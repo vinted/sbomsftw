@@ -1,0 +1,118 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:62fa33ce-9975-4f69-9e96-e0e5938108a6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-06-21T15:39:17+03:00",
+    "tools": [
+      {
+        "vendor": "vinted",
+        "name": "sa-collector",
+        "version": "0.1.0"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "",
+      "name": "fuzz/cert.key",
+      "purl": "pkg:fuzz/cert.key@2.0.0",
+      "properties": [
+        {
+          "name": "aquasecurity:trivy:Type",
+          "value": ""
+        },
+        {
+          "name": "aquasecurity:trivy:Class",
+          "value": "secret"
+        }
+      ]
+    },
+    {
+      "group": "actions",
+      "name": "http-client",
+      "version": "1.0.8",
+      "description": "Actions Http Client",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f54019aa7f32c1d47bd27dc6c1595ee0df002e8b10b38cf9d0ded7317ad24d454e995a5a042e641374d14d3eea41d8b739a415db89a31ae259b07526843f995f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/actions/http-client@1.0.8",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/actions/http-client#readme"
+        },
+        {
+          "type": "vcs",
+          "url": "git+https://github.com/actions/http-client.git"
+        }
+      ],
+      "type": "library",
+      "bom-ref": "pkg:npm/actions/http-client@1.0.8"
+    },
+    {
+      "bom-ref": "pkg:cargo/boring@2.0.0",
+      "type": "library",
+      "name": "boring",
+      "version": "2.0.0",
+      "description": "BoringSSL bindings",
+      "hashes": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0",
+            "url": "https://opensource.org/licenses/Apache-2.0"
+          }
+        }
+      ],
+      "purl": "pkg:cargo/boring@2.0.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/cloudflare/boring",
+          "type": "vcs"
+        }
+      ],
+      "properties": []
+    }
+  ],
+  "externalReferences": [
+    {
+      "url": ".",
+      "comment": "Base path",
+      "type": "other"
+    },
+    {
+      "url": "/private/tmp/checkouts/quiche/tools/http3_test/Cargo.toml",
+      "comment": "Package file",
+      "type": "other"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": ""
+    },
+    {
+      "ref": ""
+    },
+    {
+      "ref": "04bce4f8-3acb-4dc3-8af7-bc75eb9815b2",
+      "dependsOn": [
+        "",
+        ""
+      ]
+    }
+  ]
+}

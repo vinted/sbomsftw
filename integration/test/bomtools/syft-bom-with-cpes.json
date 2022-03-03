@@ -1,0 +1,133 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:a19c95eb-b50f-4fd7-b0b3-dba5d2f79c29",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-11-04T11:25:21Z",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "0.60.3"
+      }
+    ],
+    "component": {
+      "bom-ref": "7fc7d3b2280ffeed",
+      "type": "file",
+      "name": "/var/lib/rpm"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:rpm/yum-utils@1.1.31-54.el7_8?arch=noarch\u0026upstream=yum-utils-1.1.31-54.el7_8.src.rpm\u0026package-id=f872ccf389426a04",
+      "type": "library",
+      "publisher": "CentOS",
+      "name": "yum-utils",
+      "version": "1.1.31-54.el7_8",
+      "cpe": "cpe:2.3:a:yum-utils:yum-utils:1.1.31-54.el7_8:*:*:*:*:*:*:*",
+      "purl": "pkg:rpm/yum-utils@1.1.31-54.el7_8?arch=noarch\u0026upstream=yum-utils-1.1.31-54.el7_8.src.rpm",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "rpm-db-cataloger"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "RpmMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "rpm"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:yum-utils:yum_utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:yum_utils:yum-utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:yum_utils:yum_utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:centos:yum-utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:centos:yum_utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:yum:yum-utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:yum:yum_utils:1.1.31-54.el7_8:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Packages"
+        },
+        {
+          "name": "syft:metadata:release",
+          "value": "54.el7_8"
+        },
+        {
+          "name": "syft:metadata:size",
+          "value": "345576"
+        },
+        {
+          "name": "syft:metadata:sourceRpm",
+          "value": "yum-utils-1.1.31-54.el7_8.src.rpm"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rpm/zlib@1.2.7-20.el7_9?arch=x86_64\u0026upstream=zlib-1.2.7-20.el7_9.src.rpm\u0026package-id=c395a5d801d43baf",
+      "type": "library",
+      "publisher": "CentOS",
+      "name": "zlib",
+      "version": "1.2.7-20.el7_9",
+      "cpe": "cpe:2.3:a:centos:zlib:1.2.7-20.el7_9:*:*:*:*:*:*:*",
+      "purl": "pkg:rpm/zlib@1.2.7-20.el7_9?arch=x86_64\u0026upstream=zlib-1.2.7-20.el7_9.src.rpm",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "rpm-db-cataloger"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "RpmMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "rpm"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:zlib:zlib:1.2.7-20.el7_9:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Packages"
+        },
+        {
+          "name": "syft:metadata:release",
+          "value": "20.el7_9"
+        },
+        {
+          "name": "syft:metadata:size",
+          "value": "185206"
+        },
+        {
+          "name": "syft:metadata:sourceRpm",
+          "value": "zlib-1.2.7-20.el7_9.src.rpm"
+        }
+      ]
+    }
+  ]
+}

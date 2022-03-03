@@ -1,0 +1,378 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:4305f387-f85e-4ed2-8b3c-f7f7bea7de89",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-04-12T11:52:19Z",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "0.43.2"
+      }
+    ],
+    "component": {
+      "bom-ref": "c064c5755f84ac3d",
+      "type": "file",
+      "name": "/tmp/ruby-repos/anonymous_rate_response"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:gem/mustermann@1.1.1?syft-id=736fb64aae5b5832",
+      "type": "library",
+      "name": "mustermann",
+      "version": "1.1.1",
+      "cpe": "cpe:2.3:a:mustermann:mustermann:1.1.1:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/mustermann@1.1.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "Ruby",
+            "url": "https://opensource.org/licenses/Ruby"
+          }
+        },
+        {
+          "license": {
+            "id": "BSD-2-Clause",
+            "url": "https://opensource.org/licenses/BSD-2-Clause"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby-lang:mustermann:1.1.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:mustermann:1.1.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:mustermann:1.1.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:mustermann:1.1.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:gem/rack@2.2.3?syft-id=b91bf0da1f42df46",
+      "type": "library",
+      "name": "rack",
+      "version": "2.2.3",
+      "cpe": "cpe:2.3:a:ruby-lang:rack:2.2.3:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/rack@2.2.3",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:golang/github.com/pelletier/go-toml@1.8.1",
+      "type": "library",
+      "name": "github.com/pelletier/go-toml",
+      "version": "1.8.1",
+      "hashes": [],
+      "licenses": [],
+      "purl": "pkg:golang/github.com/pelletier/go-toml@1.8.1",
+      "externalReferences": [],
+      "properties": []
+    },
+    {
+      "bom-ref": "pkg:gem/rack-protection@2.1.0?syft-id=a6f8934920726b93",
+      "type": "library",
+      "name": "rack-protection",
+      "version": "2.1.0",
+      "cpe": "cpe:2.3:a:rack-protection:rack-protection:2.1.0:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/rack-protection@2.1.0",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack-protection:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack_protection:rack-protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack_protection:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby-lang:rack-protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby-lang:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:rack-protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack:rack-protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:rack-protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:rack-protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:rack_protection:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:gem/ruby2_keywords@0.0.5?syft-id=e9ecf04a3730fd5a",
+      "type": "library",
+      "name": "ruby2_keywords",
+      "version": "0.0.5",
+      "cpe": "cpe:2.3:a:ruby2-keywords:ruby2-keywords:0.0.5:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/ruby2_keywords@0.0.5",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby2-keywords:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby2_keywords:ruby2-keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby2_keywords:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby-lang:ruby2-keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby-lang:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:ruby2-keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby2:ruby2-keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby2:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:ruby2-keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:ruby2-keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:ruby2_keywords:0.0.5:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:gem/sinatra@2.1.0?syft-id=264e5b2c8b463415",
+      "type": "library",
+      "name": "sinatra",
+      "version": "2.1.0",
+      "cpe": "cpe:2.3:a:ruby-lang:sinatra:2.1.0:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/sinatra@2.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1e000492e8bd8b1d2c8ac48e39d4b3c78dfadaa56fc3038637e981314f6479f2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:sinatra:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:sinatra:sinatra:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:sinatra:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:sinatra:2.1.0:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:gem/tilt@2.0.10?syft-id=607ae1c3396e4272",
+      "type": "library",
+      "name": "tilt",
+      "version": "2.0.10",
+      "cpe": "cpe:2.3:a:ruby-lang:tilt:2.0.10:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/tilt@2.0.10",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:tilt:2.0.10:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:tilt:2.0.10:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:tilt:tilt:2.0.10:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:tilt:2.0.10:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    }
+  ]
+}

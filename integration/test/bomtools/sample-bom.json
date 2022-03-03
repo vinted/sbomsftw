@@ -1,0 +1,93 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:72861be8-8e26-483b-aef2-8f87eef986fb",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-04-12T11:56:11.107Z",
+    "tools": [
+      {
+        "vendor": "AppThreat",
+        "name": "cdxgen",
+        "version": "4.0.8"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Team AppThreat",
+        "email": "cloud@appthreat.com"
+      }
+    ]
+  },
+  "components": [
+    {
+      "group": "",
+      "name": "mustermann",
+      "version": "1.1.1",
+      "scope": "required",
+      "description": "A library implementing patterns that behave like regular expressions.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0a21cfe505869cce9ce17998db5260344e78df81ae857c07a62143fd30299531"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/mustermann@1.1.1",
+      "type": "library",
+      "bom-ref": "pkg:gem/mustermann@1.1.1"
+    },
+    {
+      "group": "",
+      "name": "rack",
+      "version": "2.2.3",
+      "description": "Rack provides a minimal, modular and adaptable interface for developing\nweb applications in Ruby. By wrapping HTTP requests and responses in\nthe simplest way possible, it unifies and distills the API for web\nservers, web frameworks, and software in between (the so-called\nmiddleware) into a single method call.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2638e7eb6689a5725c7e16f30cc4aa4e31694dc3ca30d790952526781bd0bb44"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/rack@2.2.3",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/rack/rack/issues"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/rack/rack"
+        }
+      ],
+      "type": "library",
+      "bom-ref": "pkg:gem/rack@2.2.3"
+    }
+  ],
+  "externalReferences": [
+    {
+      "type": "other",
+      "url": ".",
+      "comment": "Base path"
+    },
+    {
+      "type": "other",
+      "url": "/tmp/ruby-repos/anonymous_rate_response/Gemfile.lock",
+      "comment": "Package file"
+    }
+  ]
+}

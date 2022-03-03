@@ -1,0 +1,25 @@
+name: Release-Jobs
+on:
+  release:
+    types: [created]
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    name: Push to Cloudsmith
+    env:
+      GOOS: linux
+      GOARCH: amd64
+      RELEASE: ${{ github.ref_name }}
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      CS_REPOSITORY: ${{ secrets.CS_REPOSITORY }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4 # For cloudsmith-cli
+        with:
+          python-version: '3.10'
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18'
+      - run: /bin/bash ./build/push-to-cloudsmith.sh
