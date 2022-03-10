@@ -1,23 +1,33 @@
 package handlers
 
-const Gemfile = "Gemfile"
-const GemfileLock = "Gemfile.lock"
-const SBOMCollectionPrefix = "cyclonedx-ruby -p "
+import (
+	"fmt"
+	"path/filepath"
+)
 
-type Bundler struct{}
+const (
+	gemfile          = "Gemfile"
+	gemfileLock      = "Gemfile.lock"
+	bootstrapCommand = "bundler install"
+	bomGenTemplate   = "cyclonedx-ruby -p %s --output /dev/stdout 2>/dev/null | sed '$d'"
+)
 
-func (b Bundler) MatchFile(filename string) bool {
-	return filename == Gemfile || filename == GemfileLock
+type Bundler struct {
+	Executor CLIExecutor
 }
 
-func (b Bundler) GenerateBOM(string) (string, error) {
+func (b Bundler) MatchFile(filename string) bool {
+	return filename == gemfile || filename == gemfileLock
+}
 
-	//		err := os.Chdir(root)
-	//		//Log error here
-	//		if err != nil {
-	//			return false
-	//		}
-	//		_, err = exec.Command("bundler install").Output()
-	// out, err := exec.Command(SBOMCollectionPrefix + bootstrappedRoot).Output()
-	return "", nil
+func (b Bundler) GenerateBOM(bomRoot string) (string, error) {
+	if filepath.Base(bomRoot) == gemfile {
+		if err := b.Executor.Cd(filepath.Dir(bomRoot)); err != nil {
+			return "", err
+		}
+		if _, err := b.Executor.ShellOut(bootstrapCommand); err != nil {
+			return "", err
+		}
+	}
+	return b.Executor.ShellOut(fmt.Sprintf(bomGenTemplate, filepath.Dir(bomRoot)))
 }
