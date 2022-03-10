@@ -61,6 +61,7 @@ RUN groupadd -g 1000 satan && useradd -u 1000 -g satan -c "User for running the 
 USER satan:satan
 
 WORKDIR /home/satan
+ENV GEM_HOME="/home/satan/.gem"
 
 #Install Android SDK & NDK
 ### Android environment variables
