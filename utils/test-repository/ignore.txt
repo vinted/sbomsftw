@@ -1,1 +1,0 @@
-Used by GatherSBOMRoots test - this file should not represent SBOM root
