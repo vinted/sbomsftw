@@ -1,4 +1,4 @@
-package vcs
+package github
 
 import (
 	"github.com/go-git/go-git/v5"
@@ -8,8 +8,9 @@ import (
 const checkoutsPath = "/tmp/checkouts/"
 
 type Repository struct {
-	Name   string
-	VCSUrl string
+	Name        string
+	Description string
+	URL         string `json:"html_url"`
 }
 
 func (r Repository) FsPath() string {
@@ -18,7 +19,7 @@ func (r Repository) FsPath() string {
 
 func (r Repository) Clone() error {
 	_, err := git.PlainClone(checkoutsPath+r.Name, false, &git.CloneOptions{
-		URL:      r.VCSUrl,
+		URL:      r.URL,
 		Progress: os.Stdout,
 	})
 	return err
