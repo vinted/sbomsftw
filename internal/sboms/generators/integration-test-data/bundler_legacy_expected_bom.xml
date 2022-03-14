@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.1" version="1" serialNumber="urn:uuid:a5464ac2-4540-40c0-a787-33446419bfdd">
+  <components>
+    <component type="library">
+      <name>rake</name>
+      <version>13.0.6</version>
+      <description>Rake is a Make-like program implemented in Ruby</description>
+      <hashes>
+        <hash alg="SHA-256">5ce4bf5037b4196c24ac62834d8db1ce175470391026bd9e557d669beeb19097</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>MIT</id>
+        </license>
+      </licenses>
+      <purl>pkg:gem/rake@13.0.6</purl>
+    </component>
+  </components>
+</bom>

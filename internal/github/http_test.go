@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/vinted/software-assets/github"
+	"github.com/vinted/software-assets/internal/github"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

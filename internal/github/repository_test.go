@@ -2,7 +2,7 @@ package github_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/vinted/software-assets/github"
+	"github.com/vinted/software-assets/internal/github"
 	"testing"
 )
 
