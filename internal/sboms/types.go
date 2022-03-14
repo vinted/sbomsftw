@@ -2,7 +2,10 @@ package sboms
 
 import "fmt"
 
-type BOM map[string]string
+type BOMResult struct {
+	BOM   string
+	Error error
+}
 
 type BOMGenerator interface {
 	fmt.Stringer

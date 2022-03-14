@@ -32,9 +32,9 @@ func (b Bundler) GenerateBOM(bomRoots []string) ([]string, error) {
 	var results []string
 	for _, bomRoot := range b.normalizeRoots(bomRoots) {
 		if filepath.Base(bomRoot) == gemfile {
-			cmd := exec.Command("bundler", "install")
+			cmd := exec.Command("bash", "-c", "bundler install || bundler _1.17.3_ install")
 			cmd.Dir = filepath.Dir(bomRoot)
-			if _, err := cmd.Output(); err != nil {
+			if err := cmd.Run(); err != nil {
 				return nil, fmt.Errorf("unable to boostrap %s. Reason: %w", bomRoot, err)
 			}
 		}

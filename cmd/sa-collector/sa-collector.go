@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/vinted/software-assets/github"
-	"github.com/vinted/software-assets/sboms"
-	"github.com/vinted/software-assets/sboms/generators"
+	"github.com/vinted/software-assets/internal/github"
+	"github.com/vinted/software-assets/internal/sboms"
+	"github.com/vinted/software-assets/internal/sboms/generators"
 	"os"
 	"path/filepath"
 	"time"
