@@ -1,16 +1,16 @@
-package github_test
+package vcs_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/vinted/software-assets/internal/github"
+	"github.com/vinted/software-assets/internal/vcs"
 	"testing"
 )
 
 func TestFsPath(t *testing.T) {
-	repository := github.Repository{
+	repository := vcs.Repository{
 		Name:        "linux",
 		Description: "linux kernel",
-		URL:         "https://github.com/torvalds/linux.github",
+		URL:         "https://requests.com/torvalds/linux.requests",
 	}
 	assert.Equal(t, "/tmp/checkouts/linux", repository.FsPath())
 }

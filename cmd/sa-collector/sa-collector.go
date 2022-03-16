@@ -1,13 +1,23 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"github.com/vinted/software-assets/internal/github"
-	"github.com/vinted/software-assets/internal/sboms"
-	"github.com/vinted/software-assets/internal/sboms/generators"
+	"github.com/vinted/software-assets/internal/collectors"
+	"github.com/vinted/software-assets/internal/requests"
+	"github.com/vinted/software-assets/internal/vcs"
 	"os"
 	"path/filepath"
-	"time"
+)
+
+//Parameters used for making HTTP requests to GitHub and Dependency track
+const (
+	GithubUsername = "oh no no no"
+	GithubAPIToken = "oh no no no"
+	GithubReposURL = "oh no no no"
+
+	DTAPIToken = "oh no no no"
+	DTEndpoint = "oh no no no"
 )
 
 func cleanup() {
@@ -21,43 +31,50 @@ func setup() {
 	}
 }
 
-func generateBOM(repoPath string) {
-	bundler := generators.Bundler{}
-	fmt.Printf("Attempting to generate bom with %s for %s\n", bundler, repoPath)
-
-	relativeRoots, err := sboms.FindRoots(os.DirFS(repoPath), bundler.MatchPredicate)
-	if len(relativeRoots) == 0 {
-		fmt.Printf("Repository at %s unsupported for %s. Skipping\n", repoPath, bundler)
+func collectBOM(repository vcs.Repository) {
+	bundler := collectors.Bundler{}
+	fmt.Printf("Attempting to generate bom entries with %s for %s\n", bundler, repository)
+	bom, err := bundler.CollectBOM(repository.FsPath())
+	if err == nil {
+		uploadBOM(bom, repository.Name)
 		return
 	}
-
-	absoluteRoots := sboms.RelativeToAbsoluteRoots(relativeRoots, repoPath)
-	bom, err := bundler.GenerateBOM(absoluteRoots)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s is unable to generate BOM for repository at %s\n", bundler, repoPath)
+	var e collectors.NoRootsFoundError
+	if errors.As(err, &e) {
+		//Log that handler haven't found anything
+		return
+	} else {
+		fmt.Fprint(os.Stderr, err)
 		return
 	}
-	fmt.Println(bom)
+}
+
+func uploadBOM(bom, projectName string) {
+	//Hardcoded for now, remove to config file and parse it later on
+	fmt.Printf("Uploading %s SBOM to DT\n", projectName)
+	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, projectName, bom)
+	if _, err := requests.UploadBOM(reqConfig); err != nil {
+		_, _ = fmt.Fprint(os.Stderr, err.Error())
+	}
 }
 
 func main() {
 	setup()
 	defer cleanup()
 
-	orgURL := "https://api.github.com/orgs/vinted/repos"
-	backoff := []time.Duration{5 * time.Second, 7 * time.Second, 10 * time.Second}
-	repositories, err := github.GetRepositories(orgURL, 10*time.Second, backoff...)
+	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
+	repositories, err := requests.GetRepositories(reqConfig)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, repo := range repositories {
-		err := repo.Clone()
+		err := repo.Clone(GithubUsername, GithubAPIToken)
 		if err != nil {
 			errMsg := fmt.Sprintf("Unable to clone %s, reason: %s", repo.Name, err.Error())
 			_, _ = fmt.Fprintf(os.Stderr, errMsg)
 			continue
 		}
-		generateBOM(repo.FsPath())
+		collectBOM(repo)
 	}
 }
