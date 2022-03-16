@@ -1,6 +1,6 @@
 module github.com/vinted/software-assets
 
-go 1.17
+go 1.18
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/CycloneDX/cyclonedx-go v0.5.0 // indirect
 	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect

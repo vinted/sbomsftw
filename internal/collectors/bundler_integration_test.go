@@ -1,8 +1,9 @@
-package generators
+package collectors_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/vinted/software-assets/internal/sboms"
+	"github.com/vinted/software-assets/internal/collectors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,21 +12,60 @@ import (
 )
 
 func TestBOMGeneration(t *testing.T) {
-	tempDirName, teardown := setup(t)
-	defer teardown()
+	t.Run("collect BOMs from multiple ruby repositories correctly", func(t *testing.T) {
+		tempDirName, teardown := setup(t)
+		defer teardown()
 
-	bundler := Bundler{}
-	relativeRoots, err := sboms.FindRoots(os.DirFS(tempDirName), bundler.MatchPredicate)
+		got, err := collectors.Bundler{}.CollectBOM(tempDirName)
+		assert.NoError(t, err)
+		assertGeneratedBOM(t, got)
+	})
+
+	t.Run("return an error when BOM collection fails", func(t *testing.T) {
+		//Setup
+		testingDir, err := ioutil.TempDir("/tmp", "sa")
+		if err != nil {
+			t.Fatalf("unable to create temp directory for testing: %s", err)
+		}
+		gemfilePath := filepath.Join(testingDir, "Gemfile.lock")
+		if err := os.WriteFile(gemfilePath, []byte("👻 Invalid Gemfile.lock contents"), 0644); err != nil {
+			t.Fatal("unable to create Gemfile.lock for testing!")
+		}
+
+		teardown := func() {
+			if err := os.RemoveAll(testingDir); err != nil {
+				t.Fatalf("unable to remove temp directory created for testing: %s", err)
+			}
+		}
+		defer teardown()
+
+		got, err := collectors.Bundler{}.CollectBOM(testingDir)
+		assert.Empty(t, got)
+		expectedErrorMsg := fmt.Sprintf("can't collect BOM for %s: Unable to produce BOM for .\n", gemfilePath)
+		assert.ErrorIs(t, err, collectors.BOMCollectionFailed(expectedErrorMsg))
+	})
+}
+
+func assertGeneratedBOM(t *testing.T, got string) {
+	t.Helper()
+	expectedBOM, err := ioutil.ReadFile("integration-test-data/bundler_expected_bom.json")
 	if err != nil {
-		t.Fatalf("unable to collect BOM roots: %s", err)
+		t.Fatalf("unable to read expected BOM file: %s", err)
 	}
 
-	absoluteRoots := sboms.RelativeToAbsoluteRoots(relativeRoots, tempDirName)
-	got, err := bundler.GenerateBOM(absoluteRoots)
-	assert.NoError(t, err)
-	assert.Equal(t, 2, len(got))
-	assertGeneratedBOM(t, got[0], "integration-test-data/bundler_expected_bom.xml")
-	assertGeneratedBOM(t, got[1], "integration-test-data/bundler_legacy_expected_bom.xml")
+	//Patch expected result - BOM uuids are random
+	re := regexp.MustCompile("uuid:\\w+-\\w+-\\w+-\\w+-\\w+")
+	patchedBOM := re.ReplaceAllString(string(expectedBOM), re.FindString(got))
+
+	//Patch expected result - BOM timestamps will always differ
+	re = regexp.MustCompile(`"timestamp": "\d+-\d+-\d+T\d+:\d+:\d+.\d+Z"`)
+	patchedBOM = re.ReplaceAllString(patchedBOM, re.FindString(got))
+
+	//Patch expected result - BOM external reference path will always differ
+	re = regexp.MustCompile(`"url": ".*/tmp/sa\d+/Gemfile.lock`)
+	patchedBOM = re.ReplaceAllString(patchedBOM, re.FindString(got))
+
+	assert.Equal(t, patchedBOM, got)
 }
 
 /*
@@ -43,9 +83,7 @@ func setup(t *testing.T) (tempDirName string, teardown func()) {
 		t.Fatalf("unable to create temp directory for testing: %s", err)
 	}
 
-	/*
-		Create a temp repository with a Gemfile in it - /tmp/unix-timestamp/Gemfile
-	*/
+	//Create a temp repository with a Gemfile in it - /tmp/unix-timestamp/Gemfile
 	createTopLevelRepository := func() {
 		const gemfileContents = `
 source 'https://rubygems.org'
@@ -54,9 +92,9 @@ gem "rspec"    , '~> 3.9.0'
 gem "rake"     , '~> 12.3', '>= 12.3.3'
 gem "authorizenet"  , '~> 1.9.7'
 `
-		gemfilePath := filepath.Join(tempDirName, gemfile)
-		if err := os.WriteFile(filepath.Join(tempDirName, gemfile), []byte(gemfileContents), 0644); err != nil {
-			t.Fatalf(errMsgTemplate, gemfilePath, err)
+		gemfile := filepath.Join(tempDirName, "Gemfile")
+		if err := os.WriteFile(gemfile, []byte(gemfileContents), 0644); err != nil {
+			t.Fatalf(errMsgTemplate, gemfile, err)
 		}
 	}
 
@@ -87,7 +125,7 @@ Gem::Specification.new do |spec|
   spec.description   = %q{Command line tool for analyzing Jenkins test duration changes between \
 fast and slow builds and pinpointing the cause of slowdown.}
   spec.summary       = %q{Jenkins test suite slowdown analyzer}
-  spec.homepage      = "https://github.com/vinted/jenkins-nitro"
+  spec.homepage      = "https://requests.com/vinted/jenkins-nitro"
   spec.license       = "MIT"
 
   spec.files         = 'git ls-files'.split($/)
@@ -109,17 +147,17 @@ end
 			t.Fatalf("unable to create temp directory for testing: %s", err)
 		}
 
-		gemfilePath := filepath.Join(nestedRepoPath, gemfile)
-		if err := os.WriteFile(gemfilePath, []byte(gemfileContents), 0644); err != nil {
-			t.Fatalf(errMsgTemplate, gemfilePath, err)
+		gemfile := filepath.Join(nestedRepoPath, "Gemfile")
+		if err := os.WriteFile(gemfile, []byte(gemfileContents), 0644); err != nil {
+			t.Fatalf(errMsgTemplate, gemfile, err)
 		}
-		gemspecPath := filepath.Join(nestedRepoPath, "jenkins-nitro.gemspec")
-		if err := os.WriteFile(gemspecPath, []byte(gemspecContents), 0644); err != nil {
-			t.Fatalf(errMsgTemplate, gemspecPath, err)
+		gemspec := filepath.Join(nestedRepoPath, "jenkins-nitro.gemspec")
+		if err := os.WriteFile(gemspec, []byte(gemspecContents), 0644); err != nil {
+			t.Fatalf(errMsgTemplate, gemspec, err)
 		}
-		versionRBPath := filepath.Join(nestedRepoPath, "lib/jenkins_nitro/version.rb")
-		if err := os.WriteFile(versionRBPath, []byte(versionRBContents), 0644); err != nil {
-			t.Fatalf(errMsgTemplate, versionRBPath, err)
+		versionRb := filepath.Join(nestedRepoPath, "lib/jenkins_nitro/version.rb")
+		if err := os.WriteFile(versionRb, []byte(versionRBContents), 0644); err != nil {
+			t.Fatalf(errMsgTemplate, versionRb, err)
 		}
 	}
 
@@ -141,18 +179,4 @@ end
 	createTopLevelRepository()
 	createNestedRepository()
 	return tempDirName, teardown
-}
-
-func assertGeneratedBOM(t *testing.T, got, assertionFile string) {
-	t.Helper()
-	expectedBOM, err := ioutil.ReadFile(assertionFile)
-	if err != nil {
-		t.Fatalf("unable to read expected BOM file: %s", err)
-	}
-
-	//Patch expected result with since BOM uuids are random
-	re := regexp.MustCompile("uuid:\\w+-\\w+-\\w+-\\w+-\\w+")
-	patchedBOM := re.ReplaceAllString(string(expectedBOM), re.FindString(got))
-
-	assert.Equal(t, patchedBOM, got)
 }
