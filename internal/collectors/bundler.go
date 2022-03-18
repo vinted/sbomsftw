@@ -37,9 +37,13 @@ func (b Bundler) CollectBOM(repoPath string) (string, error) {
 	for _, root := range normalizeRoots(gemfileLock, rootsFound...) {
 		bom, err := b.generateBOM(root)
 		if err != nil {
-			return "", err
+			fmt.Printf("BOM collection failed: %s\n", err)
+			continue
 		}
 		generatedBOMs = append(generatedBOMs, bom)
+	}
+	if len(generatedBOMs) == 0 {
+		return "", BOMCollectionFailed("BOM generation failed for every root")
 	}
 	//TODO We will need to return generated bom slice here because multiple handlers will run and result will be merged
 	//to a single project before uploading to DT
@@ -54,9 +58,9 @@ func (b Bundler) generateBOM(bomRoot string) (string, error) {
 	)
 	//Error templates
 	const (
-		ErrBootstrap     = "can't boostrap %s: %w"        //Used whenever bundler install fails
-		ErrCdxGenNonZero = "can't collect BOM for %s: %w" // Used when cdxgen exits with non 0 status code
-		ErrCdxGenFailed  = "can't collect BOM for %s: %s" // Used when cdxgen exits with 0 status code but still errors out
+		ErrBootstrap     = "can't boostrap %s: %w"         //Used whenever bundler install fails
+		ErrCdxGenNonZero = "can't generate BOM for %s: %w" // Used when cdxgen exits with non 0 status code
+		ErrCdxGenFailed  = "can't generate BOM for %s: %s" // Used when cdxgen exits with 0 status code but still errors out
 	)
 	if filepath.Base(bomRoot) == gemfile {
 		/*
@@ -84,5 +88,3 @@ func (b Bundler) generateBOM(bomRoot string) (string, error) {
 	}
 	return string(out), nil
 }
-
-//todo implement function to get all repositories
