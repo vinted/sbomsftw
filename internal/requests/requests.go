@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"github.com/vinted/software-assets/internal/vcs"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -141,6 +142,32 @@ func GetRepositories(conf GetRepositoriesConfig) ([]vcs.Repository, error) {
 	}
 
 	return exponentialBackoff[[]vcs.Repository](getRepositories, conf.BackoffPolicy...)
+}
+
+func WalkRepositories(conf GetRepositoriesConfig, callback func(repos []vcs.Repository)) error {
+	endpoint, err := url.Parse(conf.URL)
+	if err != nil {
+		return fmt.Errorf("can't walk repository with malformed URL - %s: %w", conf.URL, err)
+	}
+
+	page := 1
+	for {
+		//Update URL with the incremented page number each time
+		query := endpoint.Query()
+		query.Set("page", strconv.Itoa(page))
+		endpoint.RawQuery = query.Encode()
+		conf.URL = endpoint.String()
+
+		repositories, err := GetRepositories(conf)
+		if err != nil {
+			return fmt.Errorf("repository walking failed: %w", err)
+		}
+		if len(repositories) == 0 {
+			return nil //Done all repositories have been walked
+		}
+		callback(repositories)
+		page++
+	}
 }
 
 func UploadBOM(conf UploadBOMConfig) (bool, error) {
