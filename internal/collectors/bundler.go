@@ -49,8 +49,8 @@ func (b Bundler) CollectBOM(repoPath string) (string, error) {
 func (b Bundler) generateBOM(bomRoot string) (string, error) {
 	//Shell-out commands
 	const (
-		cdxGen         = "export FETCH_LICENSE=true && cdxgen --type ruby" //Generate BOM from ruby project
-		bundlerInstall = "bundler install || bundler _1.17.3_ install"     //Creates Gemfile.lock from Gemfile if needed
+		cdxGen         = "export FETCH_LICENSE=true && cdxgen --type ruby"                      //Generate BOM from ruby project
+		bundlerInstall = "bundler install || bundler _1.9_ install || bundler _1.17.3_ install" //Creates Gemfile.lock from Gemfile if needed
 	)
 	//Error templates
 	const (

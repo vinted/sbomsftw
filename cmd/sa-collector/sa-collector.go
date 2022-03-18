@@ -42,9 +42,12 @@ func uploadBOM(bom, projectName string) {
 func processRepos(repos []vcs.Repository) {
 	bundler := collectors.Bundler{}
 	for _, r := range repos {
+		if r.Archived {
+			continue
+		}
 		err := r.Clone(GithubUsername, GithubAPIToken)
 		if err != nil {
-			errMsg := fmt.Sprintf("Unable to clone %s, reason: %s", r.Name, err.Error())
+			errMsg := fmt.Sprintf("Unable to clone %s, reason: %s\n", r.Name, err.Error())
 			_, _ = fmt.Fprintf(os.Stderr, errMsg)
 			continue
 		}
