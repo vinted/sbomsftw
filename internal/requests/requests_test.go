@@ -122,9 +122,9 @@ func TestGetRepositories(t *testing.T) {
 		assert.Equal(t, 1, hitCounter)
 
 		want := []vcs.Repository{
-			{Name: "xmlsec", Description: "Ruby bindings for xmlsec", URL: "https://github.com/vinted/xmlsec"},
-			{Name: "airbrake", Description: "Airbrake exceptions", URL: "https://github.com/vinted/airbrake-graylog2"},
-			{Name: "dotpay", Description: "dotpay.pl gem", URL: "https://github.com/vinted/dotpay"},
+			{Name: "xmlsec", Description: "Ruby bindings for xmlsec", Archived: false, URL: "https://github.com/vinted/xmlsec"},
+			{Name: "airbrake", Description: "Airbrake exceptions", Archived: true, URL: "https://github.com/vinted/airbrake-graylog2"},
+			{Name: "dotpay", Description: "dotpay.pl gem", Archived: false, URL: "https://github.com/vinted/dotpay"},
 		}
 		assert.Equal(t, want, repositories)
 	})
