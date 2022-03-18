@@ -121,16 +121,14 @@ func TestGetRepositories(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, hitCounter)
 
-		want := []vcs.Repository{
+		want := []vcs.Repository{ //We want only two repos since one of them is archived
 			{Name: "xmlsec", Description: "Ruby bindings for xmlsec", URL: "https://github.com/vinted/xmlsec"},
-			{Name: "airbrake", Description: "Airbrake exceptions", URL: "https://github.com/vinted/airbrake-graylog2"},
 			{Name: "dotpay", Description: "dotpay.pl gem", URL: "https://github.com/vinted/dotpay"},
 		}
 		assert.Equal(t, want, repositories)
 	})
 
 	t.Run("return BadStatusError on non 200 OK responses", func(t *testing.T) {
-		const errorTemplate = "did not get 200 from %s, got %d"
 		hitCounter := 0
 		teapotServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			hitCounter++
@@ -142,7 +140,6 @@ func TestGetRepositories(t *testing.T) {
 		assert.ErrorIs(t, err, requests.BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
 		assert.Empty(t, repositories)
 		assert.Equal(t, 1, hitCounter)
-		assert.Equal(t, fmt.Sprintf(errorTemplate, teapotServer.URL, http.StatusTeapot), err.Error())
 	})
 
 	t.Run("returns url.InvalidHostError whenever URL is invalid", func(t *testing.T) {

@@ -140,7 +140,18 @@ func GetRepositories(conf GetRepositoriesConfig) ([]vcs.Repository, error) {
 		return repositories, nil
 	}
 
-	return exponentialBackoff[[]vcs.Repository](getRepositories, conf.BackoffPolicy...)
+	repos, err := exponentialBackoff[[]vcs.Repository](getRepositories, conf.BackoffPolicy...)
+	if err != nil {
+		return nil, fmt.Errorf("can't fetch repositories from %s: %w", conf.URL, err)
+	}
+	//Filter out archived repos, we are not interested in them
+	var validRepos []vcs.Repository
+	for _, r := range repos {
+		if !r.Archived {
+			validRepos = append(validRepos, r)
+		}
+	}
+	return validRepos, nil
 }
 
 func UploadBOM(conf UploadBOMConfig) (bool, error) {
