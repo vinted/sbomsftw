@@ -11,7 +11,6 @@ const checkoutsPath = "/tmp/checkouts/"
 type Repository struct {
 	Name        string
 	Description string
-	Archived    bool
 	URL         string `json:"html_url"`
 }
 

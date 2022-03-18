@@ -33,7 +33,7 @@ func setup() {
 
 func collectBOM(repository vcs.Repository) {
 	bundler := collectors.Bundler{}
-	fmt.Printf("Attempting to generate bom entries with %s for %s\n", bundler, repository.FsPath())
+	fmt.Printf("Attempting to generate bom entries with %s for %s\n", bundler, repository)
 	bom, err := bundler.CollectBOM(repository.FsPath())
 	if err == nil {
 		uploadBOM(bom, repository.Name)
