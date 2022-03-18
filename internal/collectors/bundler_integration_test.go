@@ -1,7 +1,6 @@
 package collectors_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/vinted/software-assets/internal/collectors"
 	"io/ioutil"
@@ -41,8 +40,7 @@ func TestBOMGeneration(t *testing.T) {
 
 		got, err := collectors.Bundler{}.CollectBOM(testingDir)
 		assert.Empty(t, got)
-		expectedErrorMsg := fmt.Sprintf("can't collect BOM for %s: Unable to produce BOM for .\n", gemfilePath)
-		assert.ErrorIs(t, err, collectors.BOMCollectionFailed(expectedErrorMsg))
+		assert.ErrorIs(t, err, collectors.BOMCollectionFailed("BOM generation failed for every root"))
 	})
 }
 
