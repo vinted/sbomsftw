@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/vinted/software-assets/internal/collectors"
 	"github.com/vinted/software-assets/internal/requests"
@@ -31,30 +30,31 @@ func setup() {
 	}
 }
 
-func collectBOM(repository vcs.Repository) {
-	bundler := collectors.Bundler{}
-	fmt.Printf("Attempting to generate bom entries with %s for %s\n", bundler, repository)
-	bom, err := bundler.CollectBOM(repository.FsPath())
-	if err == nil {
-		uploadBOM(bom, repository.Name)
-		return
-	}
-	var e collectors.NoRootsFoundError
-	if errors.As(err, &e) {
-		//Log that handler haven't found anything
-		return
-	} else {
-		fmt.Fprint(os.Stderr, err)
-		return
-	}
-}
-
 func uploadBOM(bom, projectName string) {
 	//Hardcoded for now, remove to config file and parse it later on
 	fmt.Printf("Uploading %s SBOM to DT\n", projectName)
 	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, projectName, bom)
 	if _, err := requests.UploadBOM(reqConfig); err != nil {
-		_, _ = fmt.Fprint(os.Stderr, err.Error())
+		_, _ = fmt.Fprintln(os.Stderr, err.Error())
+	}
+}
+
+func processRepos(repos []vcs.Repository) {
+	bundler := collectors.Bundler{}
+	for _, r := range repos {
+		err := r.Clone(GithubUsername, GithubAPIToken)
+		if err != nil {
+			errMsg := fmt.Sprintf("Unable to clone %s, reason: %s", r.Name, err.Error())
+			_, _ = fmt.Fprintf(os.Stderr, errMsg)
+			continue
+		}
+		fmt.Printf("Attempting to generate bom entries with %s for %s\n", bundler, r.FsPath())
+		bom, err := bundler.CollectBOM(r.FsPath())
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err.Error())
+			continue
+		}
+		uploadBOM(bom, r.Name)
 	}
 }
 
@@ -63,18 +63,8 @@ func main() {
 	defer cleanup()
 
 	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
-	repositories, err := requests.GetRepositories(reqConfig)
+	err := requests.WalkRepositories(reqConfig, processRepos)
 	if err != nil {
 		panic(err)
-	}
-
-	for _, repo := range repositories {
-		err := repo.Clone(GithubUsername, GithubAPIToken)
-		if err != nil {
-			errMsg := fmt.Sprintf("Unable to clone %s, reason: %s", repo.Name, err.Error())
-			_, _ = fmt.Fprintf(os.Stderr, errMsg)
-			continue
-		}
-		collectBOM(repo)
 	}
 }
