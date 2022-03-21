@@ -11,5 +11,5 @@ func (e BOMCollectionFailed) Error() string {
 type BOMCollector interface {
 	fmt.Stringer
 	matchPredicate(string) bool
-	CollectBOM([]string) (string, error)
+	CollectBOM(string) (string, error)
 }
