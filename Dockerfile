@@ -34,7 +34,7 @@ RUN wget https://go.dev/dl/go1.17.7.linux-amd64.tar.gz \
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 # Install yarn & SBOM collection tools (cdxgen & cyclonedx-cli & cyclonedx-tools & licensee)
-RUN npm install -g @appthreat/cdxgen @cyclonedx/bom yarn \
+RUN npm install -g @appthreat/cdxgen @cyclonedx/bom yarn bower \
   && gem install cyclonedx-ruby licensee bundler bundler:1.9 bundler:1.17.3 \
   && wget https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.22.0/cyclonedx-linux-x64 \
   -O /usr/local/bin/cyclonedx-cli && chmod +x /usr/local/bin/cyclonedx-cli

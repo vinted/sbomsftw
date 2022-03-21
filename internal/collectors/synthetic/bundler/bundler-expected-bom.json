@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:fdd2500d-aab7-41cc-9913-47f42eb9fbb8",
+  "serialNumber": "urn:uuid:cff696c8-91bc-40b7-a2e0-635b231f51f3",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-03-17T13:58:52.792Z",
+    "timestamp": "2022-03-24T13:43:45.673Z",
     "tools": [
       {
         "vendor": "AppThreat",
@@ -75,15 +75,15 @@
       "purl": "pkg:rubygems/authorizenet@1.9.7"
     },
     {
-      "bom-ref": "pkg:rubygems/concurrent-ruby@1.1.9",
+      "bom-ref": "pkg:rubygems/concurrent-ruby@1.1.10",
       "type": "library",
       "name": "concurrent-ruby",
-      "version": "1.1.9",
+      "version": "1.1.10",
       "description": "Modern concurrency tools including agents, futures, promises, thread pools, actors, supervisors, and more.\nInspired by Erlang, Clojure, Go, JavaScript, actors, and classic concurrency patterns.\n",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "0ec0846d991c38f355b4228ad8ea77aa69c3fdaa320cd574dafedc10c4688a5b"
+          "content": "244cb1ca0d91ec2c15ca2209507c39fb163336994428e16fbd3f465c87bd8e68"
         }
       ],
       "licenses": [
@@ -94,7 +94,7 @@
           }
         }
       ],
-      "purl": "pkg:rubygems/concurrent-ruby@1.1.9",
+      "purl": "pkg:rubygems/concurrent-ruby@1.1.10",
       "externalReferences": [
         {
           "url": "https://github.com/ruby-concurrency/concurrent-ruby",
@@ -615,7 +615,7 @@
       "type": "other"
     },
     {
-      "url": "/private/tmp/sa3247278750/Gemfile.lock",
+      "url": "/private/tmp/sa1304478747/Gemfile.lock",
       "comment": "Package file",
       "type": "other"
     }

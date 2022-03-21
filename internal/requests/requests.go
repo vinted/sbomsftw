@@ -177,10 +177,11 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 		// Build the required payload for Dependency Track
 		payload, err := json.Marshal(map[string]string{
 			"projectName":    conf.ProjectName,
-			"projectVersion": "latest", //TODO Add versioning information later on,
 			"autoCreate":     strconv.FormatBool(conf.AutoCreate),
+			"projectVersion": time.Now().Format("2006-01-02 15:04:05"),
 			"bom":            base64.StdEncoding.EncodeToString([]byte(conf.BOMContents)),
 		})
+		//TODO Check what happens when we have multiple-lockfiles project versions, add a data time as a version
 		if err != nil {
 			return false, fmt.Errorf("unable to create JSON payload for uploading to Dependency track %w", err)
 		}

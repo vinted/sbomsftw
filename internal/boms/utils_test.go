@@ -1,96 +1,14 @@
-package collectors
+package boms
 
 import (
 	"encoding/json"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 	"io"
-	"io/fs"
-	"os"
+	"io/ioutil"
 	"strings"
 	"testing"
-	"testing/fstest"
 )
-
-func TestFindRoots(t *testing.T) {
-
-	var fileMatchAttempts []string
-	predicate := func(filename string) bool {
-		fileMatchAttempts = append(fileMatchAttempts, filename)
-		return filename == "Packages" || filename == "Packages.lock"
-	}
-
-	var (
-		testFS = fstest.MapFS{
-			"test-repository/Packages":                            {},
-			"test-repository/ignore.txt":                          {},
-			"test-repository/Packages.lock":                       {},
-			"test-repository/inner-dir":                           {Mode: fs.ModeDir},
-			"test-repository/inner-dir/Packages":                  {Mode: fs.ModeDir},
-			"test-repository/inner-dir/Packages.lock":             {Mode: fs.ModeDir},
-			"test-repository/inner-dir/deepest-dir/Packages.lock": {},
-		}
-		expectedBOMRoots = []string{
-			"test-repository/Packages",
-			"test-repository/Packages.lock",
-			"test-repository/inner-dir/deepest-dir/Packages.lock",
-		}
-	)
-
-	t.Run("correct BOM roots are found based on the predicate provided", func(t *testing.T) {
-		bomRoots, err := findRoots(testFS, predicate)
-		assert.NoError(t, err)
-		assert.Equal(t, expectedBOMRoots, bomRoots)
-
-		assert.Equal(t, []string{".", "test-repository", "Packages", "Packages.lock", "ignore.txt", "inner-dir",
-			"Packages", "Packages.lock", "deepest-dir", "Packages.lock"}, fileMatchAttempts)
-	})
-
-	t.Run("error is returned whenever FS walk fails", func(t *testing.T) {
-		roots, err := findRoots(os.DirFS("/non-existing"), nil)
-
-		assert.Empty(t, roots)
-
-		var e *fs.PathError
-		assert.ErrorAs(t, err, &e)
-		assert.Contains(t, err.Error(), "unable to walk file system path:")
-	})
-}
-
-func TestRelativeToAbsoluteRoots(t *testing.T) {
-	relativeRoots := []string{
-		"Packages",
-		"Packages.lock",
-		"inner-dir/Packages.lock",
-		"inner-dir/deepest-dir/Packages.lock",
-	}
-	expectedRoots := []string{
-		"/tmp/test-repository/Packages",
-		"/tmp/test-repository/Packages.lock",
-		"/tmp/test-repository/inner-dir/Packages.lock",
-		"/tmp/test-repository/inner-dir/deepest-dir/Packages.lock",
-	}
-	got := relativeToAbsoluteRoots("/tmp/test-repository", relativeRoots...)
-	assert.Equal(t, expectedRoots, got)
-}
-
-func TestNormalizeRoots(t *testing.T) {
-	rawRoots := []string{
-		"/dir/Packages",
-		"/dir/Packages.lock",
-		"/dir/inner-dir/Packages",
-		"/dir/inner-dir/deep-dir/Packages",
-		"/dir/inner-dir/deep-dir/Packages.lock",
-		"/dir/inner-dir/deep-dir/deepest-dir/Packages.lock",
-	}
-	expectedRoots := []string{
-		"/dir/Packages.lock",
-		"/dir/inner-dir/Packages",
-		"/dir/inner-dir/deep-dir/Packages.lock",
-		"/dir/inner-dir/deep-dir/deepest-dir/Packages.lock",
-	}
-	assert.ElementsMatch(t, expectedRoots, normalizeRoots("Packages.lock", rawRoots...))
-}
 
 /*
 Test data for the TestMerge function below.
@@ -206,44 +124,47 @@ func TestMerge(t *testing.T) {
 
 	t.Run("return an error when there are no BOMs to merge", func(t *testing.T) {
 		got, err := Merge(XML, []string{}...)
-		assert.Empty(t, got)
+		assert.Nil(t, got)
 		assert.ErrorIs(t, err, NoBOMsToMergeError("won't merge an empty slice of BOMs - nothing to do"))
 	})
 
 	t.Run("return an error when BOM decoding fails", func(t *testing.T) {
 		got, err := Merge(XML, "Invalid BOM 😱 ")
-		assert.Empty(t, got)
+		assert.Nil(t, got)
 		assert.ErrorIs(t, err, io.EOF)
 	})
 
 	t.Run("return an error when trying to decode an XML BOM with JSON type", func(t *testing.T) {
 		got, err := Merge(JSON, firstBOM) // Invalid type - input is XML string
-		assert.Empty(t, got)
+		assert.Nil(t, got)
 		var e *json.SyntaxError
 		assert.ErrorAs(t, err, &e)
 	})
 
 	t.Run("return an error when trying to decode BOM with unsupported type", func(t *testing.T) {
 		got, err := Merge(BOMType(42), firstBOM) //Unsupported type
-		assert.Empty(t, got)
+		assert.Nil(t, got)
 		assert.ErrorIs(t, err, BadBOMTypeError{BOMType: BOMType(42)})
 	})
 
-	t.Run("merge multiple BOMs correctly", func(t *testing.T) {
-		bomJSON, err := Merge(XML, firstBOM, secondBOM, thirdBOM)
-		assert.NoError(t, err)
+	t.Run("merge multiple-lockfiles BOMs correctly", func(t *testing.T) {
+		got, err := Merge(XML, firstBOM, secondBOM, thirdBOM)
 
-		got := new(cdx.BOM)
-		decoder := cdx.NewBOMDecoder(strings.NewReader(bomJSON), cdx.BOMFileFormatJSON)
-		if err := decoder.Decode(got); err != nil {
-			t.Fatalf("unable to decode generated bom: %s", err)
+		var actualPURLs []string
+		for _, component := range *got.Components {
+			actualPURLs = append(actualPURLs, component.PackageURL)
 		}
-
-		assertUnionPURLs(t, got)
+		assert.Equal(t, []string{
+			"pkg:gem/activesupport@6.1.5",
+			"pkg:gem/authorizenet@1.9.7",
+			"pkg:gem/concurrent-ruby@1.1.9",
+			"pkg:gem/rake@13.0.6",
+		}, actualPURLs)
+		assert.NoError(t, err)
 	})
 }
 
-func assertUnionPURLs(t *testing.T, got *cdx.BOM) {
+func assertMergeURLs(t *testing.T, got *cdx.BOM) {
 	expectedPURLs := []string{
 		"pkg:gem/activesupport@6.1.5",
 		"pkg:gem/authorizenet@1.9.7",
@@ -255,4 +176,44 @@ func assertUnionPURLs(t *testing.T, got *cdx.BOM) {
 		actualPURLs = append(actualPURLs, component.PackageURL)
 	}
 	assert.Equal(t, expectedPURLs, actualPURLs)
+}
+
+func TestFilterOptionalDependencies(t *testing.T) {
+
+	t.Run("filter out optional dependencies correctly", func(t *testing.T) {
+		testBOM, err := ioutil.ReadFile("synthetic/bom-optional-dependencies.json")
+		if err != nil {
+			t.Fatalf("unable to read a test file: %s", err)
+		}
+		filteredBOM, err := FilterOutByScope(cdx.ScopeOptional, JSON, string(testBOM))
+
+		got := new(cdx.BOM)
+		decoder := cdx.NewBOMDecoder(strings.NewReader(filteredBOM), cdx.BOMFileFormatJSON)
+		if err := decoder.Decode(got); err != nil {
+			t.Fatalf("unable to decode generated bom: %s", err)
+		}
+		var actualPURLs []string
+		for _, component := range *got.Components {
+			actualPURLs = append(actualPURLs, component.PackageURL)
+		}
+
+		expectedPURLs := []string{
+			"pkg:npm/actions/artifact@0.3.2",
+			"pkg:npm/actions/core@1.2.4",
+			"pkg:npm/actions/github@2.2.0",
+			"pkg:npm/actions/http-client@1.0.8",
+			"pkg:npm/lhci/cli@0.4.1",
+			"pkg:npm/lhci/utils@0.4.1",
+			"pkg:npm/lhci/utils@0.4.0",
+			"pkg:npm/is-windows@1.0.2",
+			"pkg:npm/lodash@4.5.0",
+		}
+		assert.Equal(t, expectedPURLs, actualPURLs)
+	})
+
+	t.Run("return an error when trying to filter BOM with unsupported type", func(t *testing.T) {
+		got, err := FilterOutByScope(cdx.ScopeOptional, BOMType(42), "") //Unsupported type
+		assert.Empty(t, got)
+		assert.ErrorIs(t, err, BadBOMTypeError{BOMType: BOMType(42)})
+	})
 }
