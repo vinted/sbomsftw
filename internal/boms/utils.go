@@ -4,6 +4,7 @@ import (
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"sort"
+	"strings"
 )
 
 type NoBOMsToMergeError string
@@ -81,4 +82,31 @@ func Merge(format BOMType, boms ...string) (*cdx.BOM, error) {
 	finalBOM.Components = &finalComponents
 
 	return &finalBOM, nil //Return string representation of updated cdx.BOM instance
+}
+
+func AttachCPEs(bom *cdx.BOM) *cdx.BOM {
+
+	cpeFromComponent := func(c cdx.Component) string {
+
+		cpeSanitize := func(s string) string {
+			return strings.Replace(s, ":", "", -1)
+		}
+
+		template := "cpe:2.3:a:%s:%s:%s:*:*:*:*:*:*:*"
+		if c.Group != "" {
+			return fmt.Sprintf(template, cpeSanitize(c.Group), cpeSanitize(c.Name), cpeSanitize(c.Version))
+		}
+		if c.Author != "" {
+			return fmt.Sprintf(template, cpeSanitize(c.Author), cpeSanitize(c.Name), cpeSanitize(c.Version))
+		}
+		return fmt.Sprintf(template, cpeSanitize(c.Name), cpeSanitize(c.Name), cpeSanitize(c.Version))
+	}
+
+	finalComponents := make([]cdx.Component, 0, len(*bom.Components))
+	for _, c := range *bom.Components {
+		c.CPE = cpeFromComponent(c)
+		finalComponents = append(finalComponents, c)
+	}
+	bom.Components = &finalComponents
+	return bom
 }

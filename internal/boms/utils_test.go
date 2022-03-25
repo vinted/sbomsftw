@@ -217,3 +217,17 @@ func TestFilterOptionalDependencies(t *testing.T) {
 		assert.ErrorIs(t, err, BadBOMTypeError{BOMType: BOMType(42)})
 	})
 }
+
+func TestAttachCPEs(t *testing.T) {
+	bom, err := BomStringToCDX(XML, firstBOM)
+	assert.NoError(t, err)
+
+	var got []string
+	for _, c := range *AttachCPEs(bom).Components {
+		got = append(got, c.CPE)
+	}
+	assert.Equal(t, []string{
+		"cpe:2.3:a:activesupport:activesupport:6.1.5:*:*:*:*:*:*:*",
+		"cpe:2.3:a:authorizenet:authorizenet:1.9.7:*:*:*:*:*:*:*",
+	}, got)
+}

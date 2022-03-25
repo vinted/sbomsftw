@@ -12,9 +12,12 @@ import (
 func TestFindRoots(t *testing.T) {
 
 	var fileMatchAttempts []string
-	predicate := func(filename string) bool {
+	predicate := func(isDir bool, filename string) bool {
 		filename = filepath.Base(filename)
 		fileMatchAttempts = append(fileMatchAttempts, filename)
+		if isDir {
+			return false
+		}
 		return filename == "Packages" || filename == "Packages.lock"
 	}
 

@@ -40,6 +40,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:activesupport:activesupport:6.1.5:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/activesupport@6.1.5",
       "externalReferences": [
         {
@@ -72,6 +73,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:authorizenet:authorizenet:1.9.7:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/authorizenet@1.9.7"
     },
     {
@@ -94,6 +96,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:concurrent-ruby:concurrent-ruby:1.1.10:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/concurrent-ruby@1.1.10",
       "externalReferences": [
         {
@@ -134,6 +137,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:diff-lcs:diff-lcs:1.5.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/diff-lcs@1.5.0",
       "externalReferences": [
         {
@@ -166,6 +170,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:i18n:i18n:1.10.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/i18n@1.10.0",
       "externalReferences": [
         {
@@ -184,6 +189,7 @@
       "name": "jenkins-nitro",
       "version": "0.0.6",
       "licenses": [],
+      "cpe": "cpe:2.3:a:jenkins-nitro:jenkins-nitro:0.0.6:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/jenkins-nitro@0.0.6"
     },
     {
@@ -206,6 +212,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:mini_portile2:mini_portile2:2.8.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/mini_portile2@2.8.0"
     },
     {
@@ -228,6 +235,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:minitest:minitest:5.15.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/minitest@5.15.0",
       "externalReferences": [
         {
@@ -256,6 +264,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:nokogiri:nokogiri:1.13.3:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/nokogiri@1.13.3",
       "externalReferences": [
         {
@@ -294,6 +303,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:racc:racc:1.6.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/racc@1.6.0"
     },
     {
@@ -316,6 +326,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rake:rake:12.3.3:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rake@12.3.3",
       "externalReferences": [
         {
@@ -348,6 +359,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rake:rake:13.0.6:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rake@13.0.6",
       "externalReferences": [
         {
@@ -366,6 +378,7 @@
       "name": "remote:",
       "version": "https://rubygems.org/",
       "licenses": [],
+      "cpe": "cpe:2.3:a:remote:remote:https//rubygems.org/:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/remote:@https://rubygems.org/"
     },
     {
@@ -381,6 +394,7 @@
         }
       ],
       "licenses": [],
+      "cpe": "cpe:2.3:a:roxml:roxml:4.2.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/roxml@4.2.0"
     },
     {
@@ -403,6 +417,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rspec-core:rspec-core:3.9.3:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rspec-core@3.9.3",
       "externalReferences": [
         {
@@ -435,6 +450,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rspec-expectations:rspec-expectations:3.9.4:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rspec-expectations@3.9.4",
       "externalReferences": [
         {
@@ -467,6 +483,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rspec-mocks:rspec-mocks:3.9.1:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rspec-mocks@3.9.1",
       "externalReferences": [
         {
@@ -499,6 +516,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rspec-support:rspec-support:3.9.4:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rspec-support@3.9.4",
       "externalReferences": [
         {
@@ -531,6 +549,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rspec:rspec:3.9.0:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/rspec@3.9.0",
       "externalReferences": [
         {
@@ -563,6 +582,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:tzinfo:tzinfo:2.0.4:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/tzinfo@2.0.4",
       "externalReferences": [
         {
@@ -595,6 +615,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:zeitwerk:zeitwerk:2.5.4:*:*:*:*:*:*:*",
       "purl": "pkg:rubygems/zeitwerk@2.5.4",
       "externalReferences": [
         {
