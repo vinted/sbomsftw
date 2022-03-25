@@ -41,6 +41,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:actions:artifact:0.6.1:*:*:*:*:*:*:*",
       "purl": "pkg:npm/actions/artifact@0.6.1",
       "externalReferences": [
         {
@@ -74,6 +75,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:actions:core:1.6.0:*:*:*:*:*:*:*",
       "purl": "pkg:npm/actions/core@1.6.0",
       "externalReferences": [
         {
@@ -107,6 +109,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:actions:http-client:1.0.11:*:*:*:*:*:*:*",
       "purl": "pkg:npm/actions/http-client@1.0.11",
       "externalReferences": [
         {
@@ -139,6 +142,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:balanced-match:balanced-match:1.0.2:*:*:*:*:*:*:*",
       "purl": "pkg:npm/balanced-match@1.0.2",
       "externalReferences": [
         {
@@ -171,6 +175,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:brace-expansion:brace-expansion:1.1.11:*:*:*:*:*:*:*",
       "purl": "pkg:npm/brace-expansion@1.1.11",
       "externalReferences": [
         {
@@ -196,6 +201,7 @@
         }
       ],
       "licenses": [],
+      "cpe": "cpe:2.3:a:concat-map:concat-map:0.0.1:*:*:*:*:*:*:*",
       "purl": "pkg:npm/concat-map@0.0.1",
       "externalReferences": [
         {
@@ -224,6 +230,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:fs.realpath:fs.realpath:1.0.0:*:*:*:*:*:*:*",
       "purl": "pkg:npm/fs.realpath@1.0.0",
       "externalReferences": [
         {
@@ -256,6 +263,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:glob:glob:7.2.0:*:*:*:*:*:*:*",
       "purl": "pkg:npm/glob@7.2.0",
       "externalReferences": [
         {
@@ -288,6 +296,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:inflight:inflight:1.0.6:*:*:*:*:*:*:*",
       "purl": "pkg:npm/inflight@1.0.6",
       "externalReferences": [
         {
@@ -320,6 +329,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:inherits:inherits:2.0.4:*:*:*:*:*:*:*",
       "purl": "pkg:npm/inherits@2.0.4",
       "externalReferences": [
         {
@@ -352,6 +362,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:lodash:lodash:4.17.21:*:*:*:*:*:*:*",
       "purl": "pkg:npm/lodash@4.17.21",
       "externalReferences": [
         {
@@ -384,6 +395,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:minimatch:minimatch:3.1.2:*:*:*:*:*:*:*",
       "purl": "pkg:npm/minimatch@3.1.2",
       "externalReferences": [
         {
@@ -416,6 +428,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:once:once:1.4.0:*:*:*:*:*:*:*",
       "purl": "pkg:npm/once@1.4.0",
       "externalReferences": [
         {
@@ -448,6 +461,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:path-is-absolute:path-is-absolute:1.0.1:*:*:*:*:*:*:*",
       "purl": "pkg:npm/path-is-absolute@1.0.1",
       "externalReferences": [
         {
@@ -480,6 +494,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:prettier:prettier:2.6.0:*:*:*:*:*:*:*",
       "purl": "pkg:npm/prettier@2.6.0",
       "externalReferences": [
         {
@@ -512,6 +527,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:rimraf:rimraf:3.0.2:*:*:*:*:*:*:*",
       "purl": "pkg:npm/rimraf@3.0.2",
       "externalReferences": [
         {
@@ -544,6 +560,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:tmp-promise:tmp-promise:3.0.3:*:*:*:*:*:*:*",
       "purl": "pkg:npm/tmp-promise@3.0.3",
       "externalReferences": [
         {
@@ -576,6 +593,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:tmp:tmp:0.2.1:*:*:*:*:*:*:*",
       "purl": "pkg:npm/tmp@0.2.1",
       "externalReferences": [
         {
@@ -608,6 +626,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:tunnel:tunnel:0.0.6:*:*:*:*:*:*:*",
       "purl": "pkg:npm/tunnel@0.0.6",
       "externalReferences": [
         {
@@ -640,6 +659,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:typescript:typescript:4.6.2:*:*:*:*:*:*:*",
       "purl": "pkg:npm/typescript@4.6.2",
       "externalReferences": [
         {
@@ -672,6 +692,7 @@
           }
         }
       ],
+      "cpe": "cpe:2.3:a:wrappy:wrappy:1.0.2:*:*:*:*:*:*:*",
       "purl": "pkg:npm/wrappy@1.0.2",
       "externalReferences": [
         {

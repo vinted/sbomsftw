@@ -65,7 +65,11 @@ func (j JS) CollectBOM(repoPath string) (*cdx.BOM, error) {
 	if len(generatedBOMs) == 0 {
 		return nil, errUnsupportedRepo
 	}
-	return boms.Merge(boms.JSON, generatedBOMs...)
+	mergedBom, err := boms.Merge(boms.JSON, generatedBOMs...)
+	if err != nil {
+		return nil, err
+	}
+	return boms.AttachCPEs(mergedBom), nil
 }
 
 func (j JS) bootstrap(bomRoots []string) []string {
