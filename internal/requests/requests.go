@@ -178,7 +178,7 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 		payload, err := json.Marshal(map[string]string{
 			"projectName":    conf.ProjectName,
 			"autoCreate":     strconv.FormatBool(conf.AutoCreate),
-			"projectVersion": time.Now().Format("2006-01-02 15:04:05"),
+			"projectVersion": "spring4shell",
 			"bom":            base64.StdEncoding.EncodeToString([]byte(conf.BOMContents)),
 		})
 		//TODO Check what happens when we have multiple-lockfiles project versions, add a data time as a version

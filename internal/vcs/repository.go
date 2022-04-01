@@ -12,6 +12,7 @@ type Repository struct {
 	Name        string
 	Description string
 	Archived    bool
+	Language    string
 	URL         string `json:"html_url"`
 }
 
