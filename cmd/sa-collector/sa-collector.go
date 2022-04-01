@@ -8,6 +8,7 @@ import (
 	"github.com/vinted/software-assets/internal/vcs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -56,24 +57,15 @@ func processRepoInternal(wg *sync.WaitGroup, collector collectors.BOMCollector, 
 	results <- collectionResult{bomContents: bomString, err: nil}
 }
 
-func processRepo(repository vcs.Repository) error {
-	if repository.Archived {
-		return nil
-	}
-
-	err := repository.Clone(GithubUsername, GithubAPIToken)
-	if err != nil {
-		return fmt.Errorf("can't clone %s: %w", repository.Name, err)
-	}
-
-	availableCollectors := [...]collectors.BOMCollector{collectors.NewRubyCollector(), collectors.NewJSCollector()}
+func processRepoPath(repoPath string) error {
+	availableCollectors := [...]collectors.BOMCollector{collectors.NewJVMCollector()}
 
 	var wg sync.WaitGroup
 	wg.Add(len(availableCollectors))
 
 	results := make(chan collectionResult, len(availableCollectors))
 	for _, c := range availableCollectors {
-		go processRepoInternal(&wg, c, repository.FsPath(), results)
+		go processRepoInternal(&wg, c, repoPath, results)
 	}
 	wg.Wait()
 	close(results)
@@ -86,9 +78,52 @@ func processRepo(repository vcs.Repository) error {
 	}
 	finalBOM, err := boms.Merge(boms.JSON, collectedBOMs...)
 	if err != nil {
-		return fmt.Errorf("can't merge BOM for %s: %w", repository.Name, err)
+		return fmt.Errorf("can't merge BOM for %s: %w", repoPath, err)
 	}
 	bomString, err := boms.CdxToBOMString(boms.JSON, finalBOM)
+	if err != nil {
+		return fmt.Errorf("can't convert BOM for %s: %w", repoPath, err)
+	}
+
+	fmt.Printf("uploading %s SBOM to DT\n", repoPath)
+	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repoPath, bomString)
+	if _, err := requests.UploadBOM(reqConfig); err != nil {
+		return fmt.Errorf("can't upload %s BOM to DT: %w", repoPath, err)
+	}
+	return nil
+}
+
+func processRepo(repository vcs.Repository) error {
+	if repository.Archived {
+		return nil
+	}
+
+	var isRepoSupported = false
+	for _, l := range []string{"java", "kotlin", "groovy", "scala"} {
+		if strings.ToLower(repository.Language) == l {
+			isRepoSupported = true
+		}
+	}
+	if !isRepoSupported {
+		return nil
+	}
+
+	fmt.Println("Processing: " + repository.Name)
+
+	err := repository.Clone(GithubUsername, GithubAPIToken)
+	if err != nil {
+		return fmt.Errorf("can't clone %s: %w", repository.Name, err)
+	}
+
+	collector := collectors.NewJVMCollector()
+
+	fmt.Printf("attempting to generate bom entries with %s for %s\n", collector, repository.FsPath())
+	bom, err := collector.CollectBOM(repository.FsPath())
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	bomString, err := boms.CdxToBOMString(boms.JSON, bom)
 	if err != nil {
 		return fmt.Errorf("can't convert BOM for %s: %w", repository.Name, err)
 	}
@@ -98,6 +133,8 @@ func processRepo(repository vcs.Repository) error {
 	if _, err := requests.UploadBOM(reqConfig); err != nil {
 		return fmt.Errorf("can't upload %s BOM to DT: %w", repository.Name, err)
 	}
+	fmt.Println("Removing " + repository.FsPath())
+	_ = os.RemoveAll(repository.FsPath())
 	return nil
 }
 
@@ -105,7 +142,10 @@ func main() {
 	cleanup()
 	setup()
 	defer cleanup()
-
+	//
+	//if err := processRepoPath("/tmp/checkouts/android"); err != nil {
+	//	panic(err)
+	//}
 	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
 	err := requests.WalkRepositories(reqConfig, func(repos []vcs.Repository) {
 		for _, r := range repos {
