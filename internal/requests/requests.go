@@ -152,6 +152,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repos []vcs.Repo
 
 	page := 1
 	for {
+		fmt.Printf("page - %d\n", page)
 		//Update URL with the incremented page number each time
 		query := endpoint.Query()
 		query.Set("page", strconv.Itoa(page))

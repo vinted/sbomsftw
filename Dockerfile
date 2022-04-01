@@ -56,18 +56,18 @@ RUN git clone https://github.com/oss-review-toolkit/ort.git
 RUN cd /opt/ort && ./gradlew installDist
 
 # Disable root account and switch to a low-priv user
-RUN groupadd -g 1000 satan && useradd -u 1000 -g satan -c "User for running the SBOM collector" -m satan \
+RUN groupadd -g 1000 collector && useradd -u 1000 -g collector -c "User for running the SBOM collector" -m collector \
 	&& usermod --shell /usr/sbin/nologin root
-USER satan:satan
+USER collector:collector
 
-WORKDIR /home/satan
-ENV GEM_HOME="/home/satan/.gem"
+WORKDIR /home/collector
+ENV GEM_HOME="/home/collector/.gem"
 
 #Install Android SDK & NDK
 ### Android environment variables
-ENV ANDROID_HOME="/home/satan/android-sdk-linux"
+ENV ANDROID_HOME="/home/collector/android-sdk-linux"
 ENV PATH="${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools"
-ENV ANDROID_NDK="/home/satan/android-ndk-linux"
+ENV ANDROID_NDK="/home/collector/android-ndk-linux"
 ENV ANDROID_NDK_HOME="$ANDROID_NDK"
 ENV ANDROID_NDK_VERSION="r23b"
 ENV ANDROID_BUILD_TOOLS_VERSION="4333796"
@@ -88,4 +88,4 @@ RUN wget https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERS
 
 # Install cyclonedx-gomod & cargo-cyclonedx for low-privilege user
 RUN go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest && cargo install cargo-cyclonedx
-ENV PATH="/home/satan/go/bin:${PATH}"
+ENV PATH="/home/collector/go/bin:${PATH}"

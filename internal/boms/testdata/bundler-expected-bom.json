@@ -1,0 +1,644 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:cff696c8-91bc-40b7-a2e0-635b231f51f3",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-03-24T13:43:45.673Z",
+    "tools": [
+      {
+        "vendor": "AppThreat",
+        "name": "cdxgen",
+        "version": "4.0.6"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Team AppThreat",
+        "email": "cloud@appthreat.com"
+      }
+    ]
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:rubygems/activesupport@6.1.5",
+      "type": "library",
+      "name": "activesupport",
+      "version": "6.1.5",
+      "description": "A toolkit of support libraries and Ruby core extensions extracted from the Rails framework. Rich support for multibyte strings, internationalization, time zones, and testing.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "28ba7f01792bd3fb135ef8618199799441568f89cc3890c78b0e4812486bfeca"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:activesupport:activesupport:6.1.5:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/activesupport@6.1.5",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rails/rails/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rails/rails/tree/v7.0.2.3/activesupport",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/authorizenet@1.9.7",
+      "type": "library",
+      "name": "authorizenet",
+      "version": "1.9.7",
+      "description": "Authorize.Net SDK includes standard payments, recurring billing, and customer profiles",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d867e757b005e5ca1b9fa642bcf9b562a0b07eaa41f89968390e2f35c7bf7b86"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "CUSTOM",
+            "url": "https://github.com/AuthorizeNet/sdk-ruby/blob/master/LICENSE.txt"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:authorizenet:authorizenet:1.9.7:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/authorizenet@1.9.7"
+    },
+    {
+      "bom-ref": "pkg:rubygems/concurrent-ruby@1.1.10",
+      "type": "library",
+      "name": "concurrent-ruby",
+      "version": "1.1.10",
+      "description": "Modern concurrency tools including agents, futures, promises, thread pools, actors, supervisors, and more.\nInspired by Erlang, Clojure, Go, JavaScript, actors, and classic concurrency patterns.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "244cb1ca0d91ec2c15ca2209507c39fb163336994428e16fbd3f465c87bd8e68"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:concurrent-ruby:concurrent-ruby:1.1.10:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/concurrent-ruby@1.1.10",
+      "externalReferences": [
+        {
+          "url": "https://github.com/ruby-concurrency/concurrent-ruby",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/diff-lcs@1.5.0",
+      "type": "library",
+      "name": "diff-lcs",
+      "version": "1.5.0",
+      "description": "Diff::LCS computes the difference between two Enumerable sequences using the\nMcIlroy-Hunt longest common subsequence (LCS) algorithm. It includes utilities\nto create a simple HTML diff output format and a standard diff-like tool.\n\nThis is release 1.4.3, providing a simple extension that allows for\nDiff::LCS::Change objects to be treated implicitly as arrays and fixes a\nnumber of formatting issues.\n\nRuby versions below 2.5 are soft-deprecated, which means that older versions\nare no longer part of the CI test suite. If any changes have been introduced\nthat break those versions, bug reports and patches will be accepted, but it\nwill be up to the reporter to verify any fixes prior to release. The next\nmajor release will completely break compatibility.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "49b934001c8c6aedb37ba19daec5c634da27b318a7a3c654ae979d6ba1929b67"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        },
+        {
+          "license": {
+            "id": "Artistic-2.0",
+            "url": "https://opensource.org/licenses/Artistic-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "GPL-2.0+",
+            "url": "https://opensource.org/licenses/GPL-2.0+"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:diff-lcs:diff-lcs:1.5.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/diff-lcs@1.5.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/halostatue/diff-lcs/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/halostatue/diff-lcs",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/i18n@1.10.0",
+      "type": "library",
+      "name": "i18n",
+      "version": "1.10.0",
+      "description": "New wave Internationalization support for Ruby.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0f4217161b9caa0da0ac814277862947e4d7cb2378567fc2a3d67b32edf6582c"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:i18n:i18n:1.10.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/i18n@1.10.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/ruby-i18n/i18n/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/ruby-i18n/i18n",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/jenkins-nitro@0.0.6",
+      "type": "library",
+      "name": "jenkins-nitro",
+      "version": "0.0.6",
+      "licenses": [],
+      "cpe": "cpe:2.3:a:jenkins-nitro:jenkins-nitro:0.0.6:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/jenkins-nitro@0.0.6"
+    },
+    {
+      "bom-ref": "pkg:rubygems/mini_portile2@2.8.0",
+      "type": "library",
+      "name": "mini_portile2",
+      "version": "2.8.0",
+      "description": "Simplistic port-like solution for developers. It provides a standard and simplified way to compile against dependency libraries without messing up your system.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1e06b286ff19b73cfc9193cb3dd2bd80416f8262443564b25b23baea74a05765"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:mini_portile2:mini_portile2:2.8.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/mini_portile2@2.8.0"
+    },
+    {
+      "bom-ref": "pkg:rubygems/minitest@5.15.0",
+      "type": "library",
+      "name": "minitest",
+      "version": "5.15.0",
+      "description": "minitest provides a complete suite of testing facilities supporting\nTDD, BDD, mocking, and benchmarking.\n\n    \"I had a class with Jim Weirich on testing last week and we were\n     allowed to choose our testing frameworks. Kirk Haines and I were\n     paired up and we cracked open the code for a few test\n     frameworks...\n\n     I MUST say that minitest is *very* readable / understandable\n     compared to the 'other two' options we looked at. Nicely done and\n     thank you for helping us keep our mental sanity.\"\n\n    -- Wayne E. Seguin\n\nminitest/test is a small and incredibly fast unit testing framework.\nIt provides a rich set of assertions to make your tests clean and\nreadable.\n\nminitest/spec is a functionally complete spec engine. It hooks onto\nminitest/test and seamlessly bridges test assertions over to spec\nexpectations.\n\nminitest/benchmark is an awesome way to assert the performance of your\nalgorithms in a repeatable manner. Now you can assert that your newb\nco-worker doesn't replace your linear algorithm with an exponential\none!\n\nminitest/mock by Steven Baker, is a beautifully tiny mock (and stub)\nobject framework.\n\nminitest/pride shows pride in testing and adds coloring to your test\noutput. I guess it is an example of how to write IO pipes too. :P\n\nminitest/test is meant to have a clean implementation for language\nimplementors that need a minimal set of methods to bootstrap a working\ntest suite. For example, there is no magic involved for test-case\ndiscovery.\n\n    \"Again, I can't praise enough the idea of a testing/specing\n     framework that I can actually read in full in one sitting!\"\n\n    -- Piotr Szotkowski\n\nComparing to rspec:\n\n    rspec is a testing DSL. minitest is ruby.\n\n    -- Adam Hawkins, \"Bow Before MiniTest\"\n\nminitest doesn't reinvent anything that ruby already provides, like:\nclasses, modules, inheritance, methods. This means you only have to\nlearn ruby to use minitest and all of your regular OO practices like\nextract-method refactorings still apply.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6d2d5bfa301257ef2c2fe8818abeaa0932ed54735c8ed039459cb4f85029ae1b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:minitest:minitest:5.15.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/minitest@5.15.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/seattlerb/minitest/issues",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/nokogiri@1.13.3",
+      "type": "library",
+      "name": "nokogiri",
+      "version": "1.13.3",
+      "description": "Nokogiri (鋸) makes it easy and painless to work with XML and HTML from Ruby. It provides a\nsensible, easy-to-understand API for reading, writing, modifying, and querying documents. It is\nfast and standards-compliant by relying on native parsers like libxml2 (C) and xerces (Java).\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bf1b1bceff910abb0b7ad825535951101a0361b859c2ad1be155c010081ecbdc"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:nokogiri:nokogiri:1.13.3:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/nokogiri@1.13.3",
+      "externalReferences": [
+        {
+          "url": "https://github.com/sparklemotion/nokogiri/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/sparklemotion/nokogiri",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/racc@1.6.0",
+      "type": "library",
+      "name": "racc",
+      "version": "1.6.0",
+      "description": "Racc is a LALR(1) parser generator.\n  It is written in Ruby itself, and generates Ruby program.\n\n  NOTE: Ruby 1.8.x comes with Racc runtime module.  You\n  can run your parsers generated by racc 1.4.x out of the\n  box.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d449a3c279026451b9fd5f34e829dc5f6e0ef6b9b472b7ff89fd3877fe8fe8cf"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Ruby",
+            "url": "https://opensource.org/licenses/Ruby"
+          }
+        },
+        {
+          "license": {
+            "id": "BSD-2-Clause",
+            "url": "https://opensource.org/licenses/BSD-2-Clause"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:racc:racc:1.6.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/racc@1.6.0"
+    },
+    {
+      "bom-ref": "pkg:rubygems/rake@12.3.3",
+      "type": "library",
+      "name": "rake",
+      "version": "12.3.3",
+      "description": "Rake is a Make-like program implemented in Ruby. Tasks and dependencies are\nspecified in standard Ruby syntax.\nRake has the following features:\n  * Rakefiles (rake's version of Makefiles) are completely defined in standard Ruby syntax.\n    No XML files to edit. No quirky Makefile syntax to worry about (is that a tab or a space?)\n  * Users can specify tasks with prerequisites.\n  * Rake supports rule patterns to synthesize implicit tasks.\n  * Flexible FileLists that act like arrays but know about manipulating file names and paths.\n  * Supports parallel execution of tasks.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5ce4bf5037b4196c24ac62834d8db1ce175470391026bd9e557d669beeb19097"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rake:rake:12.3.3:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rake@12.3.3",
+      "externalReferences": [
+        {
+          "url": "https://github.com/ruby/rake/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/ruby/rake/tree/v13.0.6",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/rake@13.0.6",
+      "type": "library",
+      "name": "rake",
+      "version": "13.0.6",
+      "description": "Rake is a Make-like program implemented in Ruby. Tasks and dependencies are\nspecified in standard Ruby syntax.\nRake has the following features:\n  * Rakefiles (rake's version of Makefiles) are completely defined in standard Ruby syntax.\n    No XML files to edit. No quirky Makefile syntax to worry about (is that a tab or a space?)\n  * Users can specify tasks with prerequisites.\n  * Rake supports rule patterns to synthesize implicit tasks.\n  * Flexible FileLists that act like arrays but know about manipulating file names and paths.\n  * Supports parallel execution of tasks.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5ce4bf5037b4196c24ac62834d8db1ce175470391026bd9e557d669beeb19097"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rake:rake:13.0.6:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rake@13.0.6",
+      "externalReferences": [
+        {
+          "url": "https://github.com/ruby/rake/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/ruby/rake/tree/v13.0.6",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/remote:@https://rubygems.org/",
+      "type": "library",
+      "name": "remote:",
+      "version": "https://rubygems.org/",
+      "licenses": [],
+      "cpe": "cpe:2.3:a:remote:remote:https//rubygems.org/:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/remote:@https://rubygems.org/"
+    },
+    {
+      "bom-ref": "pkg:rubygems/roxml@4.2.0",
+      "type": "library",
+      "name": "roxml",
+      "version": "4.2.0",
+      "description": "ROXML is a Ruby library designed to make it easier for Ruby developers to work with XML.\nUsing simple annotations, it enables Ruby classes to be mapped to XML. ROXML takes care\nof the marshalling and unmarshalling of mapped attributes so that developers can focus on\nbuilding first-class Ruby classes. As a result, ROXML simplifies the development of\nRESTful applications, Web Services, and XML-RPC.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "02356a53a158be998a1180841061b36f4435ec108552f7f2d8c1d08e68d6e2d4"
+        }
+      ],
+      "licenses": [],
+      "cpe": "cpe:2.3:a:roxml:roxml:4.2.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/roxml@4.2.0"
+    },
+    {
+      "bom-ref": "pkg:rubygems/rspec-core@3.9.3",
+      "type": "library",
+      "name": "rspec-core",
+      "version": "3.9.3",
+      "description": "BDD for Ruby. RSpec runner and example groups.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "46317850396fea47e6793dd5a7606c0816aa38f5149f4cd5de308495b89b1085"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rspec-core:rspec-core:3.9.3:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rspec-core@3.9.3",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rspec/rspec-core/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rspec/rspec-core",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/rspec-expectations@3.9.4",
+      "type": "library",
+      "name": "rspec-expectations",
+      "version": "3.9.4",
+      "description": "rspec-expectations provides a simple, readable API to express expected outcomes of a code example.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a3c0859805bdfd88bef90bf050cbb4a04f01fe9e0ad24e5b77571e1abd823100"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rspec-expectations:rspec-expectations:3.9.4:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rspec-expectations@3.9.4",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rspec/rspec-expectations/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rspec/rspec-expectations",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/rspec-mocks@3.9.1",
+      "type": "library",
+      "name": "rspec-mocks",
+      "version": "3.9.1",
+      "description": "RSpec's 'test double' framework, with support for stubbing and mocking",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "43fbe2a3cdb8cb894d52440392baca61aa0e043b640e3f8963ce426f0c6b6878"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rspec-mocks:rspec-mocks:3.9.1:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rspec-mocks@3.9.1",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rspec/rspec-mocks/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rspec/rspec-mocks",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/rspec-support@3.9.4",
+      "type": "library",
+      "name": "rspec-support",
+      "version": "3.9.4",
+      "description": "Support utilities for RSpec gems",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "03284a86b74afbbdeff6c3dc19ac2e0fe650453a96b89f860d459ca3e825d375"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rspec-support:rspec-support:3.9.4:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rspec-support@3.9.4",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rspec/rspec-support/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rspec/rspec-support",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/rspec@3.9.0",
+      "type": "library",
+      "name": "rspec",
+      "version": "3.9.0",
+      "description": "BDD for Ruby",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8907f32e5c3095724e54c143e9cfc4df37079be349343dab9029becdb259bea5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:rspec:rspec:3.9.0:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/rspec@3.9.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rspec/rspec-metagem/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rspec/rspec-metagem",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/tzinfo@2.0.4",
+      "type": "library",
+      "name": "tzinfo",
+      "version": "2.0.4",
+      "description": "TZInfo provides access to time zone data and allows times to be converted using time zone rules.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9fd0906c2409f729e90c78695e1001fa28f2fa72faa5ad2f6074c3e44e2f1783"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:tzinfo:tzinfo:2.0.4:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/tzinfo@2.0.4",
+      "externalReferences": [
+        {
+          "url": "https://github.com/tzinfo/tzinfo/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/tzinfo/tzinfo/tree/v2.0.4",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rubygems/zeitwerk@2.5.4",
+      "type": "library",
+      "name": "zeitwerk",
+      "version": "2.5.4",
+      "description": "    Zeitwerk implements constant autoloading with Ruby semantics. Each gem\n    and application may have their own independent autoloader, with its own\n    configuration, inflector, and logger. Supports autoloading,\n    reloading, and eager loading.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f5584ae0c274f9d799acebb01eca9bc31051db284287f3b4ed6b5673853c7825"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:zeitwerk:zeitwerk:2.5.4:*:*:*:*:*:*:*",
+      "purl": "pkg:rubygems/zeitwerk@2.5.4",
+      "externalReferences": [
+        {
+          "url": "https://github.com/fxn/zeitwerk/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/fxn/zeitwerk",
+          "type": "vcs"
+        }
+      ]
+    }
+  ],
+  "externalReferences": [
+    {
+      "url": ".",
+      "comment": "Base path",
+      "type": "other"
+    },
+    {
+      "url": "/private/tmp/sa1304478747/Gemfile.lock",
+      "comment": "Package file",
+      "type": "other"
+    }
+  ]
+}
