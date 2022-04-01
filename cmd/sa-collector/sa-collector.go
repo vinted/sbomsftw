@@ -3,20 +3,18 @@ package main
 import (
 	"fmt"
 	"github.com/vinted/software-assets/internal/boms"
-	"github.com/vinted/software-assets/internal/collectors"
 	"github.com/vinted/software-assets/internal/requests"
 	"github.com/vinted/software-assets/internal/vcs"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 )
 
 //Parameters used for making HTTP requests to GitHub and Dependency track
 const (
-	GithubUsername = "oh no no no"
-	GithubAPIToken = "oh no no no"
-	GithubReposURL = "oh no no no"
+	GithubUsername = ""
+	GithubAPIToken = ""
+	GithubReposURL = "https://api.github.com/orgs/vinted/repos"
 
 	DTAPIToken = "oh no no no"
 	DTEndpoint = "oh no no no"
@@ -38,10 +36,10 @@ type collectionResult struct {
 	err         error
 }
 
-func processRepoInternal(wg *sync.WaitGroup, collector collectors.BOMCollector, repoPath string, results chan<- collectionResult) {
+func processRepoInternal(wg *sync.WaitGroup, collector boms.BOMCollector, repoPath string, results chan<- collectionResult) {
 	defer wg.Done()
 	fmt.Printf("attempting to generate bom entries with %s for %s\n", collector, repoPath)
-	bom, err := collector.CollectBOM(repoPath)
+	bom, err := boms.Collect(collector, repoPath)
 	if err != nil {
 		fmt.Println(err)
 		results <- collectionResult{err: err}
@@ -58,7 +56,7 @@ func processRepoInternal(wg *sync.WaitGroup, collector collectors.BOMCollector, 
 }
 
 func processRepoPath(repoPath string) error {
-	availableCollectors := [...]collectors.BOMCollector{collectors.NewJVMCollector()}
+	availableCollectors := [...]boms.BOMCollector{boms.NewGolangCollector()}
 
 	var wg sync.WaitGroup
 	wg.Add(len(availableCollectors))
@@ -84,13 +82,15 @@ func processRepoPath(repoPath string) error {
 	if err != nil {
 		return fmt.Errorf("can't convert BOM for %s: %w", repoPath, err)
 	}
-
-	fmt.Printf("uploading %s SBOM to DT\n", repoPath)
-	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repoPath, bomString)
-	if _, err := requests.UploadBOM(reqConfig); err != nil {
-		return fmt.Errorf("can't upload %s BOM to DT: %w", repoPath, err)
-	}
+	fmt.Println(bomString)
+	fmt.Println("bom generated successfully")
 	return nil
+	//fmt.Printf("uploading %s SBOM to DT\n", repoPath)
+	//reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repoPath, bomString)
+	//if _, err := requests.UploadBOM(reqConfig); err != nil {
+	//	return fmt.Errorf("can't upload %s BOM to DT: %w", repoPath, err)
+	//}
+	//return nil
 }
 
 func processRepo(repository vcs.Repository) error {
@@ -98,13 +98,7 @@ func processRepo(repository vcs.Repository) error {
 		return nil
 	}
 
-	var isRepoSupported = false
-	for _, l := range []string{"java", "kotlin", "groovy", "scala"} {
-		if strings.ToLower(repository.Language) == l {
-			isRepoSupported = true
-		}
-	}
-	if !isRepoSupported {
+	if repository.Language != "Go" {
 		return nil
 	}
 
@@ -115,42 +109,41 @@ func processRepo(repository vcs.Repository) error {
 		return fmt.Errorf("can't clone %s: %w", repository.Name, err)
 	}
 
-	collector := collectors.NewJVMCollector()
+	collector := boms.NewGolangCollector()
 
 	fmt.Printf("attempting to generate bom entries with %s for %s\n", collector, repository.FsPath())
-	bom, err := collector.CollectBOM(repository.FsPath())
+	bom, err := boms.Collect(collector, repository.FsPath())
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
-	bomString, err := boms.CdxToBOMString(boms.JSON, bom)
-	if err != nil {
-		return fmt.Errorf("can't convert BOM for %s: %w", repository.Name, err)
-	}
-
-	fmt.Printf("uploading %s SBOM to DT\n", repository.Name)
-	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repository.Name, bomString)
-	if _, err := requests.UploadBOM(reqConfig); err != nil {
-		return fmt.Errorf("can't upload %s BOM to DT: %w", repository.Name, err)
-	}
-	fmt.Println("Removing " + repository.FsPath())
-	_ = os.RemoveAll(repository.FsPath())
+	bomsFound := len(*bom.Components)
+	fmt.Printf("%d BOMs collected for %s\n", bomsFound, repository.Name)
 	return nil
+
+	//fmt.Printf("uploading %s SBOM to DT\n", repository.Name)
+	//reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repository.Name, bomString)
+	//if _, err := requests.UploadBOM(reqConfig); err != nil {
+	//	return fmt.Errorf("can't upload %s BOM to DT: %w", repository.Name, err)
+	//}
+	//fmt.Println("Removing " + repository.FsPath())
+	//_ = os.RemoveAll(repository.FsPath())
+	//return nil
 }
 
 func main() {
 	cleanup()
 	setup()
 	defer cleanup()
-	//
-	//if err := processRepoPath("/tmp/checkouts/android"); err != nil {
+
+	//if err := processRepoPath("/tmp/checkouts/vitess"); err != nil {
 	//	panic(err)
 	//}
 	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
 	err := requests.WalkRepositories(reqConfig, func(repos []vcs.Repository) {
 		for _, r := range repos {
 			if err := processRepo(r); err != nil {
-				fmt.Printf("Can't to collect BOMs for repository at %s: %s", r.FsPath(), err)
+				fmt.Printf("can't collect BOMs for repository at %s: %s", r.FsPath(), err)
 			}
 		}
 	})

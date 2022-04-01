@@ -102,7 +102,7 @@ func TestGetRepositories(t *testing.T) {
 		hitCounter := 0
 		goodResponseServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			hitCounter++
-			content, _ := ioutil.ReadFile("test-data/sample-repos.json")
+			content, _ := ioutil.ReadFile("testdata/sample-repos.json")
 			res.WriteHeader(http.StatusOK)
 			_, _ = res.Write(content)
 		}))
@@ -171,11 +171,11 @@ func TestWalkRepositories(t *testing.T) {
 			var content []byte
 			switch req.FormValue("page") {
 			case "1":
-				content, _ = ioutil.ReadFile("test-data/repos-page-1.json")
+				content, _ = ioutil.ReadFile("testdata/repos-page-1.json")
 			case "2":
-				content, _ = ioutil.ReadFile("test-data/repos-page-2.json")
+				content, _ = ioutil.ReadFile("testdata/repos-page-2.json")
 			case "3":
-				content, _ = ioutil.ReadFile("test-data/repos-page-3.json")
+				content, _ = ioutil.ReadFile("testdata/repos-page-3.json")
 			default:
 				content = []byte("[]") //empty response
 			}

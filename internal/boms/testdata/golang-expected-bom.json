@@ -1,0 +1,208 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:5b6c23fe-fa60-4a8d-bace-3a8df1a24e7c",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-04-04T16:42:34+03:00",
+    "tools": [
+      {
+        "vendor": "CycloneDX",
+        "name": "cyclonedx-gomod",
+        "version": "v0.0.0-unset",
+        "hashes": [
+          {
+            "alg": "MD5",
+            "content": "2549848999cd3ea96ffb114aa4b69991"
+          },
+          {
+            "alg": "SHA-1",
+            "content": "3ced39b3595bf111668bbefe1ab0d611358e7b7f"
+          },
+          {
+            "alg": "SHA-256",
+            "content": "e2077f301a6ceb033ecbbc554063f28e101ec54e8cbb619c32c8aa219480f41a"
+          },
+          {
+            "alg": "SHA-384",
+            "content": "587a29fb32fee5d2f738d2f2bfd464403c5969a6e82534a8f30dc30b136cf361705f33547f0a4ffe231405d3d82240b1"
+          },
+          {
+            "alg": "SHA-512",
+            "content": "7bee59e6db3cbd59c0c3045fa78b4dbca625e77c296966dd106eef81107e6b997c9de6eb3f80c0d5817167fdd13a1ae3cb3e7b114ed381b3dd3a9b8b8071b884"
+          }
+        ],
+        "externalReferences": [
+          {
+            "url": "https://github.com/CycloneDX/cyclonedx-gomod",
+            "type": "vcs"
+          },
+          {
+            "url": "https://cyclonedx.org",
+            "type": "website"
+          }
+        ]
+      }
+    ],
+    "component": {
+      "bom-ref": "pkg:golang/github.com/vinted/luks-tools@v0.0.0-20220321123000-681c4e8bbbd8?type=module#cmd/dmtune",
+      "type": "application",
+      "name": "github.com/vinted/luks-tools",
+      "version": "v0.0.0-20220321123000-681c4e8bbbd8",
+      "purl": "pkg:golang/github.com/vinted/luks-tools@v0.0.0-20220321123000-681c4e8bbbd8?type=module#cmd/dmtune",
+      "externalReferences": [
+        {
+          "url": "https://github.com/vinted/luks-tools",
+          "type": "vcs"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:gomod:build:env:CGO_ENABLED",
+          "value": "1"
+        },
+        {
+          "name": "cdx:gomod:build:env:GOARCH",
+          "value": "arm64"
+        },
+        {
+          "name": "cdx:gomod:build:env:GOOS",
+          "value": "darwin"
+        },
+        {
+          "name": "cdx:gomod:build:env:GOVERSION",
+          "value": "go1.18"
+        }
+      ],
+      "evidence": {
+        "licenses": [
+          {
+            "license": {
+              "id": "MIT"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:golang/github.com/sirupsen/logrus@v1.8.1?type=module",
+      "type": "library",
+      "name": "github.com/sirupsen/logrus",
+      "version": "v1.8.1",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7492ae1e0aa4d4d35096aa00e814e533559ff43387dcd063432bb487df806591"
+        }
+      ],
+      "cpe": "cpe:2.3:a:github.com/sirupsen/logrus:github.com/sirupsen/logrus:v1.8.1:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/github.com/sirupsen/logrus@v1.8.1?type=module",
+      "externalReferences": [
+        {
+          "url": "https://github.com/sirupsen/logrus",
+          "type": "vcs"
+        }
+      ],
+      "evidence": {
+        "licenses": [
+          {
+            "license": {
+              "id": "MIT"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "bom-ref": "pkg:golang/golang.org/x/sys@v0.0.0-20211025201205-69cdffdb9359?type=module",
+      "type": "library",
+      "name": "golang.org/x/sys",
+      "version": "v0.0.0-20211025201205-69cdffdb9359",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d81e69d8be487c6883efe6fd04ea11302e8380e6c055957e16ca74e7436a5e29"
+        }
+      ],
+      "cpe": "cpe:2.3:a:golang.org/x/sys:golang.org/x/sys:v0.0.0-20211025201205-69cdffdb9359:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/golang.org/x/sys@v0.0.0-20211025201205-69cdffdb9359?type=module",
+      "evidence": {
+        "licenses": [
+          {
+            "license": {
+              "id": "BSD-3-Clause"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "bom-ref": "pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module",
+      "type": "library",
+      "name": "gopkg.in/yaml.v2",
+      "version": "v2.4.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0fcc60c04098ec262fc7e6369f8b01cfddc99fd251bf1762cb2a3c0937ee29a6"
+        }
+      ],
+      "cpe": "cpe:2.3:a:gopkg.in/yaml.v2:gopkg.in/yaml.v2:v2.4.0:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module",
+      "externalReferences": [
+        {
+          "url": "https://github.com/go-yaml/yaml",
+          "type": "vcs"
+        }
+      ],
+      "evidence": {
+        "licenses": [
+          {
+            "license": {
+              "id": "Apache-2.0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "bom-ref": "pkg:golang/std@go1.18?type=module",
+      "type": "library",
+      "name": "std",
+      "version": "go1.18",
+      "scope": "required",
+      "cpe": "cpe:2.3:a:std:std:go1.18:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/std@go1.18?type=module"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:golang/github.com/vinted/luks-tools@v0.0.0-20220321123000-681c4e8bbbd8?type=module#cmd/dmtune",
+      "dependsOn": [
+        "pkg:golang/github.com/sirupsen/logrus@v1.8.1?type=module",
+        "pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module",
+        "pkg:golang/std@go1.18?type=module"
+      ]
+    },
+    {
+      "ref": "pkg:golang/github.com/sirupsen/logrus@v1.8.1?type=module",
+      "dependsOn": [
+        "pkg:golang/golang.org/x/sys@v0.0.0-20211025201205-69cdffdb9359?type=module"
+      ]
+    },
+    {
+      "ref": "pkg:golang/golang.org/x/sys@v0.0.0-20211025201205-69cdffdb9359?type=module"
+    },
+    {
+      "ref": "pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module"
+    },
+    {
+      "ref": "pkg:golang/std@go1.18?type=module"
+    }
+  ]
+}

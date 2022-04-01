@@ -1,0 +1,91 @@
+package boms
+
+import (
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/stretchr/testify/assert"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func TestRubyBomCollection(t *testing.T) {
+
+	assertCollectedBOM := func(got *cdx.BOM) {
+		actualBOM, err := CdxToBOMString(JSON, got)
+		assert.NoError(t, err)
+		assertGeneratedBOM(t, actualBOM, "testdata/bundler-expected-bom.json")
+	}
+
+	setup := func(lockfile string) (*mockCLIExecutor, string) {
+		tempDir := createTempDir(t)
+		if err := os.WriteFile(filepath.Join(tempDir, lockfile), nil, 0644); err != nil {
+			t.Fatalf(unableToCreateTempFileErr, err)
+		}
+		expectedOutput, err := ioutil.ReadFile("testdata/bundler-expected-bom.json")
+		if err != nil {
+			t.Fatalf("unable to read a test file %s", err)
+		}
+		executor := new(mockCLIExecutor)
+		executor.On("executeCDXGen", tempDir, rubyCDXGenCmd).Return(string(expectedOutput), nil)
+		return executor, tempDir
+	}
+
+	t.Run("Collect BOM from Gemfile.lock correctly", func(t *testing.T) {
+		executor, testRepo := setup("Gemfile.lock")
+		defer os.RemoveAll(testRepo)
+
+		got, err := Collect(Ruby{executor: executor}, testRepo)
+
+		assert.NoError(t, err)
+		assertCollectedBOM(got)
+
+		executor.AssertExpectations(t)
+		executor.AssertNumberOfCalls(t, "executeCDXGen", 1)
+	})
+
+	t.Run("shellOut Gemfile to Gemfile.lock & Collect BOMs correctly", func(t *testing.T) {
+		executor, testRepo := setup("Gemfile")
+		defer os.RemoveAll(testRepo)
+
+		executor.On("shellOut", testRepo, rubyBootstrapCmd).Return("", nil)
+
+		got, err := Collect(Ruby{executor: executor}, testRepo)
+
+		assert.NoError(t, err)
+		assertCollectedBOM(got)
+
+		executor.AssertExpectations(t)
+		executor.AssertNumberOfCalls(t, "shellOut", 1)
+		executor.AssertNumberOfCalls(t, "executeCDXGen", 1)
+	})
+
+	t.Run("return errUnsupportedRepo when no BOMs were collected", func(t *testing.T) {
+		tempDir := createTempDir(t)
+		defer os.RemoveAll(tempDir)
+
+		if err := os.WriteFile(filepath.Join(tempDir, "Gemfile.lock"), nil, 0644); err != nil {
+			t.Fatalf(unableToCreateTempFileErr, err)
+		}
+
+		executor := new(mockCLIExecutor)
+		executor.On("executeCDXGen", tempDir, rubyCDXGenCmd).Return("", io.EOF)
+		got, err := Collect(Ruby{executor: executor}, tempDir)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, errUnsupportedRepo)
+		executor.AssertNumberOfCalls(t, "executeCDXGen", 1)
+	})
+}
+
+func TestBundlerMatchPredicate(t *testing.T) {
+	bundler := Ruby{}
+	assert.True(t, bundler.matchPredicate(false, "Gemfile"))
+	assert.True(t, bundler.matchPredicate(false, "Gemfile.lock"))
+	assert.False(t, bundler.matchPredicate(false, "/etc/passwd"))
+	assert.False(t, bundler.matchPredicate(true, "Gemfile"))
+}
+
+func TestBundlerString(t *testing.T) {
+	assert.Equal(t, "Ruby-Bundler", Ruby{}.String())
+}
