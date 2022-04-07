@@ -2,16 +2,14 @@ package boms
 
 import (
 	"fmt"
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	fp "path/filepath"
 )
 
+//Supported files by this collector
 const (
-	//Supported lockfiles
 	gemfile     = "Gemfile"
 	gemfileLock = "Gemfile.lock"
-	//BOM gen & bootstrapping commands
-	rubyCDXGenCmd    = "export FETCH_LICENSE=true && cdxgen --type ruby"
-	rubyBootstrapCmd = "bundler install || bundler _1.9_ install || bundler _1.17.3_ install"
 )
 
 type Ruby struct{ executor CLIExecutor }
@@ -35,13 +33,9 @@ func (r Ruby) String() string {
 }
 
 func (r Ruby) bootstrap(bomRoots []string) []string {
+	const bootstrapCmd = "bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install"
 	var bootstrappedRoots []string
-	var dirsToFiles = make(map[string][]string)
-	for _, r := range bomRoots {
-		dir := fp.Dir(r)
-		dirsToFiles[dir] = append(dirsToFiles[dir], fp.Base(r))
-	}
-	for dir, files := range dirsToFiles {
+	for dir, files := range dirsToFiles(bomRoots) {
 		shouldBootstrap := len(files) == 1 && files[0] == gemfile
 		if shouldBootstrap {
 			/*
@@ -50,7 +44,7 @@ func (r Ruby) bootstrap(bomRoots []string) []string {
 				when working with old ruby projects.
 			*/
 
-			if _, err := r.executor.shellOut(dir, rubyBootstrapCmd); err != nil {
+			if _, err := r.executor.shellOut(dir, bootstrapCmd); err != nil {
 				fmt.Println(fmt.Errorf(bootstrapFailedErr, dir, err))
 				continue
 			}
@@ -60,6 +54,6 @@ func (r Ruby) bootstrap(bomRoots []string) []string {
 	return bootstrappedRoots
 }
 
-func (r Ruby) generateBOM(bomRoot string) (string, error) {
-	return r.executor.executeCDXGen(bomRoot, rubyCDXGenCmd)
+func (r Ruby) generateBOM(bomRoot string) (*cdx.BOM, error) {
+	return r.executor.bomFromCdxgen(bomRoot, ruby)
 }

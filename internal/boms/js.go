@@ -2,15 +2,10 @@ package boms
 
 import (
 	"fmt"
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	"os"
 	fp "path/filepath"
 	"strings"
-)
-
-//Bootstrap and BOM generation commands
-const (
-	jsBootstrapCmd = "pnpm install || npm install || yarn install"
-	jsCDXGenCmd    = "export FETCH_LICENSE=true && cdxgen --type javascript"
 )
 
 var supportedFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
@@ -23,7 +18,6 @@ func NewJSCollector() JS {
 	return JS{executor: defaultCLIExecutor{}}
 }
 
-//todo document this
 func (j JS) matchPredicate(isDir bool, filepath string) bool {
 	for _, p := range strings.Split(fp.Dir(filepath), string(os.PathSeparator)) {
 		if p == "node_modules" { //Ignore files in node_modules directory
@@ -35,7 +29,10 @@ func (j JS) matchPredicate(isDir bool, filepath string) bool {
 			return true
 		}
 	}
-	//top level node_modules as a special case. In rare cases there will be no lockfiles but node_modules dir will be present
+	/*
+		Top level node_modules as a special case. In rare cases there will be no lockfiles
+		but node_modules dir will be present
+	*/
 	return fp.Base(filepath) == "node_modules" && isDir
 }
 
@@ -43,11 +40,12 @@ func (j JS) String() string {
 	return "JS/TS-JS"
 }
 
-func (j JS) generateBOM(bomRoot string) (string, error) {
-	return j.executor.executeCDXGen(bomRoot, jsCDXGenCmd)
+func (j JS) generateBOM(bomRoot string) (*cdx.BOM, error) {
+	return j.executor.bomFromCdxgen(bomRoot, javascript)
 }
 
 func (j JS) bootstrap(bomRoots []string) []string {
+	const bootstrapCmd = "pnpm install || npm install || yarn install"
 	var bootstrappedRoots []string
 	var dirsToFiles = make(map[string][]string)
 	for _, r := range bomRoots {
@@ -57,7 +55,7 @@ func (j JS) bootstrap(bomRoots []string) []string {
 	for dir, files := range dirsToFiles {
 		shouldBootstrap := len(files) == 1 && files[0] == "package.json"
 		if shouldBootstrap {
-			if _, err := j.executor.shellOut(dir, jsBootstrapCmd); err != nil {
+			if _, err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
 				fmt.Println(fmt.Errorf(bootstrapFailedErr, dir, err))
 				continue
 			}

@@ -7,7 +7,6 @@ import (
 	"github.com/vinted/software-assets/internal/vcs"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 //Parameters used for making HTTP requests to GitHub and Dependency track
@@ -17,7 +16,7 @@ const (
 	GithubReposURL = "https://api.github.com/orgs/vinted/repos"
 
 	DTAPIToken = "oh no no no"
-	DTEndpoint = "oh no no no"
+	DTEndpoint = "http://192.168.10.10:8081/api/v1/bom"
 )
 
 func cleanup() {
@@ -29,122 +28,59 @@ func setup() {
 	if err != nil {
 		panic("Unable to set GEM_HOME env variable")
 	}
+	err = os.Setenv("PATH", os.Getenv("PATH")+":"+"/usr/local/bin")
+	if err != nil {
+		panic("Unable to append /usr/local/bin to PATH")
+	}
 }
 
-type collectionResult struct {
-	bomContents string //in json
-	err         error
-}
-
-func processRepoInternal(wg *sync.WaitGroup, collector boms.BOMCollector, repoPath string, results chan<- collectionResult) {
-	defer wg.Done()
-	fmt.Printf("attempting to generate bom entries with %s for %s\n", collector, repoPath)
-	bom, err := boms.Collect(collector, repoPath)
+func processRepository(projectName, repoPath string) error {
+	//Proceed
+	availableCollectors := []boms.BOMCollector{
+		boms.NewGolangCollector(), boms.NewJSCollector(), boms.NewJVMCollector(), boms.NewRubyCollector(),
+	}
+	bom, err := boms.CollectFromRepo(repoPath, availableCollectors...)
 	if err != nil {
-		fmt.Println(err)
-		results <- collectionResult{err: err}
-		return
+		return fmt.Errorf("BOM collection failed for %s - %w", projectName, err)
 	}
-	bomString, err := boms.CdxToBOMString(boms.JSON, bom)
-	if err != nil {
-		fmt.Println(err)
-		results <- collectionResult{err: err}
-		return
-	}
-	fmt.Printf("BOM collection succeded for %s\n", collector)
-	results <- collectionResult{bomContents: bomString, err: nil}
-}
 
-func processRepoPath(repoPath string) error {
-	availableCollectors := [...]boms.BOMCollector{boms.NewGolangCollector()}
-
-	var wg sync.WaitGroup
-	wg.Add(len(availableCollectors))
-
-	results := make(chan collectionResult, len(availableCollectors))
-	for _, c := range availableCollectors {
-		go processRepoInternal(&wg, c, repoPath, results)
-	}
-	wg.Wait()
-	close(results)
-
-	var collectedBOMs []string
-	for r := range results {
-		if r.err == nil {
-			collectedBOMs = append(collectedBOMs, r.bomContents)
-		}
-	}
-	finalBOM, err := boms.Merge(boms.JSON, collectedBOMs...)
-	if err != nil {
-		return fmt.Errorf("can't merge BOM for %s: %w", repoPath, err)
-	}
-	bomString, err := boms.CdxToBOMString(boms.JSON, finalBOM)
+	bomString, err := boms.CdxToBOMString(boms.JSON, bom) //TODO Make this agnostic
 	if err != nil {
 		return fmt.Errorf("can't convert BOM for %s: %w", repoPath, err)
 	}
-	fmt.Println(bomString)
-	fmt.Println("bom generated successfully")
+	fmt.Printf("uploading %s SBOM to DT\n", repoPath)
+	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, projectName, bomString)
+	if _, err := requests.UploadBOM(reqConfig); err != nil {
+		return fmt.Errorf("can't upload %s BOM to DT: %w", repoPath, err)
+	}
 	return nil
-	//fmt.Printf("uploading %s SBOM to DT\n", repoPath)
-	//reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repoPath, bomString)
-	//if _, err := requests.UploadBOM(reqConfig); err != nil {
-	//	return fmt.Errorf("can't upload %s BOM to DT: %w", repoPath, err)
-	//}
-	//return nil
-}
-
-func processRepo(repository vcs.Repository) error {
-	if repository.Archived {
-		return nil
-	}
-
-	if repository.Language != "Go" {
-		return nil
-	}
-
-	fmt.Println("Processing: " + repository.Name)
-
-	err := repository.Clone(GithubUsername, GithubAPIToken)
-	if err != nil {
-		return fmt.Errorf("can't clone %s: %w", repository.Name, err)
-	}
-
-	collector := boms.NewGolangCollector()
-
-	fmt.Printf("attempting to generate bom entries with %s for %s\n", collector, repository.FsPath())
-	bom, err := boms.Collect(collector, repository.FsPath())
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	bomsFound := len(*bom.Components)
-	fmt.Printf("%d BOMs collected for %s\n", bomsFound, repository.Name)
-	return nil
-
-	//fmt.Printf("uploading %s SBOM to DT\n", repository.Name)
-	//reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repository.Name, bomString)
-	//if _, err := requests.UploadBOM(reqConfig); err != nil {
-	//	return fmt.Errorf("can't upload %s BOM to DT: %w", repository.Name, err)
-	//}
-	//fmt.Println("Removing " + repository.FsPath())
-	//_ = os.RemoveAll(repository.FsPath())
-	//return nil
 }
 
 func main() {
+	//setup()
+	//if err := processRepository("vitess", "/tmp/checkouts/hubot-xmpp"); err != nil {
+	//	panic(err)
+	//}
+	//return
 	cleanup()
 	setup()
 	defer cleanup()
-
-	//if err := processRepoPath("/tmp/checkouts/vitess"); err != nil {
-	//	panic(err)
-	//}
 	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
 	err := requests.WalkRepositories(reqConfig, func(repos []vcs.Repository) {
 		for _, r := range repos {
-			if err := processRepo(r); err != nil {
-				fmt.Printf("can't collect BOMs for repository at %s: %s", r.FsPath(), err)
+			if r.Archived {
+				continue
 			}
+			fmt.Printf("cloning %s\n", r.Name)
+			err := r.Clone(GithubUsername, GithubAPIToken)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "can't clone %s: %s\n", r.Name, err)
+				continue
+			}
+			if err := processRepository(r.Name, r.FsPath()); err != nil {
+				fmt.Printf("processing repository at %s failed: %s\n", r.FsPath(), err)
+			}
+			_ = os.RemoveAll(r.FsPath())
 		}
 	})
 	if err != nil {

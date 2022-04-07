@@ -3,89 +3,49 @@ package boms
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
-func TestRubyBomCollection(t *testing.T) {
-
-	assertCollectedBOM := func(got *cdx.BOM) {
-		actualBOM, err := CdxToBOMString(JSON, got)
-		assert.NoError(t, err)
-		assertGeneratedBOM(t, actualBOM, "testdata/bundler-expected-bom.json")
-	}
-
-	setup := func(lockfile string) (*mockCLIExecutor, string) {
-		tempDir := createTempDir(t)
-		if err := os.WriteFile(filepath.Join(tempDir, lockfile), nil, 0644); err != nil {
-			t.Fatalf(unableToCreateTempFileErr, err)
-		}
-		expectedOutput, err := ioutil.ReadFile("testdata/bundler-expected-bom.json")
-		if err != nil {
-			t.Fatalf("unable to read a test file %s", err)
-		}
+func TestRubyCollector(t *testing.T) {
+	t.Run("bootstrap BOM roots correctly", func(t *testing.T) {
 		executor := new(mockCLIExecutor)
-		executor.On("executeCDXGen", tempDir, rubyCDXGenCmd).Return(string(expectedOutput), nil)
-		return executor, tempDir
-	}
+		executor.On("shellOut",
+			"/tmp/some-random-dir/inner-dir/deepest-dir",
+			"bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install").Return("👌", nil)
 
-	t.Run("Collect BOM from Gemfile.lock correctly", func(t *testing.T) {
-		executor, testRepo := setup("Gemfile.lock")
-		defer os.RemoveAll(testRepo)
-
-		got, err := Collect(Ruby{executor: executor}, testRepo)
-
-		assert.NoError(t, err)
-		assertCollectedBOM(got)
-
-		executor.AssertExpectations(t)
-		executor.AssertNumberOfCalls(t, "executeCDXGen", 1)
-	})
-
-	t.Run("shellOut Gemfile to Gemfile.lock & Collect BOMs correctly", func(t *testing.T) {
-		executor, testRepo := setup("Gemfile")
-		defer os.RemoveAll(testRepo)
-
-		executor.On("shellOut", testRepo, rubyBootstrapCmd).Return("", nil)
-
-		got, err := Collect(Ruby{executor: executor}, testRepo)
-
-		assert.NoError(t, err)
-		assertCollectedBOM(got)
-
-		executor.AssertExpectations(t)
-		executor.AssertNumberOfCalls(t, "shellOut", 1)
-		executor.AssertNumberOfCalls(t, "executeCDXGen", 1)
-	})
-
-	t.Run("return errUnsupportedRepo when no BOMs were collected", func(t *testing.T) {
-		tempDir := createTempDir(t)
-		defer os.RemoveAll(tempDir)
-
-		if err := os.WriteFile(filepath.Join(tempDir, "Gemfile.lock"), nil, 0644); err != nil {
-			t.Fatalf(unableToCreateTempFileErr, err)
+		bomRoots := []string{
+			"/tmp/some-random-dir/Gemfile",
+			"/tmp/some-random-dir/Gemfile.lock",
+			"/tmp/some-random-dir/inner-dir/Gemfile.lock",
+			"/tmp/some-random-dir/inner-dir/deepest-dir/Gemfile",
 		}
 
-		executor := new(mockCLIExecutor)
-		executor.On("executeCDXGen", tempDir, rubyCDXGenCmd).Return("", io.EOF)
-		got, err := Collect(Ruby{executor: executor}, tempDir)
-		assert.Nil(t, got)
-		assert.ErrorIs(t, err, errUnsupportedRepo)
-		executor.AssertNumberOfCalls(t, "executeCDXGen", 1)
+		got := Ruby{executor: executor}.bootstrap(bomRoots)
+		executor.AssertExpectations(t)
+		assert.ElementsMatch(t, []string{
+			"/tmp/some-random-dir",
+			"/tmp/some-random-dir/inner-dir",
+			"/tmp/some-random-dir/inner-dir/deepest-dir",
+		}, got)
 	})
-}
 
-func TestBundlerMatchPredicate(t *testing.T) {
-	bundler := Ruby{}
-	assert.True(t, bundler.matchPredicate(false, "Gemfile"))
-	assert.True(t, bundler.matchPredicate(false, "Gemfile.lock"))
-	assert.False(t, bundler.matchPredicate(false, "/etc/passwd"))
-	assert.False(t, bundler.matchPredicate(true, "Gemfile"))
-}
+	t.Run("generate BOM correctly", func(t *testing.T) {
+		const bomRoot = "/tmp/some-random-dir"
+		executor := new(mockCLIExecutor)
+		executor.On("bomFromCdxgen", bomRoot, ruby).Return(new(cdx.BOM), nil)
+		_, _ = Ruby{executor: executor}.generateBOM(bomRoot)
+		executor.AssertExpectations(t)
+	})
 
-func TestBundlerString(t *testing.T) {
-	assert.Equal(t, "Ruby-Bundler", Ruby{}.String())
+	t.Run("match correct package files", func(t *testing.T) {
+		rubyCollector := Ruby{}
+		assert.True(t, rubyCollector.matchPredicate(false, "Gemfile"))
+		assert.True(t, rubyCollector.matchPredicate(false, "Gemfile.lock"))
+		assert.False(t, rubyCollector.matchPredicate(false, "/etc/passwd"))
+		assert.False(t, rubyCollector.matchPredicate(true, "Gemfile"))
+	})
+
+	t.Run("implement Stringer correctly", func(t *testing.T) {
+		assert.Equal(t, "Ruby-Bundler", Ruby{}.String())
+	})
 }
