@@ -8,46 +8,77 @@ are able to generate SBOMs from a give file system path
 import (
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"os"
+	"sync"
 )
 
-type BOMCollectionFailed string
+type language int
 
-func (e BOMCollectionFailed) Error() string {
-	return string(e)
+const (
+	ruby language = iota
+	javascript
+	jvm
+	golang
+)
+
+func (l language) String() string {
+	return [...]string{"ruby", "javascript", "jvm", "golang"}[l]
 }
-
-const errUnsupportedRepo = BOMCollectionFailed("BOM collection failed for every root. Unsupported repository")
 
 type BOMCollector interface {
 	fmt.Stringer
 	matchPredicate(bool, string) bool
 	bootstrap(bomRoots []string) []string
-	generateBOM(bomRoot string) (string, error)
+	generateBOM(bomRoot string) (*cdx.BOM, error)
 }
 
-func Collect(collector BOMCollector, repoPath string) (*cdx.BOM, error) {
+func CollectFromRepo(repoPath string, collectors ...BOMCollector) (*cdx.BOM, error) {
+	var collectedBOMs []*cdx.BOM
+	trivyBOM, err := bomFromTrivy(repoPath) //Quickly hit repo with trivy, see if it can generate BOM
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "trivy failed for: %s - error: %s\n", repoPath, err)
+	} else {
+		collectedBOMs = append(collectedBOMs, trivyBOM)
+	}
+	var wg sync.WaitGroup
+	wg.Add(len(collectors))
+	results := make(chan *cdx.BOM, len(collectors))
+	for _, c := range collectors {
+		go collectFromRepoInternal(&wg, c, repoPath, results)
+	}
+	wg.Wait()
+	close(results)
+	for r := range results {
+		collectedBOMs = append(collectedBOMs, r)
+	}
+	return Merge(collectedBOMs...)
+}
+
+func collectFromRepoInternal(wg *sync.WaitGroup, collector BOMCollector, repoPath string, results chan<- *cdx.BOM) {
+	defer wg.Done()
 	rootsFound, err := repoToRoots(repoPath, collector.matchPredicate)
 	if err != nil {
-		return nil, fmt.Errorf("can't to Collect BOMs for %s with %s: %w", repoPath, collector, err)
+		fmt.Fprintf(os.Stderr, "%s can't convert %s to roots: %s\n", collector, repoPath, err)
+		return
 	}
-	var generatedBOMs []string
+	var generatedBOMs []*cdx.BOM
 	for _, r := range collector.bootstrap(rootsFound) {
 		bom, err := collector.generateBOM(r)
 		if err != nil {
-			fmt.Printf("BOM generation failed: %s\n", err)
+			fmt.Fprintf(os.Stderr, "%s BOM generation failed for %s - %s\n", collector, repoPath, err)
 			continue
 		}
 		generatedBOMs = append(generatedBOMs, bom)
 	}
 	if len(generatedBOMs) == 0 {
-		return nil, errUnsupportedRepo
+		fmt.Fprintf(os.Stderr, "%s has collected no BOMs for %s\n", collector, repoPath)
+		return
 	}
-	mergedBom, err := Merge(JSON, generatedBOMs...)
-	//filter
+	bom, err := Merge(generatedBOMs...)
 	if err != nil {
-		return nil, err
+		fmt.Fprintf(os.Stderr, "can't merge BOMs collected by %s - %s\n", collector, err)
+		return
 	}
-	//todo FilterOutByScope()
-	//todo js/ruby tests became more like tests for this component - extract them!
-	return attachCPEs(mergedBom), nil
+	fmt.Printf("Found %d BOMs for %s has with %s\n", len(*bom.Components), repoPath, collector)
+	results <- bom
 }

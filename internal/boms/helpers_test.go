@@ -1,6 +1,7 @@
 package boms
 
 import (
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io/ioutil"
@@ -13,14 +14,14 @@ const unableToCreateTempDirErr = "unable to create a temp directory for testing:
 
 type mockCLIExecutor struct{ mock.Mock }
 
-func (m *mockCLIExecutor) shellOut(bomRoot string, bootstrapCmd string) (string, error) {
-	args := m.Called(bomRoot, bootstrapCmd)
+func (m *mockCLIExecutor) shellOut(bomRoot string, shellCmd string) (string, error) {
+	args := m.Called(bomRoot, shellCmd)
 	return args.String(0), args.Error(1)
 }
 
-func (m *mockCLIExecutor) executeCDXGen(bomRoot, shellCMD string) (string, error) {
-	args := m.Called(bomRoot, shellCMD)
-	return args.String(0), args.Error(1)
+func (m *mockCLIExecutor) bomFromCdxgen(bomRoot string, language language) (*cdx.BOM, error) {
+	args := m.Called(bomRoot, language)
+	return args.Get(0).(*cdx.BOM), args.Error(1)
 }
 
 func createTempDir(t *testing.T) string {

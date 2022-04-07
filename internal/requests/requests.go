@@ -123,7 +123,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]vcs.Repository, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to construct HTTP request: %w", err)
 		}
-		req.SetBasicAuth(conf.Username, conf.APIToken)
+		//req.SetBasicAuth(conf.Username, conf.APIToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 		resp, err := http.DefaultClient.Do(req)
@@ -179,7 +179,7 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 		payload, err := json.Marshal(map[string]string{
 			"projectName":    conf.ProjectName,
 			"autoCreate":     strconv.FormatBool(conf.AutoCreate),
-			"projectVersion": "spring4shell",
+			"projectVersion": time.Now().Format("2006-01-02 15:04:05"),
 			"bom":            base64.StdEncoding.EncodeToString([]byte(conf.BOMContents)),
 		})
 		//TODO Check what happens when we have multiple-lockfiles project versions, add a data time as a version
