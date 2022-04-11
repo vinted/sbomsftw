@@ -52,7 +52,7 @@ func (e defaultCLIExecutor) bomFromCdxgen(bomRoot string, language language) (*c
 	//Execute cdxgen
 	cmd := exec.Command("bash", "-c", fmt.Sprintf(cdxgenTemplate, language, outputFile))
 	cmd.Dir = bomRoot
-	if cmd.Run() != nil {
+	if err = cmd.Run(); err != nil {
 		return nil, fmt.Errorf("can't Collect BOM for %s: %w", bomRoot, err)
 	}
 
