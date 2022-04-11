@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var supportedFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
+var supportedJSFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
 
 type JS struct {
 	executor CLIExecutor
@@ -24,7 +24,7 @@ func (j JS) matchPredicate(isDir bool, filepath string) bool {
 			return false
 		}
 	}
-	for _, f := range supportedFiles {
+	for _, f := range supportedJSFiles {
 		if fp.Base(filepath) == f {
 			return true
 		}
