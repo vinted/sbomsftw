@@ -20,10 +20,11 @@ const (
 	jvm
 	golang
 	rust
+	python
 )
 
 func (l language) String() string {
-	return [...]string{"ruby", "javascript", "jvm", "golang", "rust"}[l]
+	return [...]string{"ruby", "javascript", "jvm", "golang", "rust", "python"}[l]
 }
 
 type BOMCollector interface {
