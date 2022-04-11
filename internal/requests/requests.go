@@ -123,7 +123,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]vcs.Repository, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to construct HTTP request: %w", err)
 		}
-		//req.SetBasicAuth(conf.Username, conf.APIToken)
+		req.SetBasicAuth(conf.Username, conf.APIToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 		resp, err := http.DefaultClient.Do(req)

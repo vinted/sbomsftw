@@ -37,7 +37,11 @@ func setup() {
 func processRepository(projectName, repoPath string) error {
 	//Proceed
 	availableCollectors := []boms.BOMCollector{
-		boms.NewGolangCollector(), boms.NewJSCollector(), boms.NewJVMCollector(), boms.NewRubyCollector(),
+		boms.NewGolangCollector(),
+		boms.NewJSCollector(),
+		boms.NewJVMCollector(),
+		boms.NewRubyCollector(),
+		boms.NewRustCollector(),
 	}
 	bom, err := boms.CollectFromRepo(repoPath, availableCollectors...)
 	if err != nil {
