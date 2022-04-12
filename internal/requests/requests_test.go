@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vinted/software-assets/internal/requests"
 	"github.com/vinted/software-assets/internal/vcs"
 	"io/ioutil"
@@ -109,7 +110,7 @@ func TestGetRepositories(t *testing.T) {
 		defer goodResponseServer.Close()
 
 		repositories, err := requests.GetRepositories(createGetRepositoriesConfig(goodResponseServer.URL))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, 1, hitCounter)
 
 		want := []vcs.Repository{
@@ -189,7 +190,7 @@ func TestWalkRepositories(t *testing.T) {
 		err := requests.WalkRepositories(reqConf, func(repos []vcs.Repository) {
 			collectedRepos = append(collectedRepos, repos...)
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, 4, hitCounter)
 
 		expectedRepos := []vcs.Repository{
@@ -221,7 +222,7 @@ func TestUploadBOM(t *testing.T) {
 		defer goodResponseServer.Close()
 
 		ok, err := requests.UploadBOM(createUploadBOMConfig(goodResponseServer.URL))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 	})
 
