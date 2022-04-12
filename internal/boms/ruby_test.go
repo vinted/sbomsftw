@@ -8,7 +8,7 @@ import (
 
 func TestRubyCollector(t *testing.T) {
 	t.Run("bootstrap BOM roots correctly", func(t *testing.T) {
-		executor := new(mockCLIExecutor)
+		executor := new(mockBOMBridge)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
 			"bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install").Return("👌", nil)
@@ -31,7 +31,7 @@ func TestRubyCollector(t *testing.T) {
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
-		executor := new(mockCLIExecutor)
+		executor := new(mockBOMBridge)
 		executor.On("bomFromCdxgen", bomRoot, ruby).Return(new(cdx.BOM), nil)
 		_, _ = Ruby{executor: executor}.generateBOM(bomRoot)
 		executor.AssertExpectations(t)

@@ -5,10 +5,10 @@ import (
 	fp "path/filepath"
 )
 
-type Rust struct{ executor CLIExecutor }
+type Rust struct{ executor BOMBridge }
 
 func NewRustCollector() Rust {
-	return Rust{executor: defaultCLIExecutor{}}
+	return Rust{executor: defaultBOMBridge{}}
 }
 
 //matchPredicate implements BOMCollector interface

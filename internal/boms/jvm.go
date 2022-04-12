@@ -6,11 +6,11 @@ import (
 )
 
 type JVM struct {
-	executor CLIExecutor
+	executor BOMBridge
 }
 
 func NewJVMCollector() JVM {
-	return JVM{executor: defaultCLIExecutor{}}
+	return JVM{executor: defaultBOMBridge{}}
 }
 
 //matchPredicate Implements BOMCollector interface

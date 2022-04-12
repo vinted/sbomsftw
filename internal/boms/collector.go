@@ -35,13 +35,20 @@ type BOMCollector interface {
 }
 
 func CollectFromRepo(repoPath string, collectors ...BOMCollector) (*cdx.BOM, error) {
-	var collectedBOMs []*cdx.BOM
 	trivyBOM, err := bomFromTrivy(repoPath) //Quickly hit repo with trivy, see if it can generate BOM
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "trivy failed for: %s - error: %s\n", repoPath, err)
-	} else {
-		collectedBOMs = append(collectedBOMs, trivyBOM)
 	}
+	syftBOM, err := bomFromSyft(repoPath) //Quickly hit repo with syft, see if it can generate BOM
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "syft failed for: %s - error: %s\n", repoPath, err)
+	}
+	baseBOM, err := Merge(syftBOM, trivyBOM)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "can't create base BOM %s\n", err)
+	}
+	var collectedBOMs []*cdx.BOM
+	collectedBOMs = append(collectedBOMs, baseBOM)
 	var wg sync.WaitGroup
 	wg.Add(len(collectors))
 	results := make(chan *cdx.BOM, len(collectors))

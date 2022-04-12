@@ -11,11 +11,11 @@ import (
 var supportedJSFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
 
 type JS struct {
-	executor CLIExecutor
+	executor BOMBridge
 }
 
 func NewJSCollector() JS {
-	return JS{executor: defaultCLIExecutor{}}
+	return JS{executor: defaultBOMBridge{}}
 }
 
 func (j JS) matchPredicate(isDir bool, filepath string) bool {

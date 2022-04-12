@@ -3,6 +3,11 @@ package boms
 import (
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -15,12 +20,49 @@ func (e UnsafeShellOutError) Error() string {
 	return fmt.Sprintf("attempting to shell out with unsafe input: %s", e.cmd)
 }
 
-type CLIExecutor interface {
+type BOMBridge interface {
 	shellOut(bomRoot string, bootstrapCmd string) (string, error)
 	bomFromCdxgen(bomRoot string, language language) (*cdx.BOM, error)
 }
 
-type defaultCLIExecutor struct{}
+type defaultBOMBridge struct{}
+
+//TODO Maybe extract this to repository?
+func bomFromSyft(repositoryPath string) (*cdx.BOM, error) {
+	const bomFormat = "cyclonedxjson"
+	input := source.Input{
+		Location:    repositoryPath,
+		UserInput:   "dir:" + repositoryPath,
+		Scheme:      source.DirectoryScheme,
+		ImageSource: image.UnknownSource,
+		Platform:    "",
+	}
+	src, _, err := source.New(input, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("invalid repository path supplied for syft collection: %w\n", err)
+	}
+	cfg := cataloger.DefaultConfig()
+	cfg.Search.Scope = source.AllLayersScope
+	pkgCatalog, relationships, osRelease, err := syft.CatalogPackages(src, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("syft collection for %s failed: %w\n", repositoryPath, err)
+	}
+
+	sbom := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog:    pkgCatalog,
+			LinuxDistribution: osRelease,
+		},
+		Relationships: relationships,
+		Source:        src.Metadata,
+	}
+	cdxString, err := syft.Encode(sbom, syft.FormatByName(bomFormat))
+	fmt.Println(string(cdxString))
+	if err != nil {
+		return nil, fmt.Errorf("can't decode syft bom to %s: %w\n", bomFormat, err)
+	}
+	return BomStringToCDX(JSON, string(cdxString))
+}
 
 func bomFromTrivy(repositoryPath string) (*cdx.BOM, error) {
 	cmd := fmt.Sprintf("trivy --quiet fs --format cyclonedx %s", repositoryPath)
@@ -36,7 +78,7 @@ func bomFromTrivy(repositoryPath string) (*cdx.BOM, error) {
 	return BomStringToCDX(JSON, string(out))
 }
 
-func (e defaultCLIExecutor) bomFromCdxgen(bomRoot string, language language) (*cdx.BOM, error) {
+func (e defaultBOMBridge) bomFromCdxgen(bomRoot string, language language) (*cdx.BOM, error) {
 	const cdxgenTemplate = "cdxgen --type %s -o %s"
 
 	f, err := ioutil.TempFile("/tmp", "sa-collector-tmp-output-")
@@ -64,7 +106,7 @@ func (e defaultCLIExecutor) bomFromCdxgen(bomRoot string, language language) (*c
 }
 
 //todo add sanitization
-func (e defaultCLIExecutor) shellOut(execDir, shellCmd string) (string, error) {
+func (e defaultBOMBridge) shellOut(execDir, shellCmd string) (string, error) {
 	cmd := exec.Command("bash", "-c", shellCmd)
 	cmd.Dir = execDir
 	out, err := cmd.Output()
