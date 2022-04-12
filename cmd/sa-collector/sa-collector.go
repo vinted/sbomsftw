@@ -60,6 +60,10 @@ func processRepository(projectName, repoPath string) error {
 	return nil
 }
 
+func hitWithSyft() {
+
+}
+
 func main() {
 	//setup()
 	//if err := processRepository("vitess", "/tmp/checkouts/hubot-xmpp"); err != nil {

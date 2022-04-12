@@ -3,6 +3,7 @@ package boms
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -134,7 +135,7 @@ func TestMerge(t *testing.T) {
 		third, _ := BomStringToCDX(XML, thirdBOM)
 
 		got, err := Merge(first, second, third)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		var purlsToLicenses = make(map[string][]cdx.LicenseChoice)
 		for _, component := range *got.Components {
@@ -213,7 +214,7 @@ func TestFilterOptionalDependencies(t *testing.T) {
 
 func TestAttachCPEs(t *testing.T) {
 	bom, err := BomStringToCDX(XML, firstBOM)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var got []string
 	for _, c := range *attachCPEs(bom).Components {
@@ -258,7 +259,7 @@ func TestFindRoots(t *testing.T) {
 
 	t.Run("correct BOM roots are found based on the predicate provided", func(t *testing.T) {
 		bomRoots, err := findRoots(testFS, predicate)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedBOMRoots, bomRoots)
 
 		assert.Equal(t, []string{".", "test-repository", "Packages", "Packages.lock", "ignore.txt", "inner-dir",
@@ -346,12 +347,12 @@ const jsonBOM = `{
 func TestBOMConversions(t *testing.T) {
 	t.Run("convert XML bom to JSON bom correctly", func(t *testing.T) {
 		got, err := ConvertBetweenTypes(XML, JSON, xmlBOM)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, jsonBOM, got)
 	})
 	t.Run("convert JSON bom to XML bom correctly", func(t *testing.T) {
 		got, err := ConvertBetweenTypes(JSON, XML, jsonBOM)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, xmlBOM, got)
 	})
 	t.Run("return an error when converting from unsupported type", func(t *testing.T) {
