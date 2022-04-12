@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-type Golang struct{ executor CLIExecutor }
+type Golang struct{ executor BOMBridge }
 
 func NewGolangCollector() Golang {
-	return Golang{executor: defaultCLIExecutor{}}
+	return Golang{executor: defaultBOMBridge{}}
 }
 
 //matchPredicate implements BOMCollector interface

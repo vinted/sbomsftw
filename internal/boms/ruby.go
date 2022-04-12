@@ -12,10 +12,10 @@ const (
 	gemfileLock = "Gemfile.lock"
 )
 
-type Ruby struct{ executor CLIExecutor }
+type Ruby struct{ executor BOMBridge }
 
 func NewRubyCollector() Ruby {
-	return Ruby{executor: defaultCLIExecutor{}}
+	return Ruby{executor: defaultBOMBridge{}}
 }
 
 //matchPredicate implements BOMCollector interface

@@ -24,7 +24,7 @@ func TestJVMCollector(t *testing.T) {
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
-		executor := new(mockCLIExecutor)
+		executor := new(mockBOMBridge)
 		executor.On("bomFromCdxgen", bomRoot, jvm).Return(new(cdx.BOM), nil)
 		_, _ = JVM{executor: executor}.generateBOM(bomRoot)
 		executor.AssertExpectations(t)

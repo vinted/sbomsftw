@@ -8,7 +8,7 @@ import (
 
 func TestJSCollector(t *testing.T) {
 	t.Run("bootstrap BOM roots correctly", func(t *testing.T) {
-		executor := new(mockCLIExecutor)
+		executor := new(mockBOMBridge)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
 			"pnpm install || npm install || yarn install").Return("👌", nil)
@@ -31,7 +31,7 @@ func TestJSCollector(t *testing.T) {
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
-		executor := new(mockCLIExecutor)
+		executor := new(mockBOMBridge)
 		executor.On("bomFromCdxgen", bomRoot, javascript).Return(new(cdx.BOM), nil)
 		_, _ = JS{executor: executor}.generateBOM(bomRoot)
 		executor.AssertExpectations(t)

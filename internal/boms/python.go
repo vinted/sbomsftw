@@ -7,10 +7,10 @@ import (
 
 var supportedPythonFiles = []string{"setup.py", "requirements.txt", "Pipfile.lock", "poetry.lock"}
 
-type Python struct{ executor CLIExecutor }
+type Python struct{ executor BOMBridge }
 
 func NewPythonCollector() Python {
-	return Python{executor: defaultCLIExecutor{}}
+	return Python{executor: defaultBOMBridge{}}
 }
 
 //matchPredicate implements BOMCollector interface
