@@ -5,11 +5,8 @@ import (
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"io/fs"
-	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -38,140 +35,6 @@ func FilterOutByScope(bom *cdx.BOM, scope cdx.Scope) *cdx.BOM {
 	}
 
 	bom.Components = &requiredComponents
-	return bom
-}
-
-func normalizePURLs(bom *cdx.BOM) *cdx.BOM {
-	if bom.Components == nil || len(*bom.Components) == 0 {
-		return bom
-	}
-	var normalized []cdx.Component
-	re := regexp.MustCompile(`pkg:\w+/%40[-.\w]+/`)
-	for _, c := range *bom.Components {
-		var normalizedPURL = c.PackageURL //TODO Add a test for this
-		if re.MatchString(normalizedPURL) {
-			normalizedPURL = strings.Replace(normalizedPURL, "%40", "", 1)
-		}
-		wrapped, err := url.Parse(normalizedPURL)
-		if err != nil {
-			c.PackageURL = normalizedPURL
-			normalized = append(normalized, c)
-			continue
-		}
-		c.PackageURL = wrapped.Scheme + ":" + wrapped.Opaque
-		normalized = append(normalized, c)
-	}
-	bom.Components = &normalized
-	return bom
-}
-
-func normalizePackageNames(bom *cdx.BOM) *cdx.BOM {
-	if bom.Components == nil || len(*bom.Components) == 0 {
-		return bom
-	}
-	var normalized []cdx.Component
-	for _, c := range *bom.Components {
-		var normalizedName = c.Name
-		if strings.HasPrefix(c.Name, "@") {
-			normalizedName = strings.TrimPrefix(c.Name, "@")
-		}
-		c.Name = normalizedName
-		normalized = append(normalized, c)
-	}
-	bom.Components = &normalized
-	return bom
-
-}
-
-//Merge TODO update docs
-//Merge takes in a slice of raw BOM strings and their types (JSON or XML). Note that every
-//raw bom string inside the slice must be of the same type. I.e. Don't mix JSON and XML strings
-//inside the rawBOMs slice - choose a single type.
-//Merge filters out duplicate BOM components and merges multiple-lockfiles BOMs into a single one.
-//Returned result is a BOM string in JSON format or an error if something went wrong.
-func Merge(boms ...*cdx.BOM) (*cdx.BOM, error) {
-	if len(boms) == 0 {
-		return nil, UnableToMergeBOMsError("can't merge BOMs - empty list of BOMs supplied")
-	}
-	for _, b := range boms {
-		if b == nil {
-			return nil, UnableToMergeBOMsError("can't merge BOMs - BOM list can't contain elements")
-		}
-	}
-
-	//Gather components from every single cdx.BOM instance
-	var allComponents []cdx.Component
-	for _, b := range boms {
-		b = normalizePackageNames(normalizePURLs(b))
-		if b.Components != nil {
-			//TODO Add a test for this case as well
-			allComponents = append(allComponents, *b.Components...)
-		}
-	}
-
-	/*
-		Filter only unique components - equality determined by purl.
-		Also merge in licenses from multiple components into one. This enriches results
-	*/
-	var uniqComponents = make(map[string]cdx.Component)
-	for _, currentComponent := range allComponents {
-		previousComponent, ok := uniqComponents[currentComponent.PackageURL]
-		if !ok {
-			uniqComponents[currentComponent.PackageURL] = currentComponent
-			continue
-		}
-		//If there is licensing info from other SBOMs for the same component - merge those licenses in.
-		licensesWereMissing := previousComponent.Licenses == nil || len(*previousComponent.Licenses) == 0
-		if licensesWereMissing && currentComponent.Licenses != nil {
-			uniqComponents[currentComponent.PackageURL] = currentComponent
-		}
-	}
-
-	//Make the map iteration stable and in alphabetical order
-	keys := make([]string, 0, len(uniqComponents))
-	for k := range uniqComponents {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-	//Reorder unique components
-	finalComponents := make([]cdx.Component, 0, len(keys))
-	for _, k := range keys {
-		finalComponents = append(finalComponents, uniqComponents[k])
-	}
-
-	//Update components of the first element (which is a root project) with all the uniquely merged components
-	finalBOM := *boms[0]
-	finalBOM.Components = &finalComponents
-
-	//TODO Add a merge for dependencies
-	return &finalBOM, nil //Return string representation of updated cdx.BOM instance
-}
-
-func attachCPEs(bom *cdx.BOM) *cdx.BOM {
-
-	cpeFromComponent := func(c cdx.Component) string {
-
-		cpeSanitize := func(s string) string {
-			return strings.Replace(s, ":", "", -1)
-		}
-
-		template := "cpe:2.3:a:%s:%s:%s:*:*:*:*:*:*:*"
-		if c.Group != "" {
-			return fmt.Sprintf(template, cpeSanitize(c.Group), cpeSanitize(c.Name), cpeSanitize(c.Version))
-		}
-		if c.Author != "" {
-			return fmt.Sprintf(template, cpeSanitize(c.Author), cpeSanitize(c.Name), cpeSanitize(c.Version))
-		}
-		return fmt.Sprintf(template, cpeSanitize(c.Name), cpeSanitize(c.Name), cpeSanitize(c.Version))
-	}
-
-	finalComponents := make([]cdx.Component, 0, len(*bom.Components))
-	for _, c := range *bom.Components {
-		c.CPE = cpeFromComponent(c)
-		finalComponents = append(finalComponents, c)
-	}
-	bom.Components = &finalComponents
 	return bom
 }
 

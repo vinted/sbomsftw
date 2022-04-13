@@ -1,0 +1,120 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:938b16ac-d9a0-4620-a7e4-bec83ff26ffb",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-04-12T11:52:58.780288Z",
+    "tools": [
+      {
+        "vendor": "aquasecurity",
+        "name": "trivy",
+        "version": "0.25.3"
+      }
+    ],
+    "component": {
+      "bom-ref": "62488c47-9373-46be-b003-0583e5e3850b",
+      "type": "application",
+      "name": "/tmp/ruby-repos/anonymous_rate_response",
+      "properties": [
+        {
+          "name": "aquasecurity:trivy:SchemaVersion",
+          "value": "2"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:gem/mustermann@1.1.1",
+      "type": "library",
+      "name": "mustermann",
+      "version": "1.1.1",
+      "purl": "pkg:gem/mustermann@1.1.1",
+      "properties": null
+    },
+    {
+      "bom-ref": "pkg:gem/rack@2.2.3",
+      "type": "library",
+      "name": "rack",
+      "version": "2.2.3",
+      "purl": "pkg:gem/rack@2.2.3",
+      "properties": null
+    },
+    {
+      "bom-ref": "pkg:gem/rack-protection@2.1.0",
+      "type": "library",
+      "name": "@rack-protection",
+      "version": "2.1.0",
+      "purl": "pkg:gem/rack-protection@2.1.0",
+      "properties": null
+    },
+    {
+      "bom-ref": "pkg:gem/ruby2_keywords@0.0.5",
+      "type": "library",
+      "name": "@ruby2_keywords",
+      "version": "0.0.5",
+      "purl": "pkg:gem/ruby2_keywords@0.0.5",
+      "properties": null
+    },
+    {
+      "bom-ref": "pkg:gem/sinatra@2.1.0",
+      "type": "library",
+      "name": "sinatra",
+      "version": "2.1.0",
+      "purl": "pkg:gem/sinatra@2.1.0",
+      "properties": null
+    },
+    {
+      "bom-ref": "pkg:gem/tilt@2.0.10",
+      "type": "library",
+      "name": "tilt",
+      "version": "2.0.10",
+      "purl": "pkg:gem/tilt@2.0.10",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-2-Clause",
+            "url": "https://opensource.org/licenses/BSD-2-Clause"
+          }
+        }
+      ],
+      "properties": null
+    },
+    {
+      "bom-ref": "dcbe9b3a-d1ad-4e45-9061-8a123baaf402",
+      "type": "application",
+      "name": "Gemfile.lock",
+      "properties": [
+        {
+          "name": "aquasecurity:trivy:Type",
+          "value": "bundler"
+        },
+        {
+          "name": "aquasecurity:trivy:Class",
+          "value": "lang-pkgs"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "dcbe9b3a-d1ad-4e45-9061-8a123baaf402",
+      "dependsOn": [
+        "pkg:gem/mustermann@1.1.1",
+        "pkg:gem/rack@2.2.3",
+        "pkg:gem/rack-protection@2.1.0",
+        "pkg:gem/ruby2_keywords@0.0.5",
+        "pkg:gem/sinatra@2.1.0",
+        "pkg:gem/tilt@2.0.10"
+      ]
+    },
+    {
+      "ref": "62488c47-9373-46be-b003-0583e5e3850b",
+      "dependsOn": [
+        "dcbe9b3a-d1ad-4e45-9061-8a123baaf402"
+      ]
+    }
+  ],
+  "vulnerabilities": []
+}

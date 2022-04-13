@@ -1,0 +1,206 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:72861be8-8e26-483b-aef2-8f87eef986fb",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-04-12T11:56:11.107Z",
+    "tools": [
+      {
+        "vendor": "AppThreat",
+        "name": "cdxgen",
+        "version": "4.0.8"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Team AppThreat",
+        "email": "cloud@appthreat.com"
+      }
+    ]
+  },
+  "components": [
+    {
+      "group": "",
+      "name": "mustermann",
+      "version": "1.1.1",
+      "description": "A library implementing patterns that behave like regular expressions.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0a21cfe505869cce9ce17998db5260344e78df81ae857c07a62143fd30299531"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/mustermann@1.1.1",
+      "type": "library",
+      "bom-ref": "pkg:gem/mustermann@1.1.1"
+    },
+    {
+      "group": "",
+      "name": "rack",
+      "version": "2.2.3",
+      "description": "Rack provides a minimal, modular and adaptable interface for developing\nweb applications in Ruby. By wrapping HTTP requests and responses in\nthe simplest way possible, it unifies and distills the API for web\nservers, web frameworks, and software in between (the so-called\nmiddleware) into a single method call.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2638e7eb6689a5725c7e16f30cc4aa4e31694dc3ca30d790952526781bd0bb44"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/rack@2.2.3",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/rack/rack/issues"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/rack/rack"
+        }
+      ],
+      "type": "library",
+      "bom-ref": "pkg:gem/rack@2.2.3"
+    },
+    {
+      "group": "",
+      "name": "rack-protection",
+      "version": "2.1.0",
+      "description": "Protect against typical web attacks, works with all Rack apps, including Rails.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "628d6a91340d0fdc0685cbc7e1d52066d8d905ee150b20223e41e4639a81e6c3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/rack-protection@2.1.0",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/sinatra/sinatra/tree/master/rack-protection"
+        }
+      ],
+      "type": "library",
+      "bom-ref": "pkg:gem/rack-protection@2.1.0"
+    },
+    {
+      "group": "",
+      "name": "ruby2_keywords",
+      "version": "0.0.5",
+      "description": "Shim library for Module#ruby2_keywords",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Ruby",
+            "url": "https://opensource.org/licenses/Ruby"
+          }
+        },
+        {
+          "license": {
+            "id": "BSD-2-Clause",
+            "url": "https://opensource.org/licenses/BSD-2-Clause"
+          }
+        }
+      ],
+      "purl": "pkg:gem/ruby2_keywords@0.0.5",
+      "type": "library",
+      "bom-ref": "pkg:gem/ruby2_keywords@0.0.5"
+    },
+    {
+      "group": "",
+      "name": "sinatra",
+      "version": "2.1.0",
+      "description": "Sinatra is a DSL for quickly creating web applications in Ruby with minimal effort.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1e000492e8bd8b1d2c8ac48e39d4b3c78dfadaa56fc3038637e981314f6479f4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/sinatra@2.1.0",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/sinatra/sinatra/issues"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/sinatra/sinatra"
+        }
+      ],
+      "type": "library",
+      "bom-ref": "pkg:gem/sinatra@2.1.0"
+    },
+    {
+      "group": "",
+      "name": "tilt",
+      "version": "2.0.10",
+      "description": "Generic interface to multiple Ruby template engines",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b664f0e9ae2b500cfa00f9c65c34abc6ff1799cf0034a8c0a0412d520fac866"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "purl": "pkg:gem/tilt@2.0.10",
+      "type": "library",
+      "bom-ref": "pkg:gem/tilt@2.0.10"
+    }
+  ],
+  "externalReferences": [
+    {
+      "type": "other",
+      "url": ".",
+      "comment": "Base path"
+    },
+    {
+      "type": "other",
+      "url": "/tmp/ruby-repos/anonymous_rate_response/Gemfile.lock",
+      "comment": "Package file"
+    }
+  ]
+}

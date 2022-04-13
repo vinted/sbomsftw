@@ -57,7 +57,6 @@ func bomFromSyft(repositoryPath string) (*cdx.BOM, error) {
 		Source:        src.Metadata,
 	}
 	cdxString, err := syft.Encode(sbom, syft.FormatByName(bomFormat))
-	fmt.Println(string(cdxString))
 	if err != nil {
 		return nil, fmt.Errorf("can't decode syft bom to %s: %w\n", bomFormat, err)
 	}
