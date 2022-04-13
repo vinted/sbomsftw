@@ -43,7 +43,7 @@ func CollectFromRepo(repoPath string, collectors ...BOMCollector) (*cdx.BOM, err
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "syft failed for: %s - error: %s\n", repoPath, err)
 	}
-	baseBOM, err := Merge(syftBOM, trivyBOM)
+	baseBOM, err := MergeBoms(syftBOM, trivyBOM)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "can't create base BOM %s\n", err)
 	}
@@ -60,7 +60,7 @@ func CollectFromRepo(repoPath string, collectors ...BOMCollector) (*cdx.BOM, err
 	for r := range results {
 		collectedBOMs = append(collectedBOMs, r)
 	}
-	return Merge(collectedBOMs...)
+	return MergeBoms(collectedBOMs...)
 }
 
 func collectFromRepoInternal(wg *sync.WaitGroup, collector BOMCollector, repoPath string, results chan<- *cdx.BOM) {
@@ -83,7 +83,7 @@ func collectFromRepoInternal(wg *sync.WaitGroup, collector BOMCollector, repoPat
 		fmt.Fprintf(os.Stderr, "%s has collected no BOMs for %s\n", collector, repoPath)
 		return
 	}
-	bom, err := Merge(generatedBOMs...)
+	bom, err := MergeBoms(generatedBOMs...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "can't merge BOMs collected by %s - %s\n", collector, err)
 		return
