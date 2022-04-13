@@ -22,17 +22,17 @@ func TestMergeBoms(t *testing.T) {
 		return bom
 	}
 
-	t.Run("return an error when there are no BOMs to merge", func(t *testing.T) {
+	t.Run("return errors when merging nil or empty list boms", func(t *testing.T) {
 		got, err := MergeBoms([]*cdx.BOM{}...)
 		assert.Nil(t, got)
-		assert.ErrorIs(t, err, UnableToMergeBOMsError("can't merge BOMs - empty list of BOMs supplied"))
-	})
-	t.Run("return an error when trying to merge nil boms", func(t *testing.T) {
-		got, err := MergeBoms(nil, nil)
+		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
+
+		got, err = MergeBoms(nil, nil)
 		assert.Nil(t, got)
-		assert.ErrorIs(t, err, UnableToMergeBOMsError("can't merge BOMs - BOM list can't contain elements"))
+		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
 	})
 
+	//TODO Missing tests on name normalizaiton
 	t.Run("merge multiple BOMs correctly", func(t *testing.T) {
 
 		firstBOM := bomFromFile("../../integration/testdata/bom-to-merge-1.json")

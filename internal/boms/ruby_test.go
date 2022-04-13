@@ -40,7 +40,7 @@ func TestRubyCollector(t *testing.T) {
 	t.Run("match correct package files", func(t *testing.T) {
 		rubyCollector := Ruby{}
 		assert.True(t, rubyCollector.matchPredicate(false, "Gemfile"))
-		assert.True(t, rubyCollector.matchPredicate(false, "Gemfile.lock"))
+		assert.True(t, rubyCollector.matchPredicate(false, "/opt/Gemfile.lock"))
 		assert.False(t, rubyCollector.matchPredicate(false, "/etc/passwd"))
 		assert.False(t, rubyCollector.matchPredicate(true, "Gemfile"))
 	})
