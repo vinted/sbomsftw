@@ -15,12 +15,6 @@ const (
 	bootstrapFailedErr = "can't boostrap %s: %w" //Used whenever bundler install fails
 )
 
-type UnableToMergeBOMsError string
-
-func (e UnableToMergeBOMsError) Error() string {
-	return string(e)
-}
-
 func FilterOutByScope(bom *cdx.BOM, scope cdx.Scope) *cdx.BOM {
 	if bom == nil || bom.Components == nil || len(*bom.Components) == 0 {
 		return bom

@@ -31,7 +31,7 @@ func TestGolangCollector(t *testing.T) {
 	})
 	t.Run("match correct package files", func(t *testing.T) {
 		golangCollector := Golang{}
-		for _, f := range []string{"go.mod", "go.sum", "Gopkg.lock"} {
+		for _, f := range []string{"/opt/go.mod", "go.sum", "Gopkg.lock"} {
 			assert.True(t, golangCollector.matchPredicate(false, f))
 		}
 		assert.False(t, golangCollector.matchPredicate(false, "/etc/passwd"))

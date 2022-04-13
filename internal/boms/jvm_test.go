@@ -32,7 +32,7 @@ func TestJVMCollector(t *testing.T) {
 
 	t.Run("match correct package files", func(t *testing.T) {
 		jvmCollector := JVM{}
-		for _, f := range []string{"pom.xml", "build.gradle", "build.gradle.kts", "sbt", "build.sbt"} {
+		for _, f := range []string{"/opt/pom.xml", "/opt/build.gradle", "build.gradle.kts", "sbt", "build.sbt"} {
 			assert.True(t, jvmCollector.matchPredicate(false, f))
 		}
 		assert.False(t, jvmCollector.matchPredicate(false, "p0m.xml"))

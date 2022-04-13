@@ -39,7 +39,7 @@ func TestJSCollector(t *testing.T) {
 
 	t.Run("match correct package files", func(t *testing.T) {
 		jsCollector := JS{}
-		for _, f := range []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"} {
+		for _, f := range []string{"/opt/yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"} {
 			assert.True(t, jsCollector.matchPredicate(false, f))
 		}
 		assert.False(t, jsCollector.matchPredicate(false, "/etc/passwd"))

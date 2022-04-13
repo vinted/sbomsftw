@@ -32,7 +32,7 @@ func TestRustCollector(t *testing.T) {
 	t.Run("match correct package files", func(t *testing.T) {
 		rustCollector := Rust{}
 		assert.True(t, rustCollector.matchPredicate(false, "Cargo.toml"))
-		assert.True(t, rustCollector.matchPredicate(false, "Cargo.lock"))
+		assert.True(t, rustCollector.matchPredicate(false, "/opt/Cargo.lock"))
 
 		assert.False(t, rustCollector.matchPredicate(true, "Cargo.toml"))
 		assert.False(t, rustCollector.matchPredicate(true, "Cargo.lock"))

@@ -42,6 +42,7 @@ func processRepository(projectName, repoPath string) error {
 		boms.NewJVMCollector(),
 		boms.NewRubyCollector(),
 		boms.NewRustCollector(),
+		boms.NewPythonCollector(),
 	}
 	bom, err := boms.CollectFromRepo(repoPath, availableCollectors...)
 	if err != nil {
@@ -61,11 +62,11 @@ func processRepository(projectName, repoPath string) error {
 }
 
 func main() {
-	setup()
-	if err := processRepository("gem_rbs_collection", "/tmp/gem_rbs_collection"); err != nil {
-		panic(err)
-	}
-	return
+	//setup()
+	//if err := processRepository("vmip-boston-housing-trainer", "/tmp/py-repos/ml-pytorch"); err != nil {
+	//	panic(err)
+	//}
+	//return
 	cleanup()
 	setup()
 	defer cleanup()

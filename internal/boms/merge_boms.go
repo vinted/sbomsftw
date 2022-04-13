@@ -1,6 +1,7 @@
 package boms
 
 import (
+	"errors"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
 	"net/url"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"time"
 )
+
+var ErrNoBOMsToMerge = errors.New("merge_boms: can't merge empty list of BOMs")
 
 func normalizePURLs(bom *cdx.BOM) *cdx.BOM {
 	if bom.Components == nil || len(*bom.Components) == 0 {
@@ -150,12 +153,13 @@ func mergeAllByPURL(component *cdx.Component, allComponents []*cdx.Component) *c
 }
 
 func MergeBoms(boms ...*cdx.BOM) (*cdx.BOM, error) {
+	//Validate we are working with legit input
 	if len(boms) == 0 {
-		return nil, UnableToMergeBOMsError("can't merge BOMs - empty list of BOMs supplied")
+		return nil, ErrNoBOMsToMerge
 	}
 	for _, b := range boms {
 		if b == nil {
-			return nil, UnableToMergeBOMsError("can't merge BOMs - BOM list can't contain elements")
+			return nil, ErrNoBOMsToMerge
 		}
 	}
 

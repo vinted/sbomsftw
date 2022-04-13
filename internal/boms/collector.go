@@ -88,6 +88,6 @@ func collectFromRepoInternal(wg *sync.WaitGroup, collector BOMCollector, repoPat
 		fmt.Fprintf(os.Stderr, "can't merge BOMs collected by %s - %s\n", collector, err)
 		return
 	}
-	fmt.Printf("Found %d BOMs for %s has with %s\n", len(*bom.Components), repoPath, collector)
+	fmt.Printf("Found %d BOMs for %s with %s\n", len(*bom.Components), repoPath, collector)
 	results <- bom
 }

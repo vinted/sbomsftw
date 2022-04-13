@@ -24,8 +24,9 @@ func (j JS) matchPredicate(isDir bool, filepath string) bool {
 			return false
 		}
 	}
+	filename := fp.Base(filepath)
 	for _, f := range supportedJSFiles {
-		if fp.Base(filepath) == f {
+		if filename == f {
 			return true
 		}
 	}
@@ -33,7 +34,7 @@ func (j JS) matchPredicate(isDir bool, filepath string) bool {
 		Top level node_modules as a special case. In rare cases there will be no lockfiles
 		but node_modules dir will be present
 	*/
-	return fp.Base(filepath) == "node_modules" && isDir
+	return filename == "node_modules" && isDir
 }
 
 func (j JS) String() string {
@@ -47,12 +48,7 @@ func (j JS) generateBOM(bomRoot string) (*cdx.BOM, error) {
 func (j JS) bootstrap(bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
 	var bootstrappedRoots []string
-	var dirsToFiles = make(map[string][]string)
-	for _, r := range bomRoots {
-		dir := fp.Dir(r)
-		dirsToFiles[dir] = append(dirsToFiles[dir], fp.Base(r))
-	}
-	for dir, files := range dirsToFiles {
+	for dir, files := range dirsToFiles(bomRoots) {
 		shouldBootstrap := len(files) == 1 && files[0] == "package.json"
 		if shouldBootstrap {
 			if _, err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
