@@ -13,6 +13,7 @@ import (
 
 var condaEnvPattern = regexp.MustCompile(`environment.*\.ya?ml`)
 var condaDependencyPattern = regexp.MustCompile(`- .*=\d.*`)
+var condaLooseDependencyPattern = regexp.MustCompile(`^[\w-]*=\d.*$`)
 var supportedPythonFiles = []string{"setup.py", "requirements.txt", "Pipfile.lock", "poetry.lock"}
 
 type Python struct{ executor BOMBridge }
@@ -61,8 +62,13 @@ This is needed because cdxgen doesn't support conda package manager
 func (p Python) conda2Requirements(bomRoots []string) {
 	//Extract dependencies from conda environment.yml files
 	dependenciesFromCondaEnv := func(condaEnv string) (requirements []string) {
-		for _, d := range condaDependencyPattern.FindAllString(condaEnv, -1) {
-			requirements = append(requirements, strings.TrimPrefix(d, "- "))
+		for _, dependency := range condaDependencyPattern.FindAllString(condaEnv, -1) {
+			dependency = strings.TrimPrefix(dependency, "- ")
+			if condaLooseDependencyPattern.MatchString(dependency) && len(strings.Split(dependency, "=")) == 2 {
+				//CDXGen wants all dependencies in requirements.txt to be with double == signs.
+				dependency = strings.Join(strings.Split(dependency, "="), "==")
+			}
+			requirements = append(requirements, dependency)
 		}
 		return requirements
 	}
