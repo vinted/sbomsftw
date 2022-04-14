@@ -1,4 +1,4 @@
-package boms
+package collectors
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-type Golang struct{ executor BOMBridge }
+type Golang struct{ executor ShellExecutor }
 
 func NewGolangCollector() Golang {
-	return Golang{executor: defaultBOMBridge{}}
+	return Golang{executor: DefaultShellExecutor{}}
 }
 
-//matchPredicate implements BOMCollector interface
-func (g Golang) matchPredicate(isDir bool, filepath string) bool {
+//MatchLanguageFiles implements LanguageCollector interface
+func (g Golang) MatchLanguageFiles(isDir bool, filepath string) bool {
 	//Supported files by this collector
 	const (
 		goMod = "go.mod"
@@ -33,16 +33,16 @@ func (g Golang) matchPredicate(isDir bool, filepath string) bool {
 	return filename == goMod || filename == goSum || filename == goPkg
 }
 
-func (g Golang) generateBOM(bomRoot string) (*cdx.BOM, error) {
-	return g.executor.bomFromCdxgen(bomRoot, golang)
+func (g Golang) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+	const language = "golang"
+	return g.executor.bomFromCdxgen(bomRoot, language)
 }
 
-//bootstrap implements BOMCollector interface
-func (g Golang) bootstrap(bomRoots []string) []string {
-	return squashRoots(bomRoots)
+//BootstrapLanguageFiles implements LanguageCollector interface
+func (g Golang) BootstrapLanguageFiles(bomRoots []string) []string {
+	return bomRoots
 }
 
-//String implements BOMCollector interface
 func (g Golang) String() string {
-	return "Golang collector"
+	return "golang collector"
 }

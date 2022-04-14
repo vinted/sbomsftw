@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/vinted/software-assets/internal/boms"
-	"github.com/vinted/software-assets/internal/requests"
-	"github.com/vinted/software-assets/internal/vcs"
+	requests "github.com/vinted/software-assets/internal"
+	"github.com/vinted/software-assets/pkg/bomtools"
+	"github.com/vinted/software-assets/pkg/repository"
 	"os"
 	"path/filepath"
 )
@@ -20,6 +20,7 @@ const (
 )
 
 func cleanup() {
+	// Log this error
 	_ = os.RemoveAll("/tmp/checkouts")
 }
 
@@ -34,32 +35,6 @@ func setup() {
 	}
 }
 
-func processRepository(projectName, repoPath string) error {
-	availableCollectors := []boms.BOMCollector{
-		boms.NewGolangCollector(),
-		boms.NewJSCollector(),
-		boms.NewJVMCollector(),
-		boms.NewRubyCollector(),
-		boms.NewRustCollector(),
-		boms.NewPythonCollector(),
-	}
-	bom, err := boms.CollectFromRepo(repoPath, availableCollectors...)
-	if err != nil {
-		return fmt.Errorf("BOM collection failed for %s - %w", projectName, err)
-	}
-
-	bomString, err := boms.CdxToBOMString(boms.JSON, bom) //TODO Make this agnostic
-	if err != nil {
-		return fmt.Errorf("can't convert BOM for %s: %w", repoPath, err)
-	}
-	fmt.Printf("uploading %s SBOM to DT\n", repoPath)
-	reqConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, projectName, bomString)
-	if _, err := requests.UploadBOM(reqConfig); err != nil {
-		return fmt.Errorf("can't upload %s BOM to DT: %w", repoPath, err)
-	}
-	return nil
-}
-
 func main() {
 	//setup()
 	//if err := processRepository("vmip-boston-housing-trainer", "/tmp/py-repos/ml-pytorch"); err != nil {
@@ -69,22 +44,42 @@ func main() {
 	cleanup()
 	setup()
 	defer cleanup()
+
+	deleteRepository := func(repositoryPath string) {
+		if err := os.RemoveAll(repositoryPath); err != nil {
+			fmt.Fprintf(os.Stderr, "can't remove repository directory: %s\n", err)
+		}
+	}
+
 	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
-	err := requests.WalkRepositories(reqConfig, func(repos []vcs.Repository) {
-		for _, r := range repos {
-			if r.Archived {
-				continue
-			}
-			fmt.Printf("cloning %s\n", r.Name)
-			err := r.Clone(GithubUsername, GithubAPIToken)
+	err := requests.WalkRepositories(reqConfig, func(repositoryURLs []string) {
+		for _, repositoryURL := range repositoryURLs {
+			repository, err := repository.NewFromVCS(repositoryURL, repository.Credentials{
+				Username:    GithubUsername,
+				AccessToken: GithubAPIToken,
+			})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "can't clone %s: %s\n", r.Name, err)
+				fmt.Fprintf(os.Stderr, "can't clone %s: %s\n", repositoryURL, err)
 				continue
 			}
-			if err := processRepository(r.Name, r.FsPath()); err != nil {
-				fmt.Printf("processing repository at %s failed: %s\n", r.FsPath(), err)
+			bom, err := repository.ExtractBOMs(true)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "can't collect BOMs from %s: %s\n", repository, err)
+				deleteRepository(repository.FSPath)
+				continue
 			}
-			_ = os.RemoveAll(r.FsPath())
+			bomString, err := bomtools.CDXToString(bom)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "can't convert cdx.BOM to string: %s\n", err)
+				deleteRepository(repository.FSPath)
+				continue
+			}
+
+			uploadConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repository.Name, bomString)
+			if _, err = requests.UploadBOM(uploadConfig); err != nil {
+				fmt.Fprintf(os.Stderr, "can't upload BOM to Dependecny track: %s", err)
+			}
+			deleteRepository(repository.FSPath)
 		}
 	})
 	if err != nil {

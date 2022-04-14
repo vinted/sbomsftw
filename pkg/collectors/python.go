@@ -1,8 +1,10 @@
-package boms
+package collectors
 
 import (
+	"errors"
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/vinted/software-assets/pkg/bomtools"
 	"io/ioutil"
 	"os"
 	fp "path/filepath"
@@ -16,14 +18,14 @@ var condaDependencyPattern = regexp.MustCompile(`- .*=\d.*`)
 var condaLooseDependencyPattern = regexp.MustCompile(`^[\w-]*=\d.*$`)
 var supportedPythonFiles = []string{"setup.py", "requirements.txt", "Pipfile.lock", "poetry.lock"}
 
-type Python struct{ executor BOMBridge }
+type Python struct{ executor ShellExecutor }
 
 func NewPythonCollector() Python {
-	return Python{executor: defaultBOMBridge{}}
+	return Python{executor: DefaultShellExecutor{}}
 }
 
-//matchPredicate implements BOMCollector interface
-func (p Python) matchPredicate(isDir bool, filepath string) bool {
+//MatchLanguageFiles implements LanguageCollector interface
+func (p Python) MatchLanguageFiles(isDir bool, filepath string) bool {
 	if isDir {
 		return false
 	}
@@ -40,26 +42,16 @@ func (p Python) matchPredicate(isDir bool, filepath string) bool {
 	return condaEnvPattern.MatchString(filename)
 }
 
-func (p Python) generateBOM(bomRoot string) (*cdx.BOM, error) {
-	return p.executor.bomFromCdxgen(bomRoot, python)
+func (p Python) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+	const language = "python"
+	return p.executor.bomFromCdxgen(bomRoot, language)
 }
 
-//bootstrap implements BOMCollector interface
-func (p Python) bootstrap(bomRoots []string) []string {
-	p.conda2Requirements(bomRoots)
-	return squashRoots(bomRoots)
-}
-
-//String implements BOMCollector interface
-func (p Python) String() string {
-	return "Python collector"
-}
-
-/*
-conda2Requirements traverses bom roots and converts all conda environment.yml files to a single requirements.txt file.
-This is needed because cdxgen doesn't support conda package manager
+/*BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
+all conda environment.yml files to a single requirements.txt file. This is needed because cdxgen
+doesn't support conda package manager.
 */
-func (p Python) conda2Requirements(bomRoots []string) {
+func (p Python) BootstrapLanguageFiles(bomRoots []string) []string {
 	//Extract dependencies from conda environment.yml files
 	dependenciesFromCondaEnv := func(condaEnv string) (requirements []string) {
 		for _, dependency := range condaDependencyPattern.FindAllString(condaEnv, -1) {
@@ -88,19 +80,18 @@ func (p Python) conda2Requirements(bomRoots []string) {
 
 	writeRequirementsFile := func(dir string, requirements []string) {
 		formatted := strings.Join(requirements, "\n")
-		err := os.WriteFile(fp.Join(dir, "requirements.txt"), []byte(formatted), 0644)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "python collector: can't write to requirements file %s", err)
+		if err := os.WriteFile(fp.Join(dir, "requirements.txt"), []byte(formatted), 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "%s: can't write to requirements file %s", p, err)
 		}
 	}
 
-	for dir, files := range dirsToFiles(bomRoots) {
+	for dir, files := range bomtools.DirsToFiles(bomRoots) {
 		var requirements []string
 		for _, f := range files {
 			if condaEnvPattern.MatchString(f) {
 				condaEnv, err := ioutil.ReadFile(fp.Join(dir, f))
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "python collector: can't open conda environment file %s", err)
+					fmt.Fprintf(os.Stderr, "%s: can't open conda environment file %s", p, err)
 					continue
 				}
 				requirements = append(requirements, dependenciesFromCondaEnv(string(condaEnv))...)
@@ -110,9 +101,16 @@ func (p Python) conda2Requirements(bomRoots []string) {
 			continue
 		}
 		requirements = uniqueRequirements(requirements) //Filter duplicates & convert to set
-		currentContents, err := os.ReadFile(fp.Join(dir, "requirements.txt"))
+		requirementsFilePath := fp.Join(dir, "requirements.txt")
+		currentContents, err := os.ReadFile(requirementsFilePath)
 		if err != nil {
-			//requirements.txt don't exist. Write to it directly
+			if errors.Is(err, os.ErrNotExist) {
+				//TODO Move this to info log
+				fmt.Fprintf(os.Stderr, "%s: %s doesn't exist, creating a new one\n", p, requirementsFilePath)
+			} else {
+				fmt.Fprintf(os.Stderr, "%s: can't read %s - %s. Creating requirements.txt nonetheless\n", p,
+					requirementsFilePath, err)
+			}
 			writeRequirementsFile(dir, requirements)
 			continue
 		}
@@ -120,4 +118,10 @@ func (p Python) conda2Requirements(bomRoots []string) {
 		requirements = uniqueRequirements(append(requirements, strings.Fields(string(currentContents))...))
 		writeRequirementsFile(dir, requirements)
 	}
+	return bomRoots
+}
+
+//String implements LanguageCollector interface
+func (p Python) String() string {
+	return "python collector"
 }

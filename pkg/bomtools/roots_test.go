@@ -1,10 +1,9 @@
-package boms
+package bomtools
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -20,7 +19,7 @@ func TestFilterOptionalDependencies(t *testing.T) {
 		if err != nil {
 			t.Fatalf("can't read a test file: %s", err)
 		}
-		bom, err := BomStringToCDX(JSON, string(testBOM))
+		bom, err := StringToCDX(testBOM)
 		if err != nil {
 			t.Fatalf("can't convert BOM string to cdx.BOM instance %s", err)
 		}
@@ -97,12 +96,8 @@ func TestFindRoots(t *testing.T) {
 
 	t.Run("error is returned whenever FS walk fails", func(t *testing.T) {
 		roots, err := findRoots(os.DirFS("/non-existing"), nil)
-
+		assert.NotNil(t, err)
 		assert.Empty(t, roots)
-
-		var e *fs.PathError
-		assert.ErrorAs(t, err, &e)
-		assert.Contains(t, err.Error(), "unable to walk file system path:")
 	})
 }
 
@@ -172,34 +167,6 @@ const jsonBOM = `{
   ]
 }
 `
-
-func TestBOMConversions(t *testing.T) {
-	t.Run("convert XML bom to JSON bom correctly", func(t *testing.T) {
-		got, err := ConvertBetweenTypes(XML, JSON, xmlBOM)
-		require.NoError(t, err)
-		assert.Equal(t, jsonBOM, got)
-	})
-	t.Run("convert JSON bom to XML bom correctly", func(t *testing.T) {
-		got, err := ConvertBetweenTypes(JSON, XML, jsonBOM)
-		require.NoError(t, err)
-		assert.Equal(t, xmlBOM, got)
-	})
-	t.Run("return an error when converting from unsupported type", func(t *testing.T) {
-		got, err := ConvertBetweenTypes(BOMType(42), XML, jsonBOM) //Unsupported type
-		assert.Empty(t, got)
-		assert.ErrorIs(t, err, BadBOMTypeError{BOMType: BOMType(42)})
-	})
-	t.Run("return an error when converting to unsupported type", func(t *testing.T) {
-		got, err := ConvertBetweenTypes(XML, BOMType(42), xmlBOM) //Unsupported type
-		assert.Empty(t, got)
-		assert.ErrorIs(t, err, BadBOMTypeError{BOMType: BOMType(42)})
-	})
-	t.Run("return an error when converting a JSON BOM with XML type", func(t *testing.T) {
-		got, err := ConvertBetweenTypes(XML, JSON, jsonBOM)
-		assert.Empty(t, got)
-		assert.ErrorIs(t, err, io.EOF)
-	})
-}
 
 func TestSquashRoots(t *testing.T) {
 	rootsToSquash := []string{

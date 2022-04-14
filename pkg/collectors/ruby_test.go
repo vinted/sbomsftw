@@ -1,4 +1,4 @@
-package boms
+package collectors
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestRubyCollector(t *testing.T) {
-	t.Run("bootstrap BOM roots correctly", func(t *testing.T) {
+	t.Run("BootstrapLanguageFiles BOM roots correctly", func(t *testing.T) {
 		executor := new(mockBOMBridge)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
@@ -20,7 +20,7 @@ func TestRubyCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/Gemfile",
 		}
 
-		got := Ruby{executor: executor}.bootstrap(bomRoots)
+		got := Ruby{executor: executor}.BootstrapLanguageFiles(bomRoots)
 		executor.AssertExpectations(t)
 		assert.ElementsMatch(t, []string{
 			"/tmp/some-random-dir",
@@ -32,20 +32,20 @@ func TestRubyCollector(t *testing.T) {
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, ruby).Return(new(cdx.BOM), nil)
-		_, _ = Ruby{executor: executor}.generateBOM(bomRoot)
+		executor.On("bomFromCdxgen", bomRoot, "ruby").Return(new(cdx.BOM), nil)
+		_, _ = Ruby{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})
 
 	t.Run("match correct package files", func(t *testing.T) {
 		rubyCollector := Ruby{}
-		assert.True(t, rubyCollector.matchPredicate(false, "Gemfile"))
-		assert.True(t, rubyCollector.matchPredicate(false, "/opt/Gemfile.lock"))
-		assert.False(t, rubyCollector.matchPredicate(false, "/etc/passwd"))
-		assert.False(t, rubyCollector.matchPredicate(true, "Gemfile"))
+		assert.True(t, rubyCollector.MatchLanguageFiles(false, "Gemfile"))
+		assert.True(t, rubyCollector.MatchLanguageFiles(false, "/opt/Gemfile.lock"))
+		assert.False(t, rubyCollector.MatchLanguageFiles(false, "/etc/passwd"))
+		assert.False(t, rubyCollector.MatchLanguageFiles(true, "Gemfile"))
 	})
 
 	t.Run("implement Stringer correctly", func(t *testing.T) {
-		assert.Equal(t, "Ruby-Bundler", Ruby{}.String())
+		assert.Equal(t, "ruby collector", Ruby{}.String())
 	})
 }

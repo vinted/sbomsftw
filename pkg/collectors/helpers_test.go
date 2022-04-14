@@ -1,4 +1,4 @@
-package boms
+package collectors
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -19,7 +19,7 @@ func (m *mockBOMBridge) shellOut(bomRoot string, shellCmd string) (string, error
 	return args.String(0), args.Error(1)
 }
 
-func (m *mockBOMBridge) bomFromCdxgen(bomRoot string, language language) (*cdx.BOM, error) {
+func (m *mockBOMBridge) bomFromCdxgen(bomRoot, language string) (*cdx.BOM, error) {
 	args := m.Called(bomRoot, language)
 	return args.Get(0).(*cdx.BOM), args.Error(1)
 }

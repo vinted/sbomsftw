@@ -1,4 +1,4 @@
-package boms
+package collectors
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestJSCollector(t *testing.T) {
-	t.Run("bootstrap BOM roots correctly", func(t *testing.T) {
+	t.Run("bootstrap language files BOM roots correctly", func(t *testing.T) {
 		executor := new(mockBOMBridge)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
@@ -20,36 +20,32 @@ func TestJSCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/package.json",
 		}
 
-		got := JS{executor: executor}.bootstrap(bomRoots)
+		got := JS{executor: executor}.BootstrapLanguageFiles(bomRoots)
 		executor.AssertExpectations(t)
-		assert.ElementsMatch(t, []string{
-			"/tmp/some-random-dir",
-			"/tmp/some-random-dir/inner-dir",
-			"/tmp/some-random-dir/inner-dir/deepest-dir",
-		}, got)
+		assert.ElementsMatch(t, bomRoots, got)
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, javascript).Return(new(cdx.BOM), nil)
-		_, _ = JS{executor: executor}.generateBOM(bomRoot)
+		executor.On("bomFromCdxgen", bomRoot, "javascript").Return(new(cdx.BOM), nil)
+		_, _ = JS{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})
 
 	t.Run("match correct package files", func(t *testing.T) {
 		jsCollector := JS{}
 		for _, f := range []string{"/opt/yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"} {
-			assert.True(t, jsCollector.matchPredicate(false, f))
+			assert.True(t, jsCollector.MatchLanguageFiles(false, f))
 		}
-		assert.False(t, jsCollector.matchPredicate(false, "/etc/passwd"))
-		assert.False(t, jsCollector.matchPredicate(false, "/tmp/repo/node_modules/yarn.lock"))
+		assert.False(t, jsCollector.MatchLanguageFiles(false, "/etc/passwd"))
+		assert.False(t, jsCollector.MatchLanguageFiles(false, "/tmp/repo/node_modules/yarn.lock"))
 
 		//Special case
-		assert.True(t, jsCollector.matchPredicate(true, "/tmp/repo/node_modules"))
+		assert.True(t, jsCollector.MatchLanguageFiles(true, "/tmp/repo/node_modules"))
 	})
 
 	t.Run("implement Stringer correctly", func(t *testing.T) {
-		assert.Equal(t, "JS/TS-JS", JS{}.String())
+		assert.Equal(t, "javascript collector", JS{}.String())
 	})
 }
