@@ -1,8 +1,10 @@
-package boms
+package collectors
 
 import (
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/vinted/software-assets/pkg/bomtools"
+	"os"
 	fp "path/filepath"
 )
 
@@ -12,14 +14,14 @@ const (
 	gemfileLock = "Gemfile.lock"
 )
 
-type Ruby struct{ executor BOMBridge }
+type Ruby struct{ executor ShellExecutor }
 
 func NewRubyCollector() Ruby {
-	return Ruby{executor: defaultBOMBridge{}}
+	return Ruby{executor: DefaultShellExecutor{}}
 }
 
-//matchPredicate implements BOMCollector interface
-func (r Ruby) matchPredicate(isDir bool, filepath string) bool {
+//MatchLanguageFiles implements LanguageCollector interface
+func (r Ruby) MatchLanguageFiles(isDir bool, filepath string) bool {
 	if isDir { //Return false immediately - bundler only supports Gemfile & Gemfile.lock files
 		return false
 	}
@@ -27,25 +29,25 @@ func (r Ruby) matchPredicate(isDir bool, filepath string) bool {
 	return filename == gemfile || filename == gemfileLock
 }
 
-//String implements BOMCollector interface
+//String implements LanguageCollector interface
 func (r Ruby) String() string {
-	return "Ruby-Bundler"
+	return "ruby collector"
 }
 
-func (r Ruby) bootstrap(bomRoots []string) []string {
+func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install"
 	var bootstrappedRoots []string
-	for dir, files := range dirsToFiles(bomRoots) {
+	for dir, files := range bomtools.DirsToFiles(bomRoots) {
 		shouldBootstrap := len(files) == 1 && files[0] == gemfile
 		if shouldBootstrap {
 			/*
-				Bootstrap by running bundler install. This runs two versions of bundler.
+				BootstrapLanguageFiles by running bundler install. This runs two versions of bundler.
 				Latest bundler and 1.17.3 bundler, this is needed for compatability reasons
 				when working with old ruby projects.
 			*/
 
 			if _, err := r.executor.shellOut(dir, bootstrapCmd); err != nil {
-				fmt.Println(fmt.Errorf(bootstrapFailedErr, dir, err))
+				fmt.Fprintf(os.Stderr, "%s: can't BootstrapLanguageFiles %s - %s\n", r, dir, err)
 				continue
 			}
 		}
@@ -54,6 +56,7 @@ func (r Ruby) bootstrap(bomRoots []string) []string {
 	return bootstrappedRoots
 }
 
-func (r Ruby) generateBOM(bomRoot string) (*cdx.BOM, error) {
-	return r.executor.bomFromCdxgen(bomRoot, ruby)
+func (r Ruby) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+	const language = "ruby"
+	return r.executor.bomFromCdxgen(bomRoot, language)
 }

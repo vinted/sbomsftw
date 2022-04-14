@@ -1,8 +1,9 @@
-package boms
+package collectors
 
 import (
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/vinted/software-assets/pkg/bomtools"
 	"os"
 	fp "path/filepath"
 	"strings"
@@ -11,14 +12,14 @@ import (
 var supportedJSFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
 
 type JS struct {
-	executor BOMBridge
+	executor ShellExecutor
 }
 
 func NewJSCollector() JS {
-	return JS{executor: defaultBOMBridge{}}
+	return JS{executor: DefaultShellExecutor{}}
 }
 
-func (j JS) matchPredicate(isDir bool, filepath string) bool {
+func (j JS) MatchLanguageFiles(isDir bool, filepath string) bool {
 	for _, p := range strings.Split(fp.Dir(filepath), string(os.PathSeparator)) {
 		if p == "node_modules" { //Ignore files in node_modules directory
 			return false
@@ -38,25 +39,23 @@ func (j JS) matchPredicate(isDir bool, filepath string) bool {
 }
 
 func (j JS) String() string {
-	return "JS/TS-JS"
+	return "javascript collector"
 }
 
-func (j JS) generateBOM(bomRoot string) (*cdx.BOM, error) {
-	return j.executor.bomFromCdxgen(bomRoot, javascript)
+func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+	const language = "javascript"
+	return j.executor.bomFromCdxgen(bomRoot, language)
 }
 
-func (j JS) bootstrap(bomRoots []string) []string {
+func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
-	var bootstrappedRoots []string
-	for dir, files := range dirsToFiles(bomRoots) {
-		shouldBootstrap := len(files) == 1 && files[0] == "package.json"
-		if shouldBootstrap {
+	for dir, files := range bomtools.DirsToFiles(bomRoots) {
+		if len(files) == 1 && files[0] == "package.json" { //Create a lock file if none exist yet
 			if _, err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
-				fmt.Println(fmt.Errorf(bootstrapFailedErr, dir, err))
+				fmt.Fprintf(os.Stderr, "%s: can't bootstrap %s - %s", j, dir, err)
 				continue
 			}
 		}
-		bootstrappedRoots = append(bootstrappedRoots, dir)
 	}
-	return bootstrappedRoots
+	return bomRoots
 }

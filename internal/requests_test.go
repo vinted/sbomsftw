@@ -1,4 +1,4 @@
-package requests_test
+package internal
 
 import (
 	"context"
@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vinted/software-assets/internal/requests"
-	"github.com/vinted/software-assets/internal/vcs"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -26,11 +24,11 @@ const (
 
 func TestExponentialBackoff(t *testing.T) {
 
-	createUploadBOMConfig := func(url string) requests.UploadBOMConfig {
-		return requests.UploadBOMConfig{
+	createUploadBOMConfig := func(url string) UploadBOMConfig {
+		return UploadBOMConfig{
 			URL:      url,
 			APIToken: "test-token",
-			BackoffConfig: requests.BackoffConfig{
+			BackoffConfig: BackoffConfig{
 				RequestTimeout: 100 * time.Millisecond, // Time out after 100 millis
 				BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
 			},
@@ -46,16 +44,16 @@ func TestExponentialBackoff(t *testing.T) {
 		}))
 		defer timeoutServer.Close()
 
-		requestConfig := requests.GetRepositoriesConfig{
+		requestConfig := GetRepositoriesConfig{
 			URL:      timeoutServer.URL,
 			APIToken: "test-token",
-			BackoffConfig: requests.BackoffConfig{
+			BackoffConfig: BackoffConfig{
 				RequestTimeout: 100 * time.Millisecond, // Time out after 100 millis
 				BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
 			},
 		}
 
-		repositories, err := requests.GetRepositories(requestConfig)
+		repositories, err := GetRepositories(requestConfig)
 		assert.Empty(t, repositories)
 		assert.Equal(t, 3, hitCounter)
 		assert.ErrorIs(t, err, context.DeadlineExceeded)
@@ -71,7 +69,7 @@ func TestExponentialBackoff(t *testing.T) {
 		}))
 		defer timeoutServer.Close()
 
-		ok, err := requests.UploadBOM(createUploadBOMConfig(timeoutServer.URL))
+		ok, err := UploadBOM(createUploadBOMConfig(timeoutServer.URL))
 		assert.False(t, ok)
 		assert.Equal(t, 3, hitCounter)
 		assert.ErrorIs(t, err, context.DeadlineExceeded)
@@ -87,8 +85,8 @@ func TestExponentialBackoff(t *testing.T) {
 		}))
 		defer tooManyReqsServer.Close()
 
-		repositories, err := requests.UploadBOM(createUploadBOMConfig(tooManyReqsServer.URL))
-		want := requests.BadStatusError{URL: tooManyReqsServer.URL, Status: http.StatusTooManyRequests}
+		repositories, err := UploadBOM(createUploadBOMConfig(tooManyReqsServer.URL))
+		want := BadStatusError{URL: tooManyReqsServer.URL, Status: http.StatusTooManyRequests}
 		assert.Empty(t, repositories)
 		assert.Equal(t, 3, hitCounter)
 		assert.ErrorIs(t, err, want)
@@ -103,20 +101,19 @@ func TestGetRepositories(t *testing.T) {
 		hitCounter := 0
 		goodResponseServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			hitCounter++
-			content, _ := ioutil.ReadFile("testdata/sample-repos.json")
+			content, _ := ioutil.ReadFile("../integration/testdata/requests/sample-repos.json")
 			res.WriteHeader(http.StatusOK)
 			_, _ = res.Write(content)
 		}))
 		defer goodResponseServer.Close()
 
-		repositories, err := requests.GetRepositories(createGetRepositoriesConfig(goodResponseServer.URL))
+		repositories, err := GetRepositories(createGetRepositoriesConfig(goodResponseServer.URL))
 		require.NoError(t, err)
 		assert.Equal(t, 1, hitCounter)
 
-		want := []vcs.Repository{
-			{Name: "xmlsec", Description: "Ruby bindings for xmlsec", Archived: false, URL: "https://github.com/vinted/xmlsec"},
-			{Name: "airbrake", Description: "Airbrake exceptions", Archived: true, URL: "https://github.com/vinted/airbrake-graylog2"},
-			{Name: "dotpay", Description: "dotpay.pl gem", Archived: false, URL: "https://github.com/vinted/dotpay"},
+		want := []repository{
+			{Name: "xmlsec", Archived: false, URL: "https://github.com/vinted/xmlsec"},
+			{Name: "dotpay", Archived: false, URL: "https://github.com/vinted/dotpay"},
 		}
 		assert.Equal(t, want, repositories)
 	})
@@ -130,16 +127,16 @@ func TestGetRepositories(t *testing.T) {
 			res.WriteHeader(http.StatusTeapot)
 		}))
 		defer teapotServer.Close()
-		repositories, err := requests.GetRepositories(createGetRepositoriesConfig(teapotServer.URL))
+		repositories, err := GetRepositories(createGetRepositoriesConfig(teapotServer.URL))
 
-		assert.ErrorIs(t, err, requests.BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
+		assert.ErrorIs(t, err, BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
 		assert.Empty(t, repositories)
 		assert.Equal(t, 1, hitCounter)
 		assert.Equal(t, fmt.Sprintf(errorTemplate, teapotServer.URL, http.StatusTeapot), err.Error())
 	})
 
 	t.Run("returns url.InvalidHostError whenever URL is invalid", func(t *testing.T) {
-		repositories, err := requests.GetRepositories(createGetRepositoriesConfig("http://bad url.com"))
+		repositories, err := GetRepositories(createGetRepositoriesConfig("http://bad url.com"))
 		var e url.InvalidHostError
 		assert.ErrorAs(t, err, &e)
 		assert.Empty(t, repositories)
@@ -155,7 +152,7 @@ func TestGetRepositories(t *testing.T) {
 		}))
 		defer invalidJSONServer.Close()
 
-		repositories, err := requests.GetRepositories(createGetRepositoriesConfig(invalidJSONServer.URL))
+		repositories, err := GetRepositories(createGetRepositoriesConfig(invalidJSONServer.URL))
 		var e *json.SyntaxError
 		assert.ErrorAs(t, err, &e)
 		assert.Empty(t, repositories)
@@ -172,11 +169,11 @@ func TestWalkRepositories(t *testing.T) {
 			var content []byte
 			switch req.FormValue("page") {
 			case "1":
-				content, _ = ioutil.ReadFile("testdata/repos-page-1.json")
+				content, _ = ioutil.ReadFile("../integration/testdata/requests/repos-page-1.json")
 			case "2":
-				content, _ = ioutil.ReadFile("testdata/repos-page-2.json")
+				content, _ = ioutil.ReadFile("../integration/testdata/requests/repos-page-2.json")
 			case "3":
-				content, _ = ioutil.ReadFile("testdata/repos-page-3.json")
+				content, _ = ioutil.ReadFile("../integration/testdata/requests/repos-page-3.json")
 			default:
 				content = []byte("[]") //empty response
 			}
@@ -185,25 +182,25 @@ func TestWalkRepositories(t *testing.T) {
 		}))
 		defer goodResponseServer.Close()
 
-		var collectedRepos []vcs.Repository
+		var collectedRepos []string
 		reqConf := createGetRepositoriesConfig(goodResponseServer.URL)
-		err := requests.WalkRepositories(reqConf, func(repos []vcs.Repository) {
+		err := WalkRepositories(reqConf, func(repos []string) {
 			collectedRepos = append(collectedRepos, repos...)
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 4, hitCounter)
 
-		expectedRepos := []vcs.Repository{
-			{Name: "xmlsec", Description: "Ruby bindings for xmlsec", URL: "https://github.com/vinted/xmlsec"},
-			{Name: "airbrake", Description: "Airbrake exceptions", Archived: true, URL: "https://github.com/vinted/airbrake-graylog2"},
-			{Name: "facebook-android-sdk", Description: "Android Facebook SDK", URL: "https://github.com/vinted/facebook-android-sdk"},
-			{Name: "PhotoView", Description: "ImageView for Android", URL: "https://github.com/vinted/PhotoView"},
+		expectedRepos := []string{
+			"https://github.com/vinted/xmlsec",
+			"https://github.com/vinted/airbrake-graylog2",
+			"https://github.com/vinted/facebook-android-sdk",
+			"https://github.com/vinted/PhotoView",
 		}
 		assert.Equal(t, expectedRepos, collectedRepos)
 	})
 
 	t.Run("return an error when request config contains invalid URL", func(t *testing.T) {
-		err := requests.WalkRepositories(createGetRepositoriesConfig("http://bad url.com"), nil)
+		err := WalkRepositories(createGetRepositoriesConfig("http://bad url.com"), nil)
 		var e url.InvalidHostError
 		assert.ErrorAs(t, err, &e)
 		assert.Contains(t, err.Error(), repositoryWalkFailed)
@@ -221,7 +218,7 @@ func TestUploadBOM(t *testing.T) {
 		}))
 		defer goodResponseServer.Close()
 
-		ok, err := requests.UploadBOM(createUploadBOMConfig(goodResponseServer.URL))
+		ok, err := UploadBOM(createUploadBOMConfig(goodResponseServer.URL))
 		require.NoError(t, err)
 		assert.True(t, ok)
 	})
@@ -234,14 +231,14 @@ func TestUploadBOM(t *testing.T) {
 			res.WriteHeader(http.StatusTeapot)
 		}))
 		defer teapotServer.Close()
-		ok, err := requests.UploadBOM(createUploadBOMConfig(teapotServer.URL))
+		ok, err := UploadBOM(createUploadBOMConfig(teapotServer.URL))
 
 		assert.False(t, ok)
-		assert.ErrorIs(t, err, requests.BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
+		assert.ErrorIs(t, err, BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
 	})
 
 	t.Run("returns url.InvalidHostError whenever URL is invalid", func(t *testing.T) {
-		ok, err := requests.UploadBOM(createUploadBOMConfig("http://bad url.com"))
+		ok, err := UploadBOM(createUploadBOMConfig("http://bad url.com"))
 		var e url.InvalidHostError
 		assert.ErrorAs(t, err, &e)
 		assert.False(t, ok)
@@ -249,21 +246,22 @@ func TestUploadBOM(t *testing.T) {
 	})
 }
 
-func createGetRepositoriesConfig(url string) requests.GetRepositoriesConfig {
-	return requests.GetRepositoriesConfig{
-		URL:      url,
-		APIToken: "test-token",
-		BackoffConfig: requests.BackoffConfig{
+func createGetRepositoriesConfig(url string) GetRepositoriesConfig {
+	return GetRepositoriesConfig{
+		URL:                         url,
+		APIToken:                    "test-token",
+		IncludeArchivedRepositories: false,
+		BackoffConfig: BackoffConfig{
 			RequestTimeout: 10 * time.Second,
 			BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
 		},
 	}
 }
 
-func createUploadBOMConfig(url string) requests.UploadBOMConfig {
-	return requests.UploadBOMConfig{
+func createUploadBOMConfig(url string) UploadBOMConfig {
+	return UploadBOMConfig{
 		URL: url,
-		BackoffConfig: requests.BackoffConfig{
+		BackoffConfig: BackoffConfig{
 			RequestTimeout: 10 * time.Second,
 			BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
 		},

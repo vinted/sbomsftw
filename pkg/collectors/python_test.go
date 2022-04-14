@@ -1,4 +1,4 @@
-package boms
+package collectors
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -11,26 +11,22 @@ import (
 )
 
 func TestPythonCollector(t *testing.T) {
-	t.Run("bootstrap BOM roots correctly", func(t *testing.T) {
+	t.Run("Bootstrap language files correctly", func(t *testing.T) {
 		bomRoots := []string{
 			"/tmp/some-random-dir/requirements.txt",
 			"/tmp/some-random-dir/setup.py",
 			"/tmp/some-random-dir/inner-dir/Pipfile.lock",
 			"/tmp/some-random-dir/inner-dir/deepest-dir/poetry.lock",
 		}
-		got := Python{}.bootstrap(bomRoots)
-		assert.ElementsMatch(t, []string{
-			"/tmp/some-random-dir",
-			"/tmp/some-random-dir/inner-dir",
-			"/tmp/some-random-dir/inner-dir/deepest-dir",
-		}, got)
+		got := Python{}.BootstrapLanguageFiles(bomRoots)
+		assert.ElementsMatch(t, bomRoots, got)
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, python).Return(new(cdx.BOM), nil)
-		_, _ = Python{executor: executor}.generateBOM(bomRoot)
+		executor.On("bomFromCdxgen", bomRoot, "python").Return(new(cdx.BOM), nil)
+		_, _ = Python{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})
 
@@ -45,7 +41,7 @@ func TestPythonCollector(t *testing.T) {
 		}
 
 		for _, f := range packageFiles {
-			assert.True(t, pythonCollector.matchPredicate(false, f))
+			assert.True(t, pythonCollector.MatchLanguageFiles(false, f))
 		}
 
 		condaEnvFiles := []string{
@@ -56,18 +52,14 @@ func TestPythonCollector(t *testing.T) {
 			"/opt/environment-3.8.yml",
 		}
 		for _, f := range condaEnvFiles {
-			assert.True(t, pythonCollector.matchPredicate(false, f))
+			assert.True(t, pythonCollector.MatchLanguageFiles(false, f))
 		}
 
 		for _, f := range []string{"setup.py", "requirements.txt", "Pipfile.lock", "poetry.lock"} {
-			assert.False(t, pythonCollector.matchPredicate(true, f))
+			assert.False(t, pythonCollector.MatchLanguageFiles(true, f))
 		}
-		assert.False(t, pythonCollector.matchPredicate(false, "environment-dev.yaml"))
-		assert.False(t, pythonCollector.matchPredicate(false, "/etc/passwd"))
-	})
-
-	t.Run("implement Stringer correctly", func(t *testing.T) {
-		assert.Equal(t, "Python collector", Python{}.String())
+		assert.False(t, pythonCollector.MatchLanguageFiles(false, "environment-dev.yaml"))
+		assert.False(t, pythonCollector.MatchLanguageFiles(false, "/etc/passwd"))
 	})
 
 	t.Run("don't create requirements.txt if no conda environment files exist", func(t *testing.T) {
@@ -75,7 +67,7 @@ func TestPythonCollector(t *testing.T) {
 		err := os.WriteFile(filepath.Join(tempDir, "setup.py"), nil, 0644)
 		require.NoError(t, err)
 
-		Python{}.bootstrap([]string{filepath.Join(tempDir, "setup.py")})
+		Python{}.BootstrapLanguageFiles([]string{filepath.Join(tempDir, "setup.py")})
 		_, err = ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
 		//assert.NotNil(t, err)
 		assert.ErrorIs(t, err, os.ErrNotExist)
@@ -132,7 +124,7 @@ func TestPythonCollector(t *testing.T) {
 			filepath.Join(innerDir, "environment.yml"),
 		}
 
-		Python{}.bootstrap(bomRoots)
+		Python{}.BootstrapLanguageFiles(bomRoots)
 
 		got, err := ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
 		require.NoError(t, err)

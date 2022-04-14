@@ -1,4 +1,4 @@
-package requests
+package internal
 
 /*
 Package requests provides an API for:
@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/vinted/software-assets/internal/vcs"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,7 +28,9 @@ type BackoffConfig struct {
 
 type GetRepositoriesConfig struct {
 	BackoffConfig
-	URL, Username, APIToken string
+	URL, Username, APIToken     string
+	IncludeArchivedRepositories bool
+	//todo we need include archive true setting
 }
 
 type UploadBOMConfig struct {
@@ -49,9 +50,10 @@ func (b BadStatusError) Error() string {
 
 func NewGetRepositoriesConfig(url, username, apiToken string) GetRepositoriesConfig {
 	return GetRepositoriesConfig{
-		URL:      url,
-		Username: username,
-		APIToken: apiToken,
+		URL:                         url,
+		Username:                    username,
+		APIToken:                    apiToken,
+		IncludeArchivedRepositories: false,
 		BackoffConfig: BackoffConfig{
 			RequestTimeout: 10 * time.Second, //Good defaults
 			BackoffPolicy:  []time.Duration{4 * time.Second, 8 * time.Second, 14 * time.Second},
@@ -73,8 +75,14 @@ func NewUploadBOMConfig(url, apiToken, projectName, bomContents string) UploadBO
 	}
 }
 
+type repository struct {
+	Name     string
+	Archived bool
+	URL      string `json:"html_url"`
+}
+
 type response interface {
-	[]vcs.Repository | bool
+	[]repository | bool
 }
 
 // Exponential backoff
@@ -115,8 +123,8 @@ func exponentialBackoff[T response](request func() (T, error), backoff ...time.D
 //If the backoff varargs are supplied and request fails, this function will reattempt the HTTP request
 //with exponential backoff provided. The backoff kicks in only if the error is a timeout error or HTTP
 //too many requests error. Returns a slice of repositories fetched or an error if something goes wrong.
-func GetRepositories(conf GetRepositoriesConfig) ([]vcs.Repository, error) {
-	getRepositories := func() ([]vcs.Repository, error) {
+func GetRepositories(conf GetRepositoriesConfig) ([]repository, error) {
+	getRepositories := func() ([]repository, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
 		defer cancel()
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, conf.URL, nil)
@@ -134,17 +142,25 @@ func GetRepositories(conf GetRepositoriesConfig) ([]vcs.Repository, error) {
 		if resp.StatusCode != http.StatusOK {
 			return nil, BadStatusError{Status: resp.StatusCode, URL: conf.URL}
 		}
-		var repositories []vcs.Repository
+		var repositories []repository
 		if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
 			return nil, fmt.Errorf("unable to parse JSON: %w", err)
 		}
-		return repositories, nil
+		if conf.IncludeArchivedRepositories {
+			return repositories, nil
+		}
+		var validRepositories []repository
+		for _, r := range repositories {
+			if !r.Archived {
+				validRepositories = append(validRepositories, r)
+			}
+		}
+		return validRepositories, nil
 	}
 
-	return exponentialBackoff[[]vcs.Repository](getRepositories, conf.BackoffPolicy...)
+	return exponentialBackoff[[]repository](getRepositories, conf.BackoffPolicy...)
 }
-
-func WalkRepositories(conf GetRepositoriesConfig, callback func(repos []vcs.Repository)) error {
+func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string)) error {
 	endpoint, err := url.Parse(conf.URL)
 	if err != nil {
 		return fmt.Errorf("can't walk repository with malformed URL - %s: %w", conf.URL, err)
@@ -166,7 +182,11 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repos []vcs.Repo
 		if len(repositories) == 0 {
 			return nil //Done all repositories have been walked
 		}
-		callback(repositories)
+		var repositoryURLs []string
+		for _, r := range repositories {
+			repositoryURLs = append(repositoryURLs, r.URL)
+		}
+		callback(repositoryURLs)
 		page++
 	}
 }
@@ -182,7 +202,6 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 			"projectVersion": time.Now().Format("2006-01-02 15:04:05"),
 			"bom":            base64.StdEncoding.EncodeToString([]byte(conf.BOMContents)),
 		})
-		//TODO Check what happens when we have multiple-lockfiles project versions, add a data time as a version
 		if err != nil {
 			return false, fmt.Errorf("unable to create JSON payload for uploading to Dependency track %w", err)
 		}
@@ -196,13 +215,23 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			return false, fmt.Errorf("HTTP Request failed: %w", err)
+			return false, fmt.Errorf("uploadBOM: HTTP Request failed: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			closeErr := resp.Body.Close()
+			if err != nil {
+				if closeErr != nil {
+					err = fmt.Errorf("uploadBOM: %w can't close response body %v", err, closeErr)
+				}
+				return
+			}
+			err = closeErr
+		}()
 		if resp.StatusCode != http.StatusOK {
-			return false, BadStatusError{Status: resp.StatusCode, URL: conf.URL}
+			err = BadStatusError{Status: resp.StatusCode, URL: conf.URL}
+			return false, err
 		}
-		return true, nil
+		return true, err
 	}
 
 	return exponentialBackoff[bool](uploadBOM, conf.BackoffPolicy...)

@@ -1,4 +1,4 @@
-package boms
+package bomtools
 
 import (
 	"errors"

@@ -1,4 +1,4 @@
-package boms
+package bomtools
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -15,14 +15,14 @@ func TestMergeBoms(t *testing.T) {
 		if err != nil {
 			t.Fatalf("can't read BOM from file: %s\n", err)
 		}
-		bom, err := BomStringToCDX(JSON, string(bomString))
+		bom, err := StringToCDX(bomString)
 		if err != nil {
 			t.Fatalf("can't convert BOM string to *cdx.BOM file: %s\n", err)
 		}
 		return bom
 	}
 
-	t.Run("return errors when merging nil or empty list boms", func(t *testing.T) {
+	t.Run("return errors when merging nil or empty list collectors", func(t *testing.T) {
 		got, err := MergeBoms([]*cdx.BOM{}...)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
@@ -39,7 +39,7 @@ func TestMergeBoms(t *testing.T) {
 		secondBOM := bomFromFile("../../integration/testdata/bom-to-merge-2.json")
 		thirdBOM := bomFromFile("../../integration/testdata/bom-to-merge-3.json")
 
-		expectedBOM := bomFromFile("../../integration/testdata/expected-merged-boms.json")
+		expectedBOM := bomFromFile("../../integration/testdata/expected-merged-collectors.json")
 		got, err := MergeBoms(firstBOM, secondBOM, thirdBOM)
 		require.NoError(t, err)
 
