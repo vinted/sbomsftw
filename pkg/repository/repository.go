@@ -35,7 +35,7 @@ func (b BadVCSURLError) Error() string {
 	return fmt.Sprintf("invalid VCS URL supplied %s\n", b.URL)
 }
 
-func NewFromVCS(vcsURL string, credentials Credentials) (*Repository, error) {
+func New(vcsURL string, credentials Credentials) (*Repository, error) {
 	const checkoutsPath = "/tmp/checkouts/"
 
 	urlPaths := strings.Split(vcsURL, "/")
@@ -55,22 +55,6 @@ func NewFromVCS(vcsURL string, credentials Credentials) (*Repository, error) {
 	return &Repository{
 		Name:              name,
 		FSPath:            filepath.Join(checkoutsPath, name),
-		genericCollectors: []pkg.Collector{collectors.Syft{}, collectors.Trivy{}},
-		languageCollectors: []pkg.LanguageCollector{
-			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
-			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector()},
-	}, nil
-}
-
-func NewFromFS(filesystemPath string) (*Repository, error) {
-	_, err := os.Stat(filesystemPath)
-	if err != nil {
-		return nil, fmt.Errorf("can't create repository from file system: %w\n", err)
-	}
-
-	return &Repository{
-		FSPath:            filesystemPath,
-		Name:              filepath.Base(filesystemPath),
 		genericCollectors: []pkg.Collector{collectors.Syft{}, collectors.Trivy{}},
 		languageCollectors: []pkg.LanguageCollector{
 			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
