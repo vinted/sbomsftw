@@ -57,7 +57,7 @@ func bomsFromRepository(vcsURL string) error {
 		}
 	}
 
-	repo, err := repository.NewFromVCS(vcsURL, repository.Credentials{
+	repo, err := repository.New(vcsURL, repository.Credentials{
 		Username:    GithubUsername,
 		AccessToken: GithubAPIToken,
 	})
