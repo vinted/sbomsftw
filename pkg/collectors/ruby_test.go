@@ -7,26 +7,22 @@ import (
 )
 
 func TestRubyCollector(t *testing.T) {
-	t.Run("BootstrapLanguageFiles BOM roots correctly", func(t *testing.T) {
+	t.Run("Bootstrap language files correctly", func(t *testing.T) {
 		executor := new(mockBOMBridge)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
 			"bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install").Return("👌", nil)
 
-		bomRoots := []string{
+		languageFiles := []string{
 			"/tmp/some-random-dir/Gemfile",
 			"/tmp/some-random-dir/Gemfile.lock",
 			"/tmp/some-random-dir/inner-dir/Gemfile.lock",
 			"/tmp/some-random-dir/inner-dir/deepest-dir/Gemfile",
 		}
 
-		got := Ruby{executor: executor}.BootstrapLanguageFiles(bomRoots)
+		got := Ruby{executor: executor}.BootstrapLanguageFiles(languageFiles)
 		executor.AssertExpectations(t)
-		assert.ElementsMatch(t, []string{
-			"/tmp/some-random-dir",
-			"/tmp/some-random-dir/inner-dir",
-			"/tmp/some-random-dir/inner-dir/deepest-dir",
-		}, got)
+		assert.ElementsMatch(t, languageFiles, got)
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {

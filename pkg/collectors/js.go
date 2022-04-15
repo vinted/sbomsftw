@@ -43,8 +43,13 @@ func (j JS) String() string {
 }
 
 func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+	defer func() {
+		if err := os.RemoveAll(bomRoot); err != nil {
+			fmt.Fprintf(os.Stderr, "%s: GenerateBOM can't remove %s - %s\n", j, bomRoot, err)
+		}
+	}()
 	const language = "javascript"
-	return j.executor.bomFromCdxgen(bomRoot, language)
+	return j.executor.bomFromCdxgen(fp.Dir(bomRoot), language)
 }
 
 func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {

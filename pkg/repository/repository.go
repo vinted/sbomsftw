@@ -102,7 +102,11 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 	for r := range results {
 		collectedBOMs = append(collectedBOMs, r)
 	}
-	return bomtools.MergeBoms(collectedBOMs...)
+	merged, err := bomtools.MergeBoms(collectedBOMs...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: ExtractBOMs can't merge boms - %s\n", r, err)
+	}
+	return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
 }
 
 func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.LanguageCollector, results chan<- *cdx.BOM) {

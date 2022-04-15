@@ -34,12 +34,11 @@ func (r Ruby) String() string {
 	return "ruby collector"
 }
 
+//BootstrapLanguageFiles implements LanguageCollector interface
 func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install"
-	var bootstrappedRoots []string
 	for dir, files := range bomtools.DirsToFiles(bomRoots) {
-		shouldBootstrap := len(files) == 1 && files[0] == gemfile
-		if shouldBootstrap {
+		if len(files) == 1 && files[0] == gemfile {
 			/*
 				BootstrapLanguageFiles by running bundler install. This runs two versions of bundler.
 				Latest bundler and 1.17.3 bundler, this is needed for compatability reasons
@@ -51,11 +50,11 @@ func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
 				continue
 			}
 		}
-		bootstrappedRoots = append(bootstrappedRoots, dir)
 	}
-	return bootstrappedRoots
+	return bomRoots
 }
 
+//GenerateBOM implements LanguageCollector interface
 func (r Ruby) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "ruby"
 	return r.executor.bomFromCdxgen(bomRoot, language)

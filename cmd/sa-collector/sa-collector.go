@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	requests "github.com/vinted/software-assets/internal"
 	"github.com/vinted/software-assets/pkg/bomtools"
 	"github.com/vinted/software-assets/pkg/repository"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -35,54 +37,64 @@ func setup() {
 	}
 }
 
-func main() {
-	//setup()
-	//if err := processRepository("vmip-boston-housing-trainer", "/tmp/py-repos/ml-pytorch"); err != nil {
-	//	panic(err)
-	//}
-	//return
-	cleanup()
-	setup()
-	defer cleanup()
+func uploadToDependencyTrack(repositoryName string, bom *cdx.BOM) error {
+	bomString, err := bomtools.CDXToString(bom)
+	if err != nil {
+		return fmt.Errorf("can't convert cdx.BOM to string: %v\n", err)
+	}
 
+	uploadConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repositoryName, bomString)
+	if _, err = requests.UploadBOM(uploadConfig); err != nil {
+		return fmt.Errorf("can't upload BOM to Dependecny track: %v\n", err)
+	}
+	return nil
+}
+
+func bomsFromRepository(vcsURL string) error {
 	deleteRepository := func(repositoryPath string) {
 		if err := os.RemoveAll(repositoryPath); err != nil {
 			fmt.Fprintf(os.Stderr, "can't remove repository directory: %s\n", err)
 		}
 	}
 
+	repo, err := repository.NewFromVCS(vcsURL, repository.Credentials{
+		Username:    GithubUsername,
+		AccessToken: GithubAPIToken,
+	})
+	if err != nil {
+		return fmt.Errorf("can't clone %s: %v\n", vcsURL, err)
+	}
+	defer deleteRepository(repo.FSPath)
+	bom, err := repo.ExtractBOMs(true)
+	if err != nil {
+		return fmt.Errorf("can't collect BOMs from %s: %v\n", repo, err)
+	}
+	if err = uploadToDependencyTrack(repo.Name, bom); err != nil {
+		return fmt.Errorf("can't upload BOMs to Dependency Track: %v\n", err)
+	}
+	return nil
+}
+
+func bomsFromRepositories() {
 	reqConfig := requests.NewGetRepositoriesConfig(GithubReposURL, GithubUsername, GithubAPIToken)
 	err := requests.WalkRepositories(reqConfig, func(repositoryURLs []string) {
 		for _, repositoryURL := range repositoryURLs {
-			repository, err := repository.NewFromVCS(repositoryURL, repository.Credentials{
-				Username:    GithubUsername,
-				AccessToken: GithubAPIToken,
-			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "can't clone %s: %s\n", repositoryURL, err)
+			if err := bomsFromRepository(repositoryURL); err != nil {
+				_, _ = fmt.Fprintln(os.Stderr, err)
 				continue
 			}
-			bom, err := repository.ExtractBOMs(true)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "can't collect BOMs from %s: %s\n", repository, err)
-				deleteRepository(repository.FSPath)
-				continue
-			}
-			bomString, err := bomtools.CDXToString(bom)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "can't convert cdx.BOM to string: %s\n", err)
-				deleteRepository(repository.FSPath)
-				continue
-			}
-
-			uploadConfig := requests.NewUploadBOMConfig(DTEndpoint, DTAPIToken, repository.Name, bomString)
-			if _, err = requests.UploadBOM(uploadConfig); err != nil {
-				fmt.Fprintf(os.Stderr, "can't upload BOM to Dependecny track: %s", err)
-			}
-			deleteRepository(repository.FSPath)
 		}
 	})
 	if err != nil {
-		panic(err)
+		log.Fatalf("BOM collection from repositories failed: %s\n", err)
+	}
+}
+
+func main() {
+	cleanup()
+	setup()
+	defer cleanup()
+	if err := bomsFromRepository("https://github.com/vinted/lighthouse-ci-action"); err != nil {
+		log.Fatalln(err)
 	}
 }

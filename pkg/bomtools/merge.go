@@ -132,6 +132,9 @@ func mergeAllByPURL(component *cdx.Component, allComponents []*cdx.Component) *c
 		if c.Description != "" {
 			mergedComponent.Description = c.Description
 		}
+		if c.Scope != "" {
+			mergedComponent.Scope = c.Scope
+		}
 		if c.Hashes != nil {
 			h := mergeCollection[cdx.Hash](*c.Hashes, *mergedComponent.Hashes)
 			mergedComponent.Hashes = &h
