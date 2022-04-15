@@ -39,7 +39,7 @@ func TestMergeBoms(t *testing.T) {
 		secondBOM := bomFromFile("../../integration/testdata/bom-to-merge-2.json")
 		thirdBOM := bomFromFile("../../integration/testdata/bom-to-merge-3.json")
 
-		expectedBOM := bomFromFile("../../integration/testdata/expected-merged-collectors.json")
+		expectedBOM := bomFromFile("../../integration/testdata/expected-merged-boms.json")
 		got, err := MergeBoms(firstBOM, secondBOM, thirdBOM)
 		require.NoError(t, err)
 

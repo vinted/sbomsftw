@@ -17,7 +17,7 @@ type ShellExecutor interface {
 type DefaultShellExecutor struct{}
 
 func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string) (*cdx.BOM, error) {
-	const cdxgenTemplate = "export FETCH_LICENSE=true && cdxgen --type %s -o %s"
+	const cdxgenTemplate = "cdxgen --type %s -o %s"
 
 	f, err := ioutil.TempFile("/tmp", "sa-collector-tmp-output-")
 	if err != nil {

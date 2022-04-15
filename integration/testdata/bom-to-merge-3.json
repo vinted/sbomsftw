@@ -24,6 +24,7 @@
       "group": "",
       "name": "mustermann",
       "version": "1.1.1",
+      "scope": "required",
       "description": "A library implementing patterns that behave like regular expressions.",
       "hashes": [
         {
@@ -79,6 +80,7 @@
     {
       "group": "",
       "name": "rack-protection",
+      "scope": "optional",
       "version": "2.1.0",
       "description": "Protect against typical web attacks, works with all Rack apps, including Rails.",
       "hashes": [
