@@ -1,13 +1,5 @@
 package internal
 
-/*
-Package requests provides an API for:
-Retrieving organization repositories from GitHub
-Uploading generated BOM to dependency track.
-
-Every request that this package performs is enhanced with exponential backoff.
-*/
-
 import (
 	"bytes"
 	"context"
@@ -30,7 +22,6 @@ type GetRepositoriesConfig struct {
 	BackoffConfig
 	URL, Username, APIToken     string
 	IncludeArchivedRepositories bool
-	//todo we need include archive true setting
 }
 
 type UploadBOMConfig struct {
@@ -75,14 +66,16 @@ func NewUploadBOMConfig(url, apiToken, projectName, bomContents string) UploadBO
 	}
 }
 
-type repository struct {
+//todo this might break some shit
+type repositoryMapping struct {
 	Name     string
 	Archived bool
+	Language string
 	URL      string `json:"html_url"`
 }
 
 type response interface {
-	[]repository | bool
+	[]repositoryMapping | bool
 }
 
 // Exponential backoff
@@ -123,8 +116,8 @@ func exponentialBackoff[T response](request func() (T, error), backoff ...time.D
 //If the backoff varargs are supplied and request fails, this function will reattempt the HTTP request
 //with exponential backoff provided. The backoff kicks in only if the error is a timeout error or HTTP
 //too many requests error. Returns a slice of repositories fetched or an error if something goes wrong.
-func GetRepositories(conf GetRepositoriesConfig) ([]repository, error) {
-	getRepositories := func() ([]repository, error) {
+func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
+	getRepositories := func() ([]repositoryMapping, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
 		defer cancel()
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, conf.URL, nil)
@@ -142,14 +135,14 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repository, error) {
 		if resp.StatusCode != http.StatusOK {
 			return nil, BadStatusError{Status: resp.StatusCode, URL: conf.URL}
 		}
-		var repositories []repository
+		var repositories []repositoryMapping
 		if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
 			return nil, fmt.Errorf("unable to parse JSON: %w", err)
 		}
 		if conf.IncludeArchivedRepositories {
 			return repositories, nil
 		}
-		var validRepositories []repository
+		var validRepositories []repositoryMapping
 		for _, r := range repositories {
 			if !r.Archived {
 				validRepositories = append(validRepositories, r)
@@ -158,7 +151,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repository, error) {
 		return validRepositories, nil
 	}
 
-	return exponentialBackoff[[]repository](getRepositories, conf.BackoffPolicy...)
+	return exponentialBackoff(getRepositories, conf.BackoffPolicy...)
 }
 func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string)) error {
 	endpoint, err := url.Parse(conf.URL)
@@ -168,8 +161,6 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 
 	page := 1
 	for {
-		fmt.Printf("page - %d\n", page)
-		//Update URL with the incremented page number each time
 		query := endpoint.Query()
 		query.Set("page", strconv.Itoa(page))
 		endpoint.RawQuery = query.Encode()
@@ -185,6 +176,14 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		var repositoryURLs []string
 		for _, r := range repositories {
 			repositoryURLs = append(repositoryURLs, r.URL)
+			// if r.Name == "android" {
+			// 	continue
+			// }
+
+			// //good for debugging
+			// if r.Language == "Kotlin" || r.Language == "Java" || r.Language == "Scala" {
+			// 	repositoryURLs = append(repositoryURLs, r.URL)
+			// }
 		}
 		callback(repositoryURLs)
 		page++
@@ -234,5 +233,5 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 		return true, err
 	}
 
-	return exponentialBackoff[bool](uploadBOM, conf.BackoffPolicy...)
+	return exponentialBackoff(uploadBOM, conf.BackoffPolicy...)
 }

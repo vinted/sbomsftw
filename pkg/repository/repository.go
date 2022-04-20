@@ -3,16 +3,19 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+
+	log "github.com/sirupsen/logrus"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/vinted/software-assets/pkg"
 	"github.com/vinted/software-assets/pkg/bomtools"
 	"github.com/vinted/software-assets/pkg/collectors"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
 )
 
 type Credentials struct {
@@ -44,10 +47,10 @@ func New(vcsURL string, credentials Credentials) (*Repository, error) {
 	}
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 
+	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, filepath.Join(checkoutsPath, name))
 	_, err := git.PlainClone(filepath.Join(checkoutsPath, name), false, &git.CloneOptions{
-		URL:      vcsURL,
-		Progress: os.Stdout,
-		Auth:     &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
+		URL:  vcsURL,
+		Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
 	})
 	if err != nil {
 		return nil, err
@@ -68,7 +71,10 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 		for _, c := range r.genericCollectors {
 			bom, err := c.GenerateBOM(r.FSPath)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%s failed for: %s - error: %s\n", c, r.FSPath, err)
+				log.WithFields(log.Fields{
+					"repository": r,
+					"error":      err,
+				}).Errorf("%s failed to collect BOMs", c)
 				continue
 			}
 			collectedBOMs = append(collectedBOMs, bom)
@@ -88,7 +94,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 	}
 	merged, err := bomtools.MergeBoms(collectedBOMs...)
 	if err != nil {
-		return nil, fmt.Errorf("%s: ExtractBOMs can't merge boms - %s\n", r, err)
+		return nil, fmt.Errorf("%s: ExtractBOMs can't merge boms - %s", r, err)
 	}
 	return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
 }
@@ -99,18 +105,18 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 	if err != nil {
 		var e bomtools.NoRootsFoundError
 		if errors.As(err, &e) {
-			fmt.Fprintf(os.Stderr, "%s: found no language files for %s - skipping\n", collector, r)
+			log.WithField("repository", r).Debugf("%s found no language files - skipping ❎ ", collector)
 		} else {
-			fmt.Fprintf(os.Stderr, "%s: can't convert repo to roots - %s\n", collector, err)
+			log.WithField("repository", r).Warn("%s can't convert repository to roots ❌ ", collector)
 		}
 		return
 	}
-	fmt.Fprintf(os.Stdout, "extracting BOMs from %s with %s\n", r, collector)
+	log.WithField("repository", r).Infof("extracting BOMs with %s", collector)
 	var collectedBOMs []*cdx.BOM
 	for _, root := range collector.BootstrapLanguageFiles(rootsFound) {
 		bom, err := collector.GenerateBOM(root)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "bomsFromCollector: %s cdxgen failed on %s\n", collector, root)
+			log.WithField("collection path", root).Debugf("%s failed for %s", collector, r)
 			continue
 		}
 		collectedBOMs = append(collectedBOMs, bom)
@@ -119,9 +125,12 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 	mergedBOM, err := bomtools.MergeBoms(collectedBOMs...)
 	if err != nil {
 		if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
-			fmt.Fprintf(os.Stderr, "bomsFromCollector: %s found no BOMs\n", collector)
+			log.WithField("repository", r).Warnf("%s found no BOMs", collector)
 		} else {
-			fmt.Fprintf(os.Stderr, "bomsFromCollector: failed to merge BOMs from %s: %s\n", collector, err)
+			log.WithFields(log.Fields{
+				"repository": r,
+				"error":      err,
+			}).Warnf("%s failed to merge BOMs", collector)
 		}
 		return
 	}

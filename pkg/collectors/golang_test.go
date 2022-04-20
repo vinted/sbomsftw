@@ -1,8 +1,10 @@
 package collectors
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGolangCollector(t *testing.T) {
@@ -30,5 +32,13 @@ func TestGolangCollector(t *testing.T) {
 
 	t.Run("implement Stringer correctly", func(t *testing.T) {
 		assert.Equal(t, "golang collector", Golang{}.String())
+	})
+
+	t.Run("generate BOM correctly", func(t *testing.T) {
+		const bomRoot = "/tmp/some-random-dir/go.mod"
+		executor := new(mockBOMBridge)
+		executor.On("bomFromCdxgen", "/tmp/some-random-dir", "golang", false).Return(new(cdx.BOM), nil)
+		_, _ = Golang{executor: executor}.GenerateBOM(bomRoot)
+		executor.AssertExpectations(t)
 	})
 }

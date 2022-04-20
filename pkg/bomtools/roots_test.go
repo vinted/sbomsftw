@@ -182,6 +182,6 @@ func TestSquashRoots(t *testing.T) {
 		"/tmp/inner-dir",
 		"/tmp/inner-dir/deepest-dir",
 	}
-	got := squashRoots(rootsToSquash)
+	got := SquashRoots(rootsToSquash)
 	assert.ElementsMatch(t, want, got)
 }

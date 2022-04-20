@@ -35,7 +35,7 @@ func (g Golang) MatchLanguageFiles(isDir bool, filepath string) bool {
 
 func (g Golang) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "golang"
-	return g.executor.bomFromCdxgen(bomRoot, language)
+	return g.executor.bomFromCdxgen(fp.Dir(bomRoot), language, false)
 }
 
 //BootstrapLanguageFiles implements LanguageCollector interface

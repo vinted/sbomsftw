@@ -25,7 +25,7 @@ func TestPythonCollector(t *testing.T) {
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, "python").Return(new(cdx.BOM), nil)
+		executor.On("bomFromCdxgen", bomRoot, "python", false).Return(new(cdx.BOM), nil)
 		_, _ = Python{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})

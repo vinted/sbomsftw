@@ -75,9 +75,7 @@ ENV ANDROID_BUILD_TOOLS_VERSION="4333796"
 ### Setup Android SDK using Java 8 & Accept EULA
 ENV JAVA_HOME="/usr/lib/jvm/adoptopenjdk-8-hotspot-amd64"
 RUN  mkdir -p ~/.android && touch ~/.android/repositories.cfg && mkdir ~/android-sdk-linux && cd ~/android-sdk-linux \
-    && wget https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_BUILD_TOOLS_VERSION}.z \
-     \
-     ip \
+    && wget https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_BUILD_TOOLS_VERSION}.zip \
     -q --output-document=sdk-tools.zip && unzip sdk-tools.zip && rm sdk-tools.zip \
     && echo y | sdkmanager "build-tools;28.0.2" "platforms;android-28" \
     && echo y | sdkmanager "extras;android;m2repository" "extras;google;m2repository" "extras;google;google_play_services" \
