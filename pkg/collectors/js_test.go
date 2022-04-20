@@ -26,9 +26,9 @@ func TestJSCollector(t *testing.T) {
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
-		const bomRoot = "/tmp/some-random-dir"
+		const bomRoot = "/tmp/some-random-dir/yarn.lock"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, "javascript").Return(new(cdx.BOM), nil)
+		executor.On("bomFromCdxgen", "/tmp/some-random-dir", "javascript", false).Return(new(cdx.BOM), nil)
 		_, _ = JS{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})

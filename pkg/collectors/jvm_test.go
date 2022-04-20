@@ -15,25 +15,30 @@ func TestJVMCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/build.sbt",
 		}
 		got := JVM{}.BootstrapLanguageFiles(bomRoots)
-		assert.Equal(t, bomRoots, got)
+		assert.Equal(t, []string{
+			"/tmp/some-random-dir",
+			"/tmp/some-random-dir/inner-dir",
+			"/tmp/some-random-dir/inner-dir/deepest-dir",
+		}, got)
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, "jvm").Return(new(cdx.BOM), nil)
+		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(new(cdx.BOM), nil)
 		_, _ = JVM{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})
 
 	t.Run("match correct package files", func(t *testing.T) {
 		jvmCollector := JVM{}
-		for _, f := range []string{"/opt/pom.xml", "/opt/build.gradle", "build.gradle.kts", "sbt", "build.sbt"} {
+		for _, f := range []string{"/opt/pom.xml", "/opt/gradlew", "gradlew", "sbt", "build.sbt"} {
 			assert.True(t, jvmCollector.MatchLanguageFiles(false, f))
 		}
 		assert.False(t, jvmCollector.MatchLanguageFiles(false, "p0m.xml"))
 		assert.False(t, jvmCollector.MatchLanguageFiles(true, "pom.xml"))
-		assert.False(t, jvmCollector.MatchLanguageFiles(true, "build.gradle"))
+		assert.False(t, jvmCollector.MatchLanguageFiles(false, "build.gradle"))
+		assert.False(t, jvmCollector.MatchLanguageFiles(false, "build.gradle.kts"))
 	})
 
 	t.Run("implement Stringer correctly", func(t *testing.T) {

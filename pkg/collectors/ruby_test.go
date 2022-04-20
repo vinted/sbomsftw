@@ -22,13 +22,17 @@ func TestRubyCollector(t *testing.T) {
 
 		got := Ruby{executor: executor}.BootstrapLanguageFiles(languageFiles)
 		executor.AssertExpectations(t)
-		assert.ElementsMatch(t, languageFiles, got)
+		assert.ElementsMatch(t, []string{
+			"/tmp/some-random-dir",
+			"/tmp/some-random-dir/inner-dir",
+			"/tmp/some-random-dir/inner-dir/deepest-dir",
+		}, got)
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockBOMBridge)
-		executor.On("bomFromCdxgen", bomRoot, "ruby").Return(new(cdx.BOM), nil)
+		executor.On("bomFromCdxgen", bomRoot, "ruby", false).Return(new(cdx.BOM), nil)
 		_, _ = Ruby{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
 	})
