@@ -44,11 +44,7 @@ func (c CDXGen) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	if err != nil || len(output) == 0 {
 		return nil, fmt.Errorf("%s: can't collect BOMs for %s", c, repositoryPath)
 	}
-	bom, err := bomtools.StringToCDX(output)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %v", c, err)
-	}
-	return bomtools.FilterOutByScope(bom, cdx.ScopeOptional), nil
+	return bomtools.StringToCDX(output)
 }
 
 //String implements BOMCollector interface
