@@ -45,7 +45,6 @@ func setup() {
 		panic("Unable to set ANDROID_HOME variable")
 	}
 }
-//todo filter by scope early
 
 func uploadToDependencyTrack(repositoryName string, bom *cdx.BOM) error {
 	bomString, err := bomtools.CDXToString(bom)
@@ -59,7 +58,6 @@ func uploadToDependencyTrack(repositoryName string, bom *cdx.BOM) error {
 	uploadConfig := NewUploadBOMConfig(endpoint, apiToken, repositoryName, bomString)
 	if _, err = UploadBOM(uploadConfig); err != nil {
 		log.WithField("error", err).Error("can't upload BOMs to Dependency Track")
-		fmt.Printf("Here is your bom: \n%s\n", bomString)
 		return err
 	}
 	return nil
@@ -87,18 +85,36 @@ func sbomsFromRepositoryInternal(vcsURL string) {
 		return
 	}
 	log.Infof("Collected %d components from %s ⭐ ", len(*bom.Components), repo.Name)
-	if viper.GetString("output") == "dtrack" { //TODO Move to enum
+
+	//SBOM output options
+	const (
+		dtrack = "dtrack"
+		stdout = "stdout"
+	)
+
+	outputLocation := viper.GetString("output")
+	switch outputLocation {
+	case dtrack:
 		if err = uploadToDependencyTrack(repo.Name, bom); err != nil {
 			log.WithField("error", err).Errorf("can't upload BOMs from %s to dependency track", repo.Name)
 		}
-		return
+	case stdout:
+		bomString, err := bomtools.CDXToString(bom)
+		if err != nil {
+			log.WithField("error", err).Error("can't convert cdx.BOM to string")
+			return
+		}
+		fmt.Println(bomString)
+	default:
+		bomString, err := bomtools.CDXToString(bom)
+		if err != nil {
+			log.WithField("error", err).Error("can't convert cdx.BOM to string")
+			return
+		}
+		if err = os.WriteFile(outputLocation, []byte(bomString), 0644); err != nil {
+			log.WithField("error", err).Errorf("can't write generated BOM to %s", outputLocation)
+		}
 	}
-	// bomString, err := bomtools.CDXToString(bom)
-	// if err != nil {
-	// 	log.WithField("error", err).Error("can't convert cdx.BOM to string")
-	// 	return
-	// }
-	// fmt.Println(bomString)
 }
 
 func SBOMsFromRepository(vcsURL string) {
