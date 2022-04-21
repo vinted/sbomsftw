@@ -1,10 +1,12 @@
 package collectors
 
 import (
-	cdx "github.com/CycloneDX/cyclonedx-go"
 	"os"
 	fp "path/filepath"
 	"strings"
+
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
 type Golang struct{ executor ShellExecutor }
@@ -35,12 +37,12 @@ func (g Golang) MatchLanguageFiles(isDir bool, filepath string) bool {
 
 func (g Golang) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "golang"
-	return g.executor.bomFromCdxgen(fp.Dir(bomRoot), language, false)
+	return g.executor.bomFromCdxgen(bomRoot, language, false)
 }
 
 //BootstrapLanguageFiles implements LanguageCollector interface
 func (g Golang) BootstrapLanguageFiles(bomRoots []string) []string {
-	return bomRoots
+	return bomtools.SquashRoots(bomRoots)
 }
 
 func (g Golang) String() string {

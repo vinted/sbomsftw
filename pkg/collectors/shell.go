@@ -1,10 +1,14 @@
 package collectors
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/vinted/software-assets/pkg/bomtools"
@@ -18,11 +22,17 @@ type ShellExecutor interface {
 type DefaultShellExecutor struct{}
 
 func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
-	var cdxgenTemplate string
-	if multiModuleMode {
-		cdxgenTemplate = "export GRADLE_MULTI_PROJECT_MODE=1 && cdxgen --type %s -o %s"
-	} else {
-		cdxgenTemplate = "unset GRADLE_MULTI_PROJECT_MODE && cdxgen --type %s -o %s"
+
+	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
+		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
+		var multiModuleModeConfig string
+		if multiModuleMode {
+			multiModuleModeConfig = "export GRADLE_MULTI_PROJECT_MODE=1"
+		} else {
+			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
+		}
+		const template = "%s && %s && cdxgen --type %s -o %s"
+		return fmt.Sprintf(template, licenseConfig, multiModuleModeConfig, language, outputFile)
 	}
 
 	f, err := ioutil.TempFile("/tmp", "sa-collector-tmp-output-")
@@ -38,21 +48,28 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 	}()
 
 	outputFile := f.Name() + ".json"
-	//Execute cdxgen
-	cmd := exec.Command("bash", "-c", fmt.Sprintf(cdxgenTemplate, language, outputFile))
+
+	//Fetching licenses can timeout so add a cancelation of 15 minutes
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute) 
+	cmd := exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, true, language, outputFile))
 	cmd.Dir = bomRoot
 
-	_, err = cmd.Output()
-
-	//fmt.Println(string(out))
-	if err != nil {
-		return nil, fmt.Errorf("can't Collect BOM for %s: %v", bomRoot, err)
+	if err = cmd.Run(); err != nil {
+		cancel()
+		log.WithField("error", err).Errorf("cdxgen failed - regenerating SBOMs without licensing info")
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Minute)
+		cmd = exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, false, language, outputFile))
+		cmd.Dir = bomRoot
+		if err = cmd.Run(); err != nil {
+			cancel()
+			return nil, fmt.Errorf("can't Collect BOM for %s: %v", bomRoot, err)
+		}
+		cancel()
 	}
+	cancel()
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
-		// fmt.Println("collection failed")
-		// fmt.Println(err)
 		return nil, fmt.Errorf("can't Collect %s BOM for %s %v", language, bomRoot, err)
 	}
 	return bomtools.StringToCDX(output)
