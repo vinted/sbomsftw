@@ -58,7 +58,7 @@ func New(vcsURL string, credentials Credentials) (*Repository, error) {
 	return &Repository{
 		Name:              name,
 		FSPath:            filepath.Join(checkoutsPath, name),
-		genericCollectors: []pkg.Collector{collectors.Syft{}, collectors.Trivy{}},
+		genericCollectors: []pkg.Collector{collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{}},
 		languageCollectors: []pkg.LanguageCollector{
 			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
 			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector()},
