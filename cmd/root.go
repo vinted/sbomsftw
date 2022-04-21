@@ -83,7 +83,7 @@ func init() {
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level: debug/info/warn/error/fatal/panic")
-	rootCmd.PersistentFlags().StringP("output", "o", "stdout", "where to output SBOM results: stdout or dtrack")
+	rootCmd.PersistentFlags().StringP("output", "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
 	viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output"))
 }
 
