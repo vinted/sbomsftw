@@ -50,7 +50,7 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 	outputFile := f.Name() + ".json"
 
 	//Fetching licenses can timeout so add a cancelation of 15 minutes
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute) 
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	cmd := exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, true, language, outputFile))
 	cmd.Dir = bomRoot
 
@@ -70,7 +70,7 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
-		return nil, fmt.Errorf("can't Collect %s BOM for %s %v", language, bomRoot, err)
+		return nil, fmt.Errorf("can't Collect %s BOM for %s", language, bomRoot)
 	}
 	return bomtools.StringToCDX(output)
 }
