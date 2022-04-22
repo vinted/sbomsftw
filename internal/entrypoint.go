@@ -2,10 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -66,7 +68,7 @@ func uploadToDependencyTrack(repositoryName string, bom *cdx.BOM) error {
 func sbomsFromRepositoryInternal(vcsURL string) {
 	deleteRepository := func(repositoryPath string) {
 		if err := os.RemoveAll(repositoryPath); err != nil {
-			log.Errorf("can't remove repository directory: %s\n", err)
+			log.WithField("error", err).Errorf("can't remove repository at: %s", repositoryPath)
 		}
 	}
 
@@ -85,6 +87,7 @@ func sbomsFromRepositoryInternal(vcsURL string) {
 		return
 	}
 	log.Infof("Collected %d components from %s ⭐ ", len(*bom.Components), repo.Name)
+	return
 
 	//SBOM output options
 	const (
@@ -147,6 +150,13 @@ func SBOMsFromOrganization(organizationURL string) {
 	err := WalkRepositories(reqConfig, func(repositoryURLs []string) {
 		for _, u := range repositoryURLs {
 			sbomsFromRepositoryInternal(u)
+			if viper.GetBool("delay") {
+				min := 10
+				max := 20
+				delay := rand.Intn(max-min) + min
+				log.Infof("sleeping for %d seconds before cloning another repository", delay)
+				time.Sleep(time.Second * time.Duration(delay))
+			}
 		}
 	})
 	if err != nil {

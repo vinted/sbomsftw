@@ -74,7 +74,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 				log.WithFields(log.Fields{
 					"repository": r,
 					"error":      err,
-				}).Errorf("%s failed to collect BOMs", c)
+				}).Debugf("%s failed to collect BOMs", c)
 				continue
 			}
 			collectedBOMs = append(collectedBOMs, bom)
