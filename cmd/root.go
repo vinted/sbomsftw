@@ -23,7 +23,9 @@ package cmd
 
 import (
 	"errors"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -66,6 +68,7 @@ func Execute() {
 var logLevel string
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {

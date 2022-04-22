@@ -80,6 +80,11 @@ func (j JVM) BootstrapLanguageFiles(bomRoots []string) []string {
 					}).Debug("can't prime gradle cache")
 					continue
 				}
+				log.WithFields(log.Fields{
+					"collector":       j,
+					"collection path": dir,
+				}).Debug("gradle cache primed successfuly")
+
 			}
 		}
 	}

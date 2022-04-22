@@ -27,6 +27,7 @@ import (
 	"regexp"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/vinted/software-assets/internal"
 )
 
@@ -49,5 +50,7 @@ sa-collector org evil-corp --output=dtrack --log-level=warn`,
 }
 
 func init() {
+	orgCmd.Flags().BoolP("delay", "d", false, "whether to add a random delay when cloning repos (default \"false\")")
+	viper.BindPFlag("delay", orgCmd.Flags().Lookup("delay"))
 	rootCmd.AddCommand(orgCmd)
 }
