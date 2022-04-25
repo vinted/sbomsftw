@@ -74,26 +74,3 @@ func RepoToRoots(repoPath string, predicate BOMRootMatcher) ([]string, error) {
 	}
 	return absoluteRoots, nil
 }
-
-func SquashRoots(bomRoots []string) []string {
-	var dirsToFiles = make(map[string][]string)
-	for _, r := range bomRoots {
-		dir := filepath.Dir(r)
-		dirsToFiles[dir] = append(dirsToFiles[dir], filepath.Base(r))
-	}
-	squashed := make([]string, 0, len(dirsToFiles))
-	for dir := range dirsToFiles {
-		squashed = append(squashed, dir)
-	}
-	return squashed
-}
-
-//TODO Add docs
-func DirsToFiles(bomRoots []string) map[string][]string {
-	var dirsToFiles = make(map[string][]string)
-	for _, r := range bomRoots {
-		dir := filepath.Dir(r)
-		dirsToFiles[dir] = append(dirsToFiles[dir], filepath.Base(r))
-	}
-	return dirsToFiles
-}

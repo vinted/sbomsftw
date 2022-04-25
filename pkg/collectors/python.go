@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
 var condaEnvPattern = regexp.MustCompile(`environment.*\.ya?ml`)
@@ -54,7 +53,7 @@ func (p Python) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 		}
 	}()
 	const language = "python"
-	return p.executor.bomFromCdxgen(bomRoot, language, false)
+	return p.executor.bomFromCdxgen(fp.Dir(bomRoot), language, false)
 }
 
 /* BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
@@ -98,7 +97,7 @@ func (p Python) BootstrapLanguageFiles(bomRoots []string) []string {
 		}
 	}
 
-	for dir, files := range bomtools.DirsToFiles(bomRoots) {
+	for dir, files := range SplitPaths(bomRoots) {
 		var requirements []string
 		for _, f := range files {
 			if condaEnvPattern.MatchString(f) {

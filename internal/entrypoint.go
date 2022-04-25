@@ -62,6 +62,7 @@ func uploadToDependencyTrack(repositoryName string, bom *cdx.BOM) error {
 		log.WithField("error", err).Error("can't upload BOMs to Dependency Track")
 		return err
 	}
+	log.Infof("%s bom was upload to Dependency Track", repositoryName)
 	return nil
 }
 
@@ -87,7 +88,7 @@ func sbomsFromRepositoryInternal(vcsURL string) {
 		return
 	}
 	log.Infof("Collected %d components from %s ⭐ ", len(*bom.Components), repo.Name)
-	return
+	//return
 
 	//SBOM output options
 	const (

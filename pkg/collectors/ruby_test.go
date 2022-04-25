@@ -1,17 +1,18 @@
 package collectors
 
 import (
+	"testing"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestRubyCollector(t *testing.T) {
 	t.Run("Bootstrap language files correctly", func(t *testing.T) {
-		executor := new(mockBOMBridge)
+		executor := new(mockShellExecutor)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
-			"bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install").Return("👌", nil)
+			"bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install").Return(nil)
 
 		languageFiles := []string{
 			"/tmp/some-random-dir/Gemfile",
@@ -31,7 +32,7 @@ func TestRubyCollector(t *testing.T) {
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
-		executor := new(mockBOMBridge)
+		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", bomRoot, "ruby", false).Return(new(cdx.BOM), nil)
 		_, _ = Ruby{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
