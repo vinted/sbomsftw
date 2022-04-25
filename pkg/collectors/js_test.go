@@ -1,17 +1,18 @@
 package collectors
 
 import (
+	"testing"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestJSCollector(t *testing.T) {
 	t.Run("bootstrap language files BOM roots correctly", func(t *testing.T) {
-		executor := new(mockBOMBridge)
+		executor := new(mockShellExecutor)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",
-			"pnpm install || npm install || yarn install").Return("👌", nil)
+			"pnpm install || npm install || yarn install").Return(nil)
 
 		bomRoots := []string{
 			"/tmp/some-random-dir/pnpm-lock.yaml",
@@ -22,12 +23,16 @@ func TestJSCollector(t *testing.T) {
 
 		got := JS{executor: executor}.BootstrapLanguageFiles(bomRoots)
 		executor.AssertExpectations(t)
-		assert.ElementsMatch(t, bomRoots, got)
+		assert.ElementsMatch(t, []string{
+			"/tmp/some-random-dir",
+			"/tmp/some-random-dir/inner-dir",
+			"/tmp/some-random-dir/inner-dir/deepest-dir",
+		}, got)
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
-		const bomRoot = "/tmp/some-random-dir/yarn.lock"
-		executor := new(mockBOMBridge)
+		const bomRoot = "/tmp/some-random-dir"
+		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", "/tmp/some-random-dir", "javascript", false).Return(new(cdx.BOM), nil)
 		_, _ = JS{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)

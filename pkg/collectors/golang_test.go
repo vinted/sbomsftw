@@ -8,7 +8,7 @@ import (
 )
 
 func TestGolangCollector(t *testing.T) {
-	t.Run("BootstrapLanguageFiles BOM roots correctly", func(t *testing.T) {
+	t.Run("Bootstrap language files correctly", func(t *testing.T) {
 		bomRoots := []string{
 			"/tmp/some-random-dir/go.mod",
 			"/tmp/some-random-dir/go.sum",
@@ -16,7 +16,11 @@ func TestGolangCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/Gopkg.lock",
 		}
 		got := Golang{}.BootstrapLanguageFiles(bomRoots)
-		assert.ElementsMatch(t, bomRoots, got)
+		assert.ElementsMatch(t, []string{
+			"/tmp/some-random-dir",
+			"/tmp/some-random-dir/inner-dir",
+			"/tmp/some-random-dir/inner-dir/deepest-dir",
+		}, got)
 	})
 
 	t.Run("match correct package files", func(t *testing.T) {
@@ -35,8 +39,8 @@ func TestGolangCollector(t *testing.T) {
 	})
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
-		const bomRoot = "/tmp/some-random-dir/go.mod"
-		executor := new(mockBOMBridge)
+		const bomRoot = "/tmp/some-random-dir"
+		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", "/tmp/some-random-dir", "golang", false).Return(new(cdx.BOM), nil)
 		_, _ = Golang{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)

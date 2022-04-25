@@ -7,7 +7,6 @@ import (
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
 var supportedJSFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
@@ -45,12 +44,12 @@ func (j JS) String() string {
 
 func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "javascript"
-	return j.executor.bomFromCdxgen(fp.Dir(bomRoot), language, false)
+	return j.executor.bomFromCdxgen(bomRoot, language, false)
 }
 
 func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
-	for dir, files := range bomtools.DirsToFiles(bomRoots) {
+	for dir, files := range SplitPaths(bomRoots) {
 		if len(files) == 1 && files[0] == "package.json" { //Create a lock file if none exist yet
 			if err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
 				log.WithFields(log.Fields{
@@ -61,5 +60,5 @@ func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 			}
 		}
 	}
-	return bomRoots
+	return SquashToDirs(bomRoots)
 }

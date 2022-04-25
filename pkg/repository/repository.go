@@ -107,7 +107,10 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 		if errors.As(err, &e) {
 			log.WithField("repository", r).Debugf("%s found no language files - skipping ❎ ", collector)
 		} else {
-			log.WithField("repository", r).Warn("%s can't convert repository to roots ❌ ", collector)
+			log.WithFields(log.Fields{
+				"repository": r,
+				"error":      e,
+			}).Warn("%s can't convert repository to roots ❌ ", collector)
 		}
 		return
 	}

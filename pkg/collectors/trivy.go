@@ -13,6 +13,7 @@ type Trivy struct{}
 
 //GenerateBOM TODO Refactor this and don't shell out
 func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
+	//todo we need cancelation context here as well
 	cmd := fmt.Sprintf("trivy --quiet fs --format cyclonedx %s", repositoryPath)
 	re := regexp.MustCompile(`^[\w./-]*$`)
 

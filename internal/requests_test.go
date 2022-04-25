@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //Error prefixes used for assertions
@@ -111,9 +112,9 @@ func TestGetRepositories(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 1, hitCounter)
 
-		want := []repository{
-			{Name: "xmlsec", Archived: false, URL: "https://github.com/vinted/xmlsec"},
-			{Name: "dotpay", Archived: false, URL: "https://github.com/vinted/dotpay"},
+		want := []repositoryMapping{
+			{Name: "xmlsec", Archived: false, Language: "C", URL: "https://github.com/vinted/xmlsec"},
+			{Name: "dotpay", Archived: false, Language: "Ruby", URL: "https://github.com/vinted/dotpay"},
 		}
 		assert.Equal(t, want, repositories)
 	})

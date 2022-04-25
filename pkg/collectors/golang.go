@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
 type Golang struct{ executor ShellExecutor }
@@ -24,7 +23,7 @@ func (g Golang) MatchLanguageFiles(isDir bool, filepath string) bool {
 		goPkg = "Gopkg.lock"
 	)
 	for _, p := range strings.Split(fp.Dir(filepath), string(os.PathSeparator)) {
-		if p == "vendor" { //Ignore files in vendor directory - add a test for this
+		if p == "vendor" {
 			return false
 		}
 	}
@@ -42,7 +41,7 @@ func (g Golang) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 
 //BootstrapLanguageFiles implements LanguageCollector interface
 func (g Golang) BootstrapLanguageFiles(bomRoots []string) []string {
-	return bomtools.SquashRoots(bomRoots)
+	return SquashToDirs(bomRoots)
 }
 
 func (g Golang) String() string {

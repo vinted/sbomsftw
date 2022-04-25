@@ -27,7 +27,7 @@ func (g Rust) MatchLanguageFiles(isDir bool, filepath string) bool {
 
 //BootstrapLanguageFiles implements LanguageCollector interface
 func (g Rust) BootstrapLanguageFiles(bomRoots []string) []string {
-	return bomRoots
+	return SquashToDirs(bomRoots)
 }
 
 func (g Rust) GenerateBOM(bomRoot string) (*cdx.BOM, error) {

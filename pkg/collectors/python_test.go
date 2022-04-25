@@ -1,16 +1,25 @@
 package collectors
 
 import (
-	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPythonCollector(t *testing.T) {
+	createTempDir := func(t *testing.T) string {
+		tempDirName, err := ioutil.TempDir("/tmp", "sa")
+		if err != nil {
+			t.Fatalf("unable to create temp directory for testing: %s", err)
+		}
+		return tempDirName
+	}
+
 	t.Run("Bootstrap language files correctly", func(t *testing.T) {
 		bomRoots := []string{
 			"/tmp/some-random-dir/requirements.txt",
@@ -24,9 +33,9 @@ func TestPythonCollector(t *testing.T) {
 
 	t.Run("generate BOM correctly", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
-		executor := new(mockBOMBridge)
+		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", bomRoot, "python", false).Return(new(cdx.BOM), nil)
-		_, _ = Python{executor: executor}.GenerateBOM(bomRoot)
+		_, _ = Python{executor: executor}.GenerateBOM("/tmp/some-random-dir/setup.py")
 		executor.AssertExpectations(t)
 	})
 

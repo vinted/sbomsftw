@@ -37,7 +37,7 @@ func (j JVM) String() string {
 func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 
 	isBOMEmpty := func(bom *cdx.BOM) bool {
-		return bom == nil || len(*bom.Components) == 0
+		return bom == nil || bom.Components == nil || len(*bom.Components) == 0
 	}
 
 	const language = "jvm"
@@ -64,7 +64,7 @@ func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 //GenerateBOM implements LanguageCollector interface
 func (j JVM) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "./gradlew"
-	for dir, files := range bomtools.DirsToFiles(bomRoots) {
+	for dir, files := range SplitPaths(bomRoots) {
 		for _, f := range files {
 			if f == "gradlew" {
 				log.WithFields(log.Fields{
@@ -88,5 +88,5 @@ func (j JVM) BootstrapLanguageFiles(bomRoots []string) []string {
 			}
 		}
 	}
-	return bomtools.SquashRoots(bomRoots)
+	return SquashToDirs(bomRoots)
 }
