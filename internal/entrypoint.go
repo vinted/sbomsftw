@@ -168,7 +168,7 @@ func writeSBOMToFile(bom *cdx.BOM, resultsFile string) {
 //Setup & cleanup functions
 
 func cleanup() {
-	log.Info("cleaning up")
+	log.Debug("cleaning up")
 	if _, err := os.Stat(repository.CheckoutsPath); !os.IsNotExist(err) {
 		if err = os.RemoveAll(repository.CheckoutsPath); err != nil {
 			log.WithField("error", err).Errorf("can't remove %s", repository.CheckoutsPath)
