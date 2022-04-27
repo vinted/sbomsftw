@@ -26,6 +26,39 @@
   },
   "components": [
     {
+      "bom-ref": "pkg:golang/github.com/pelletier/go-toml@v1.8.1",
+      "type": "library",
+      "name": "github.com/pelletier/go-toml",
+      "version": "v1.8.1",
+      "hashes": [],
+      "licenses": [],
+      "cpe": "cpe:2.3:a:pelletier:go-toml:v1.8.1:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/github.com/pelletier/go-toml@v1.8.1",
+      "externalReferences": [],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "go-mod-file-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "go"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "go-module"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:pelletier:go_toml:v1.8.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "go.mod"
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:gem/mustermann@1.1.1",
       "type": "library",
       "name": "mustermann",

@@ -1,31 +1,47 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:4305f387-f85e-4ed2-8b3c-f7f7bea7de89",
+  "serialNumber": "urn:uuid:39d0ea34-b60b-475b-a21e-ba88f6bf3f9c",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-04-12T11:52:19Z",
+    "timestamp": "2022-04-13T12:39:28+03:00",
     "tools": [
       {
-        "vendor": "anchore",
-        "name": "syft",
-        "version": "0.43.2"
+        "vendor": "vinted",
+        "name": "sa-collector",
+        "version": "0.1.0"
       }
-    ],
-    "component": {
-      "bom-ref": "c064c5755f84ac3d",
-      "type": "file",
-      "name": "/tmp/ruby-repos/anonymous_rate_response"
-    }
+    ]
   },
   "components": [
     {
-      "bom-ref": "pkg:gem/mustermann@1.1.1?syft-id=736fb64aae5b5832",
+      "bom-ref": "dcbe9b3a-d1ad-4e45-9061-8a123baaf402",
+      "type": "application",
+      "name": "Gemfile.lock",
+      "properties": [
+        {
+          "name": "aquasecurity:trivy:Type",
+          "value": "bundler"
+        },
+        {
+          "name": "aquasecurity:trivy:Class",
+          "value": "lang-pkgs"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:gem/mustermann@1.1.1",
       "type": "library",
       "name": "mustermann",
       "version": "1.1.1",
-      "cpe": "cpe:2.3:a:mustermann:mustermann:1.1.1:*:*:*:*:*:*:*",
-      "purl": "pkg:gem/mustermann@1.1.1",
+      "scope": "required",
+      "description": "A library implementing patterns that behave like regular expressions.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0a21cfe505869cce9ce17998db5260344e78df81ae857c07a62143fd30299531"
+        }
+      ],
       "licenses": [
         {
           "license": {
@@ -38,8 +54,17 @@
             "id": "BSD-2-Clause",
             "url": "https://opensource.org/licenses/BSD-2-Clause"
           }
+        },
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
         }
       ],
+      "cpe": "cpe:2.3:a:mustermann:mustermann:1.1.1:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/mustermann@1.1.1",
+      "externalReferences": [],
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -76,54 +101,34 @@
       ]
     },
     {
-      "bom-ref": "pkg:gem/rack@2.2.3?syft-id=b91bf0da1f42df46",
-      "type": "library",
-      "name": "rack",
-      "version": "2.2.3",
-      "cpe": "cpe:2.3:a:ruby-lang:rack:2.2.3:*:*:*:*:*:*:*",
-      "purl": "pkg:gem/rack@2.2.3",
-      "properties": [
-        {
-          "name": "syft:package:foundBy",
-          "value": "ruby-gemfile-cataloger"
-        },
-        {
-          "name": "syft:package:language",
-          "value": "ruby"
-        },
-        {
-          "name": "syft:package:type",
-          "value": "gem"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:ruby_lang:rack:2.2.3:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:rack:rack:2.2.3:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:ruby:rack:2.2.3:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:*:rack:2.2.3:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": "Gemfile.lock"
-        }
-      ]
-    },
-    {
-      "bom-ref": "pkg:gem/rack-protection@2.1.0?syft-id=a6f8934920726b93",
+      "bom-ref": "pkg:gem/rack-protection@2.1.0",
       "type": "library",
       "name": "rack-protection",
+      "scope": "optional",
       "version": "2.1.0",
+      "description": "Protect against typical web attacks, works with all Rack apps, including Rails.",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "628d6a91340d0fdc0685cbc7e1d52066d8d905ee150b20223e41e4639a81e6c3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
       "cpe": "cpe:2.3:a:rack-protection:rack-protection:2.1.0:*:*:*:*:*:*:*",
       "purl": "pkg:gem/rack-protection@2.1.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/sinatra/sinatra/tree/master/rack-protection",
+          "type": "vcs"
+        }
+      ],
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -196,12 +201,101 @@
       ]
     },
     {
-      "bom-ref": "pkg:gem/ruby2_keywords@0.0.5?syft-id=e9ecf04a3730fd5a",
+      "bom-ref": "pkg:gem/rack@2.2.3",
+      "type": "library",
+      "name": "rack",
+      "version": "2.2.3",
+      "description": "Rack provides a minimal, modular and adaptable interface for developing\nweb applications in Ruby. By wrapping HTTP requests and responses in\nthe simplest way possible, it unifies and distills the API for web\nservers, web frameworks, and software in between (the so-called\nmiddleware) into a single method call.\n",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2638e7eb6689a5725c7e16f30cc4aa4e31694dc3ca30d790952526781bd0bb44"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:ruby-lang:rack:2.2.3:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/rack@2.2.3",
+      "externalReferences": [
+        {
+          "url": "https://github.com/rack/rack/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/rack/rack",
+          "type": "vcs"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "ruby-gemfile-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "ruby"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "gem"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby_lang:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:rack:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:ruby:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:rack:2.2.3:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "Gemfile.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:gem/ruby2_keywords@0.0.5",
       "type": "library",
       "name": "ruby2_keywords",
       "version": "0.0.5",
+      "description": "Shim library for Module#ruby2_keywords",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Ruby",
+            "url": "https://opensource.org/licenses/Ruby"
+          }
+        },
+        {
+          "license": {
+            "id": "BSD-2-Clause",
+            "url": "https://opensource.org/licenses/BSD-2-Clause"
+          }
+        }
+      ],
       "cpe": "cpe:2.3:a:ruby2-keywords:ruby2-keywords:0.0.5:*:*:*:*:*:*:*",
       "purl": "pkg:gem/ruby2_keywords@0.0.5",
+      "externalReferences": [],
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -274,16 +368,39 @@
       ]
     },
     {
-      "bom-ref": "pkg:gem/sinatra@2.1.0?syft-id=264e5b2c8b463415",
+      "bom-ref": "pkg:gem/sinatra@2.1.0",
       "type": "library",
       "name": "sinatra",
       "version": "2.1.0",
-      "cpe": "cpe:2.3:a:ruby-lang:sinatra:2.1.0:*:*:*:*:*:*:*",
-      "purl": "pkg:gem/sinatra@2.1.0",
+      "description": "Sinatra is a DSL for quickly creating web applications in Ruby with minimal effort.",
       "hashes": [
         {
           "alg": "SHA-256",
           "content": "1e000492e8bd8b1d2c8ac48e39d4b3c78dfadaa56fc3038637e981314f6479f2"
+        },
+        {
+          "alg": "SHA-256",
+          "content": "1e000492e8bd8b1d2c8ac48e39d4b3c78dfadaa56fc3038637e981314f6479f4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:a:ruby-lang:sinatra:2.1.0:*:*:*:*:*:*:*",
+      "purl": "pkg:gem/sinatra@2.1.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/sinatra/sinatra/issues",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/sinatra/sinatra",
+          "type": "vcs"
         }
       ],
       "properties": [
@@ -322,12 +439,34 @@
       ]
     },
     {
-      "bom-ref": "pkg:gem/tilt@2.0.10?syft-id=607ae1c3396e4272",
+      "bom-ref": "pkg:gem/tilt@2.0.10",
       "type": "library",
       "name": "tilt",
       "version": "2.0.10",
+      "description": "Generic interface to multiple Ruby template engines",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b664f0e9ae2b500cfa00f9c65c34abc6ff1799cf0034a8c0a0412d520fac866"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-2-Clause",
+            "url": "https://opensource.org/licenses/BSD-2-Clause"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+          }
+        }
+      ],
       "cpe": "cpe:2.3:a:ruby-lang:tilt:2.0.10:*:*:*:*:*:*:*",
       "purl": "pkg:gem/tilt@2.0.10",
+      "externalReferences": [],
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -361,6 +500,70 @@
           "name": "syft:location:0:path",
           "value": "Gemfile.lock"
         }
+      ]
+    },
+    {
+      "bom-ref": "pkg:golang/github.com/pelletier/go-toml@1.8.1",
+      "type": "library",
+      "name": "github.com/pelletier/go-toml",
+      "version": "v1.8.1",
+      "hashes": [],
+      "licenses": [],
+      "cpe": "cpe:2.3:a:pelletier:go-toml:v1.8.1:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/github.com/pelletier/go-toml@1.8.1",
+      "externalReferences": [],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "go-mod-file-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "go"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "go-module"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:pelletier:go_toml:v1.8.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "go.mod"
+        }
+      ]
+    }
+  ],
+  "externalReferences": [
+    {
+      "url": ".",
+      "comment": "Base path",
+      "type": "other"
+    },
+    {
+      "url": "/tmp/ruby-repos/anonymous_rate_response/Gemfile.lock",
+      "comment": "Package file",
+      "type": "other"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "dcbe9b3a-d1ad-4e45-9061-8a123baaf402",
+      "dependsOn": [
+        "pkg:gem/mustermann@1.1.1",
+        "pkg:gem/rack@2.2.3",
+        "pkg:gem/rack-protection@2.1.0",
+        "pkg:gem/ruby2_keywords@0.0.5",
+        "pkg:gem/sinatra@2.1.0",
+        "pkg:gem/tilt@2.0.10"
+      ]
+    },
+    {
+      "ref": "62488c47-9373-46be-b003-0583e5e3850b",
+      "dependsOn": [
+        "dcbe9b3a-d1ad-4e45-9061-8a123baaf402"
       ]
     }
   ]

@@ -1,0 +1,174 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:4ef2f273-e0f7-4ce6-a34b-6d07b92ec8c6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-04-27T09:43:27.861Z",
+    "tools": [
+      {
+        "vendor": "AppThreat",
+        "name": "cdxgen",
+        "version": "4.0.11"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Team AppThreat",
+        "email": "cloud@appthreat.com"
+      }
+    ]
+  },
+  "components": [
+    {
+      "group": "actions",
+      "name": "artifact",
+      "version": "0.3.2",
+      "description": "",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "46f6a14d8daac4503448a115ab21a9bb4efcdbe2"
+        }
+      ],
+      "licenses": [],
+      "purl": "pkg:npm/actions/artifact@0.3.2",
+      "type": "library",
+      "bom-ref": "pkg:npm/actions/artifact@0.3.2"
+    },
+    {
+      "group": "actions",
+      "name": "core",
+      "version": "1.2.4",
+      "description": "",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2b351ee4311e557a6b0287717c62adc7d7fbba4b95284e95ea981eeade460c693471d91f88c11f6a1a2aec77c1b0eb26572e09eebaf561940f513bd7bde6229f"
+        }
+      ],
+      "licenses": [],
+      "purl": "pkg:npm/actions/core@1.2.4",
+      "type": "library",
+      "bom-ref": "pkg:npm/actions/core@1.2.4"
+    },
+    {
+      "bom-ref": "pkg:npm/%40actions/artifact@0.3.2?syft-id=9bc1c6ff02c5e7b2",
+      "type": "library",
+      "name": "@actions/artifact",
+      "version": "0.3.2",
+      "cpe": "cpe:2.3:a:\\@actions\\/artifact:\\@actions\\/artifact:0.3.2:*:*:*:*:*:*:*",
+      "purl": "pkg:npm/%40actions/artifact@0.3.2",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "javascript-lock-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "javascript"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "npm"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:\\@actions\\/artifact:0.3.2:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "yarn.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:npm/%40actions/core@1.2.4?syft-id=cda3720cdea0512e",
+      "type": "library",
+      "name": "@actions/core",
+      "version": "1.2.4",
+      "cpe": "cpe:2.3:a:\\@actions\\/core:\\@actions\\/core:1.2.4:*:*:*:*:*:*:*",
+      "purl": "pkg:npm/%40actions/core@1.2.4",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "javascript-lock-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "javascript"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "npm"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:\\@actions\\/core:1.2.4:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "yarn.lock"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:golang/github.com/pelletier/go-toml@1.8.1",
+      "type": "library",
+      "name": "github.com/pelletier/go-toml",
+      "version": "1.8.1",
+      "hashes": [],
+      "licenses": [],
+      "purl": "pkg:golang/github.com/pelletier/go-toml@1.8.1",
+      "externalReferences": [],
+      "properties": []
+    },
+    {
+      "bom-ref": "pkg:golang/github.com/pelletier/go-toml@v1.8.1",
+      "type": "library",
+      "name": "github.com/pelletier/go-toml",
+      "version": "v1.8.1",
+      "hashes": [],
+      "licenses": [],
+      "cpe": "cpe:2.3:a:pelletier:go-toml:v1.8.1:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/github.com/pelletier/go-toml@v1.8.1",
+      "externalReferences": [],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "go-mod-file-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "go"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "go-module"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:pelletier:go_toml:v1.8.1:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "go.mod"
+        }
+      ]
+    }
+  ],
+  "externalReferences": [
+    {
+      "type": "other",
+      "url": ".",
+      "comment": "Base path"
+    },
+    {
+      "type": "other",
+      "url": "/tmp/checkouts/lighthouse-ci-action/yarn.lock",
+      "comment": "Package file"
+    }
+  ]
+}

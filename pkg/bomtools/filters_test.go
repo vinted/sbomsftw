@@ -11,7 +11,7 @@ import (
 func TestFilterOptionalDependencies(t *testing.T) {
 
 	t.Run("filter out optional dependencies correctly", func(t *testing.T) {
-		testBOM, err := ioutil.ReadFile("../../integration/testdata/bom-optional-dependencies.json")
+		testBOM, err := ioutil.ReadFile("../../integration/testdata/bomtools/bom-optional-dependencies.json")
 		if err != nil {
 			t.Fatalf("can't read a test file: %s", err)
 		}
