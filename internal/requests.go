@@ -66,7 +66,6 @@ func NewUploadBOMConfig(url, apiToken, projectName, bomContents string) UploadBO
 	}
 }
 
-//todo this might break some shit
 type repositoryMapping struct {
 	Name     string
 	Archived bool
@@ -131,14 +130,29 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 		if err != nil {
 			return nil, fmt.Errorf("HTTP Request failed: %w", err)
 		}
-		defer resp.Body.Close()
+
+		defer func() {
+			closeErr := resp.Body.Close()
+			if err != nil {
+				if closeErr != nil {
+					err = fmt.Errorf("GetRepositories: %w can't close response body %v", err, closeErr)
+				}
+				return
+			}
+			err = closeErr
+		}()
+
 		if resp.StatusCode != http.StatusOK {
-			return nil, BadStatusError{Status: resp.StatusCode, URL: conf.URL}
+			err = BadStatusError{Status: resp.StatusCode, URL: conf.URL}
+			return nil, err
 		}
+
 		var repositories []repositoryMapping
-		if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
-			return nil, fmt.Errorf("unable to parse JSON: %w", err)
+		if err = json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
+			err = fmt.Errorf("unable to parse JSON: %w", err)
+			return nil, err
 		}
+
 		if conf.IncludeArchivedRepositories {
 			return repositories, nil
 		}
@@ -176,14 +190,6 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		var repositoryURLs []string
 		for _, r := range repositories {
 			repositoryURLs = append(repositoryURLs, r.URL)
-			// if r.Name == "android" {
-			// 	continue
-			// }
-
-			// //good for debugging
-			// if r.Language == "Kotlin" || r.Language == "Java" || r.Language == "Scala" {
-			// 	repositoryURLs = append(repositoryURLs, r.URL)
-			// }
 		}
 		callback(repositoryURLs)
 		page++
@@ -220,7 +226,7 @@ func UploadBOM(conf UploadBOMConfig) (bool, error) {
 			closeErr := resp.Body.Close()
 			if err != nil {
 				if closeErr != nil {
-					err = fmt.Errorf("uploadBOM: %w can't close response body %v", err, closeErr)
+					err = fmt.Errorf("UploadBOM: %w can't close response body %v", err, closeErr)
 				}
 				return
 			}

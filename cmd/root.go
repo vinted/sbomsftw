@@ -1,24 +1,3 @@
-/*
-Copyright © 2022 Infosec Team <infosec@vinted.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
 package cmd
 
 import (
@@ -45,7 +24,6 @@ This must be done via environment variables. For example:
 export SAC_DTRACK_TOKEN=dependency-track-access-token-with-write-scope
 export SAC_DTRACK_URL=https://dependency-track.evilcorp.com/`
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "software-assets [repo/org] [vcs-url] [flags]",
 	Short: "Collects CycloneDX SBOMs from Github repositories",
@@ -56,8 +34,6 @@ sa-collector org evil-corp                                          collect SBOM
 sa-collector org evil-corp --output=dtrack                          collect SBOMs from evil-corp organization & upload them to Dependency Track`,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -66,6 +42,8 @@ func Execute() {
 }
 
 var logLevel string
+
+const cantBindFlagTemplate = "can't bind %s flag to viper: %v"
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -85,12 +63,15 @@ func init() {
 		return nil
 	}
 
+	const outputFlag = "output"
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level: debug/info/warn/error/fatal/panic")
-	rootCmd.PersistentFlags().StringP("output", "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
-	viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output"))
+	rootCmd.PersistentFlags().StringP(outputFlag, "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
+	if err := viper.BindPFlag(outputFlag, rootCmd.PersistentFlags().Lookup(outputFlag)); err != nil {
+		logrus.Fatalf(cantBindFlagTemplate, outputFlag, err)
+		os.Exit(1)
+	}
 }
 
-// initConfig reads in ENV variables if set.
 func initConfig() {
 	viper.SetEnvPrefix("sac")
 	viper.AutomaticEnv() // read in environment variables that match

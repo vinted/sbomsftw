@@ -110,7 +110,7 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 			log.WithFields(log.Fields{
 				"repository": r,
 				"error":      e,
-			}).Warn("%s can't convert repository to roots ❌ ", collector)
+			}).Warnf("%s can't convert repository to roots ❌ ", collector)
 		}
 		return
 	}
