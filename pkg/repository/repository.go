@@ -18,6 +18,8 @@ import (
 	"github.com/vinted/software-assets/pkg/collectors"
 )
 
+const CheckoutsPath = "/tmp/checkouts/"
+
 type Credentials struct {
 	Username    string
 	AccessToken string
@@ -39,25 +41,28 @@ func (b BadVCSURLError) Error() string {
 }
 
 func New(vcsURL string, credentials Credentials) (*Repository, error) {
-	const checkoutsPath = "/tmp/checkouts/"
-
 	urlPaths := strings.Split(vcsURL, "/")
 	if len(urlPaths) == 0 {
 		return nil, BadVCSURLError{URL: vcsURL}
 	}
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 
-	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, filepath.Join(checkoutsPath, name))
-	_, err := git.PlainClone(filepath.Join(checkoutsPath, name), false, &git.CloneOptions{
-		URL:  vcsURL,
-		Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
-	})
+	fsPath := filepath.Join(CheckoutsPath, name)
+	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
+	_, err := git.PlainClone(fsPath, false, &git.CloneOptions{URL: vcsURL})
 	if err != nil {
-		return nil, err
+		//Retry to clone the repo with credentials if failed
+		_, err = git.PlainClone(fsPath, false, &git.CloneOptions{
+			URL:  vcsURL,
+			Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &Repository{
 		Name:              name,
-		FSPath:            filepath.Join(checkoutsPath, name),
+		FSPath:            filepath.Join(CheckoutsPath, name),
 		genericCollectors: []pkg.Collector{collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{}},
 		languageCollectors: []pkg.LanguageCollector{
 			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
@@ -74,7 +79,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 				log.WithFields(log.Fields{
 					"repository": r,
 					"error":      err,
-				}).Debugf("%s failed to collect BOMs", c)
+				}).Debugf("%s failed to collect SBOMs", c)
 				continue
 			}
 			collectedBOMs = append(collectedBOMs, bom)
@@ -94,7 +99,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 	}
 	merged, err := bomtools.MergeBoms(collectedBOMs...)
 	if err != nil {
-		return nil, fmt.Errorf("%s: ExtractBOMs can't merge boms - %s", r, err)
+		return nil, fmt.Errorf("%s: ExtractBOMs can't merge sboms - %s", r, err)
 	}
 	return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
 }
@@ -114,7 +119,7 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 		}
 		return
 	}
-	log.WithField("repository", r).Infof("extracting BOMs with %s", collector)
+	log.WithField("repository", r).Infof("extracting SBOMs with %s", collector)
 	var collectedBOMs []*cdx.BOM
 	for _, root := range collector.BootstrapLanguageFiles(rootsFound) {
 		bom, err := collector.GenerateBOM(root)
@@ -128,12 +133,12 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 	mergedBOM, err := bomtools.MergeBoms(collectedBOMs...)
 	if err != nil {
 		if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
-			log.WithField("repository", r).Warnf("%s found no BOMs", collector)
+			log.WithField("repository", r).Warnf("%s found no SBOMs", collector)
 		} else {
 			log.WithFields(log.Fields{
 				"repository": r,
 				"error":      err,
-			}).Warnf("%s failed to merge BOMs", collector)
+			}).Warnf("%s failed to merge SBOMs", collector)
 		}
 		return
 	}

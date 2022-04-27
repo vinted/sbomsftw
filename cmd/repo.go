@@ -8,7 +8,6 @@ import (
 	"github.com/vinted/software-assets/internal"
 )
 
-// repoCmd represents the repo command
 var repoCmd = &cobra.Command{
 	Use:   "repo [GitHub repository URL] [flags]",
 	Short: "Collect SBOMs from a single repository",

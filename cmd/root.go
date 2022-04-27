@@ -12,7 +12,7 @@ import (
 )
 
 const subCommandHelpMsg = `
-Output collect SBOMs to stdout or Dependency track for further analysis.
+Output collect SBOMs to stdout/file or Dependency track for further analysis.
 
 To Collect SBOMs from private GitHub repositories a valid set of credentials must be provided.
 This must be done via environment variables. For example:
@@ -21,8 +21,8 @@ export SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
 
 To upload SBOMs to Dependency Track a valid API Token and URL must be provided.
 This must be done via environment variables. For example:
-export SAC_DTRACK_TOKEN=dependency-track-access-token-with-write-scope
-export SAC_DTRACK_URL=https://dependency-track.evilcorp.com/`
+export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
+export SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/`
 
 var rootCmd = &cobra.Command{
 	Use:   "software-assets [repo/org] [vcs-url] [flags]",
