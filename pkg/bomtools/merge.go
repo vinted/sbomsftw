@@ -19,16 +19,20 @@ func normalizePURLs(bom *cdx.BOM) *cdx.BOM {
 		return bom
 	}
 	var normalized []cdx.Component
-	re := regexp.MustCompile(`pkg:\w+/%40[-.\w]+/`)
+	encodedPurlRe := regexp.MustCompile(`pkg:\w+/%40[-.\w]+/`)
+	versionedPurlRe := regexp.MustCompile(`@v[-.\w]+$`)
 	for _, c := range *bom.Components {
 		if c.Type == cdx.ComponentTypeApplication {
 			//Don't normalize PURLs for application type components
 			normalized = append(normalized, c)
 			continue
 		}
-		var normalizedPURL = c.PackageURL //TODO Add a test for this
-		if re.MatchString(normalizedPURL) {
+		var normalizedPURL = c.PackageURL
+		if encodedPurlRe.MatchString(normalizedPURL) {
 			normalizedPURL = strings.Replace(normalizedPURL, "%40", "", 1)
+		}
+		if versionedPurlRe.MatchString(normalizedPURL) {
+			normalizedPURL = strings.Replace(normalizedPURL, "@v", "@", 1)
 		}
 		wrapped, err := url.Parse(normalizedPURL)
 		if err != nil {

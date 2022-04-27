@@ -22,6 +22,25 @@ func TestMergeBoms(t *testing.T) {
 		return bom
 	}
 
+	t.Run("normalize PURLs correctly", func(t *testing.T) {
+		got := normalizePURLs(bomFromFile("../../integration/testdata/bomtools/normalize-purls-bom.json"))
+		require.NotNil(t, got)
+		require.NotNil(t, got.Components)
+
+		var gotPURLs []string
+		for _, c := range *got.Components {
+			gotPURLs = append(gotPURLs, c.PackageURL)
+		}
+		assert.ElementsMatch(t, []string{
+			"pkg:npm/actions/core@1.2.4",
+			"pkg:npm/actions/core@1.2.4",
+			"pkg:npm/actions/artifact@0.3.2",
+			"pkg:npm/actions/artifact@0.3.2",
+			"pkg:golang/github.com/pelletier/go-toml@1.8.1",
+			"pkg:golang/github.com/pelletier/go-toml@1.8.1",
+		}, gotPURLs)
+	})
+
 	t.Run("return errors when merging nil or empty list collectors", func(t *testing.T) {
 		got, err := MergeBoms([]*cdx.BOM{}...)
 		assert.Nil(t, got)
@@ -32,14 +51,13 @@ func TestMergeBoms(t *testing.T) {
 		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
 	})
 
-	//TODO Missing tests on name normalizaiton
 	t.Run("merge multiple BOMs correctly", func(t *testing.T) {
 
-		firstBOM := bomFromFile("../../integration/testdata/bom-to-merge-1.json")
-		secondBOM := bomFromFile("../../integration/testdata/bom-to-merge-2.json")
-		thirdBOM := bomFromFile("../../integration/testdata/bom-to-merge-3.json")
+		firstBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-1.json")
+		secondBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-2.json")
+		thirdBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-3.json")
 
-		expectedBOM := bomFromFile("../../integration/testdata/expected-merged-boms.json")
+		expectedBOM := bomFromFile("../../integration/testdata/bomtools/expected-merged-boms.json")
 		got, err := MergeBoms(firstBOM, secondBOM, thirdBOM)
 		require.NoError(t, err)
 
