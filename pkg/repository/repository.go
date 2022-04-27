@@ -106,9 +106,9 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 
 func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.LanguageCollector, results chan<- *cdx.BOM) {
 	defer wg.Done()
-	rootsFound, err := bomtools.RepoToRoots(r.FSPath, collector.MatchLanguageFiles)
+	rootsFound, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)
 	if err != nil {
-		var e bomtools.NoRootsFoundError
+		var e noLanguageFilesFoundError
 		if errors.As(err, &e) {
 			log.WithField("repository", r).Debugf("%s found no language files - skipping ❎ ", collector)
 		} else {

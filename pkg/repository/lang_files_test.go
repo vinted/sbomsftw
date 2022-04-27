@@ -1,4 +1,4 @@
-package bomtools
+package repository
 
 import (
 	"io/fs"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFindRoots(t *testing.T) {
+func TestLanguageFilesByPredicate(t *testing.T) {
 
 	var fileMatchAttempts []string
 	predicate := func(isDir bool, filename string) bool {
@@ -31,46 +31,50 @@ func TestFindRoots(t *testing.T) {
 			"test-repository/inner-dir":                           {Mode: fs.ModeDir},
 			"test-repository/inner-dir/.git":                      {Mode: fs.ModeDir},
 			"test-repository/inner-dir/.git/Packages":             {},
+			"test-repository/inner-dir/test/Packages":             {},
+			"test-repository/inner-dir/tests/Packages":            {},
 			"test-repository/inner-dir/Packages":                  {Mode: fs.ModeDir},
 			"test-repository/inner-dir/Packages.lock":             {Mode: fs.ModeDir},
+			"test-repository/inner-dir/testing/Packages":          {},
 			"test-repository/inner-dir/deepest-dir/Packages.lock": {},
 		}
 		expectedBOMRoots = []string{
 			"test-repository/Packages",
 			"test-repository/Packages.lock",
 			"test-repository/inner-dir/deepest-dir/Packages.lock",
+			"test-repository/inner-dir/testing/Packages",
 		}
 	)
 
 	t.Run("correct BOM roots are found based on the predicate provided", func(t *testing.T) {
-		bomRoots, err := findRoots(testFS, predicate)
+		bomRoots, err := languageFilesByPredicate(testFS, predicate)
 		require.NoError(t, err)
 		assert.Equal(t, expectedBOMRoots, bomRoots)
 
 		assert.Equal(t, []string{".", "test-repository", "Packages", "Packages.lock", "ignore.txt", "inner-dir",
-			"Packages", "Packages.lock", "deepest-dir", "Packages.lock"}, fileMatchAttempts)
+			"Packages", "Packages.lock", "deepest-dir", "Packages.lock", "testing", "Packages"}, fileMatchAttempts)
 	})
 
 	t.Run("error is returned whenever FS walk fails", func(t *testing.T) {
-		roots, err := findRoots(os.DirFS("/non-existing"), nil)
+		roots, err := languageFilesByPredicate(os.DirFS("/non-existing"), nil)
 		assert.NotNil(t, err)
 		assert.Empty(t, roots)
 	})
 }
 
-func TestRelativeToAbsoluteRoots(t *testing.T) {
-	relativeRoots := []string{
+func TestRelativeToAbsolutePaths(t *testing.T) {
+	relativePaths := []string{
 		"Packages",
 		"Packages.lock",
 		"inner-dir/Packages.lock",
 		"inner-dir/deepest-dir/Packages.lock",
 	}
-	expectedRoots := []string{
+	expectedPaths := []string{
 		"/tmp/test-repository/Packages",
 		"/tmp/test-repository/Packages.lock",
 		"/tmp/test-repository/inner-dir/Packages.lock",
 		"/tmp/test-repository/inner-dir/deepest-dir/Packages.lock",
 	}
-	got := relativeToAbsoluteRoots("/tmp/test-repository", relativeRoots...)
-	assert.Equal(t, expectedRoots, got)
+	got := relativeToAbsolutePaths("/tmp/test-repository", relativePaths...)
+	assert.Equal(t, expectedPaths, got)
 }
