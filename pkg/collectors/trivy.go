@@ -1,33 +1,36 @@
 package collectors
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/vinted/software-assets/pkg/bomtools"
 	"os/exec"
 	"regexp"
+	"time"
 )
 
 type Trivy struct{}
 
-//GenerateBOM TODO Refactor this and don't shell out
+//GenerateBOM implements Collector interface
 func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
-	//todo we need cancelation context here as well
 	cmd := fmt.Sprintf("trivy --quiet fs --format cyclonedx %s", repositoryPath)
 	re := regexp.MustCompile(`^[\w./-]*$`)
 
-	if matches := re.MatchString(repositoryPath); !matches { //Sanitize repositoryPath given to prevent cmd injection
+	if !re.MatchString(repositoryPath) {
 		return nil, errors.New("invalid shell command")
 	}
-	out, err := exec.Command("bash", "-c", cmd).Output()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, "bash", "-c", cmd).Output()
 	if err != nil {
 		return nil, err
 	}
 	return bomtools.StringToCDX(out)
 }
 
-//String implements BOMCollector interface
+//String implements LanguageCollector interface
 func (t Trivy) String() string {
 	return "trivy collector"
 }
