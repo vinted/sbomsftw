@@ -3,12 +3,9 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"os"
+	log "github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
-	"sync"
-
-	log "github.com/sirupsen/logrus"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
@@ -86,16 +83,11 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 		}
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(r.languageCollectors))
-	results := make(chan *cdx.BOM, len(r.languageCollectors))
 	for _, c := range r.languageCollectors {
-		go r.bomsFromCollector(&wg, c, results)
-	}
-	wg.Wait()
-	close(results)
-	for r := range results {
-		collectedBOMs = append(collectedBOMs, r)
+		bom := r.bomsFromCollector(c)
+		if bom != nil {
+			collectedBOMs = append(collectedBOMs, bom)
+		}
 	}
 	merged, err := bomtools.MergeBoms(collectedBOMs...)
 	if err != nil {
@@ -104,8 +96,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 	return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
 }
 
-func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.LanguageCollector, results chan<- *cdx.BOM) {
-	defer wg.Done()
+func (r Repository) bomsFromCollector(collector pkg.LanguageCollector) *cdx.BOM {
 	rootsFound, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)
 	if err != nil {
 		var e noLanguageFilesFoundError
@@ -117,7 +108,7 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 				"error":      e,
 			}).Warnf("%s can't convert repository to roots ❌ ", collector)
 		}
-		return
+		return nil
 	}
 	log.WithField("repository", r).Infof("extracting SBOMs with %s", collector)
 	var collectedBOMs []*cdx.BOM
@@ -128,7 +119,6 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 			continue
 		}
 		collectedBOMs = append(collectedBOMs, bom)
-		os.Remove(root)
 	}
 	mergedBOM, err := bomtools.MergeBoms(collectedBOMs...)
 	if err != nil {
@@ -140,9 +130,9 @@ func (r Repository) bomsFromCollector(wg *sync.WaitGroup, collector pkg.Language
 				"error":      err,
 			}).Warnf("%s failed to merge SBOMs", collector)
 		}
-		return
+		return nil
 	}
-	results <- mergedBOM
+	return mergedBOM
 }
 
 func (r Repository) String() string {
