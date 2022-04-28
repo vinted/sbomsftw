@@ -37,6 +37,9 @@ func (b BadVCSURLError) Error() string {
 	return fmt.Sprintf("invalid VCS URL supplied %s\n", b.URL)
 }
 
+/*New clones the repository supplied in vcsURL parameter and returns a new Repository instance.
+If repository is private credentials must be supplied.
+*/
 func New(vcsURL string, credentials Credentials) (*Repository, error) {
 	urlPaths := strings.Split(vcsURL, "/")
 	if len(urlPaths) == 0 {
@@ -67,6 +70,10 @@ func New(vcsURL string, credentials Credentials) (*Repository, error) {
 	}, nil
 }
 
+/*ExtractBOMs extracts SBOMs for every possible language from the repository.
+If includeGenericCollectors is set to true then additional collectors such as:
+syft & trivy and executed against the repository as well. This tends to produce richer SBOM results
+*/
 func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedBOMs []*cdx.BOM
 	if includeGenericCollectors { //Generate base BOM with generic collectors (syft & trivy)

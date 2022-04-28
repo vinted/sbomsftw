@@ -8,7 +8,7 @@ import (
 )
 
 func TestRubyCollector(t *testing.T) {
-	t.Run("Bootstrap language files correctly", func(t *testing.T) {
+	t.Run("bootstrap language files correctly", func(t *testing.T) {
 		executor := new(mockShellExecutor)
 		executor.On("shellOut",
 			"/tmp/some-random-dir/inner-dir/deepest-dir",

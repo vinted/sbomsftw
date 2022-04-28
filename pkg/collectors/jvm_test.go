@@ -9,7 +9,7 @@ import (
 )
 
 func TestJVMCollector(t *testing.T) {
-	t.Run("Bootstrap language files correctly", func(t *testing.T) {
+	t.Run("bootstrap language files correctly", func(t *testing.T) {
 		bomRoots := []string{
 			"/tmp/some-random-dir/build.gradle",
 			"/tmp/some-random-dir/build.gradle.kts",
@@ -45,7 +45,7 @@ func TestJVMCollector(t *testing.T) {
 		bom := new(cdx.BOM)
 		bom.Components = &components
 
-		//Return a non empty BOM the first time
+		//Return a non-empty BOM the first time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", false).Return(bom, nil)
 		//But return an empty BOM for the second time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(new(cdx.BOM), nil)
@@ -54,7 +54,6 @@ func TestJVMCollector(t *testing.T) {
 		assert.Equal(t, got, bom)
 	})
 
-	//todo think of a better naming
 	t.Run("collect BOMs correctly when multiple gradle build modes succeed", func(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
@@ -67,9 +66,9 @@ func TestJVMCollector(t *testing.T) {
 		secondBOM := new(cdx.BOM)
 		secondBOM.Components = &secondBOMComponents
 
-		//Return a non empty BOM the first time
+		//Return a non-empty BOM the first time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", false).Return(firstBOM, nil)
-		//Return a non empty BOM the second time as well
+		//Return a non-empty BOM the second time as well
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(secondBOM, nil)
 
 		got, _ := JVM{executor: executor}.GenerateBOM(bomRoot)

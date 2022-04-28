@@ -8,7 +8,7 @@ import (
 )
 
 func TestGolangCollector(t *testing.T) {
-	t.Run("Bootstrap language files correctly", func(t *testing.T) {
+	t.Run("bootstrap language files correctly", func(t *testing.T) {
 		bomRoots := []string{
 			"/tmp/some-random-dir/go.mod",
 			"/tmp/some-random-dir/go.sum",

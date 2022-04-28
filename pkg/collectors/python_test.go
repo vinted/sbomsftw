@@ -20,7 +20,7 @@ func TestPythonCollector(t *testing.T) {
 		return tempDirName
 	}
 
-	t.Run("Bootstrap language files correctly", func(t *testing.T) {
+	t.Run("bootstrap language files correctly", func(t *testing.T) {
 		bomRoots := []string{
 			"/tmp/some-random-dir/requirements.txt",
 			"/tmp/some-random-dir/setup.py",
