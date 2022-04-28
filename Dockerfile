@@ -19,7 +19,7 @@ RUN add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
 
 # Install all remaining apt dependencies
 RUN apt-get update && apt-get install rubygems build-essential git ruby-dev adoptopenjdk-8-hotspot \
-    cmake maven pkg-config libssl-dev locales unzip clang nodejs cargo -y --no-install-recommends
+    cmake maven pkg-config libssl-dev locales unzip clang nodejs -y --no-install-recommends
 
 # Fix up locales
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
@@ -28,8 +28,7 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 # Install yarn & SBOM collection tools (cdxgen & cyclonedx-cli & cyclonedx-tools & licensee)
-RUN npm install -g @appthreat/cdxgen @cyclonedx/bom yarn bower \
-  && gem install bundler bundler:1.9 bundler:1.17.3
+RUN npm install -g @appthreat/cdxgen yarn bower && gem install bundler bundler:1.9 bundler:1.17.3
 
 RUN go install -v github.com/ramya-rao-a/go-outline@latest \
     && go install -v github.com/cweill/gotests/gotests@latest \

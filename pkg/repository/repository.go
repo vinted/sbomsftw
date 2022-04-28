@@ -71,6 +71,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 	var collectedBOMs []*cdx.BOM
 	if includeGenericCollectors { //Generate base BOM with generic collectors (syft & trivy)
 		for _, c := range r.genericCollectors {
+			log.WithField("repository", r).Infof("extracting SBOMs with: %s", c)
 			bom, err := c.GenerateBOM(r.FSPath)
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -97,7 +98,7 @@ func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error)
 }
 
 func (r Repository) bomsFromCollector(collector pkg.LanguageCollector) *cdx.BOM {
-	rootsFound, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)
+	languageFiles, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)
 	if err != nil {
 		var e noLanguageFilesFoundError
 		if errors.As(err, &e) {
@@ -105,17 +106,17 @@ func (r Repository) bomsFromCollector(collector pkg.LanguageCollector) *cdx.BOM 
 		} else {
 			log.WithFields(log.Fields{
 				"repository": r,
-				"error":      e,
+				"error":      err,
 			}).Warnf("%s can't convert repository to roots ❌ ", collector)
 		}
 		return nil
 	}
 	log.WithField("repository", r).Infof("extracting SBOMs with %s", collector)
 	var collectedBOMs []*cdx.BOM
-	for _, root := range collector.BootstrapLanguageFiles(rootsFound) {
-		bom, err := collector.GenerateBOM(root)
+	for _, collectionPath := range collector.BootstrapLanguageFiles(languageFiles) {
+		bom, err := collector.GenerateBOM(collectionPath)
 		if err != nil {
-			log.WithField("collection path", root).Debugf("%s failed for %s", collector, r)
+			log.WithField("collection path", collectionPath).Debugf("%s failed for %s", collector, r)
 			continue
 		}
 		collectedBOMs = append(collectedBOMs, bom)

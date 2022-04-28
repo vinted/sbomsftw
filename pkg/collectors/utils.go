@@ -34,11 +34,18 @@ func SquashToDirs(pathsToSquash []string) []string {
 
 /*
 SplitPaths - Split filesystem paths to directory -> file mappings.
-E.g. given the following input: ["/tmp/go.mod", "/tmp/go.sum"] this
-function will return a map of:
+E.g. given the following input: []string{
+		"/tmp/test/go.mod",
+		"/tmp/test/go.sum",
+		"/tmp/inner-dir/go.mod",
+		"/tmp/inner-dir/go.sum",
+		"/tmp/inner-dir/deepest-dir/go.mod",
+	}
+this function will return a map of:
 	[
-		"/tmp" => "go.mod",
-		"/tmp" => "go.sum",
+		"/tmp/test" => ["go.mod", "go.sum"],
+		"/tmp/inner-dir" => ["go.mod", "go.sum"],
+		"/tmp/inner-dir/deepest-dir" => ["go.mod"],
 	]
 */
 func SplitPaths(bomRoots []string) map[string][]string {

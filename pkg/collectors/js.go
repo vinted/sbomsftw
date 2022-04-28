@@ -49,6 +49,7 @@ func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 
 func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
+	var bootstrappedRoots []string
 	for dir, files := range SplitPaths(bomRoots) {
 		if len(files) == 1 && files[0] == "package.json" { //Create a lock file if none exist yet
 			if err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
@@ -59,6 +60,7 @@ func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 				continue
 			}
 		}
+		bootstrappedRoots = append(bootstrappedRoots, dir)
 	}
-	return SquashToDirs(bomRoots)
+	return bootstrappedRoots
 }

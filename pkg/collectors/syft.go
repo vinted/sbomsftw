@@ -50,5 +50,5 @@ func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 
 //String implements BOMCollector interface
 func (s Syft) String() string {
-	return "syft collector"
+	return "generic syft collector"
 }

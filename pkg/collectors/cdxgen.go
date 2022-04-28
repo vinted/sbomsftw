@@ -49,5 +49,5 @@ func (c CDXGen) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 
 //String implements BOMCollector interface
 func (c CDXGen) String() string {
-	return "cdxgen collector"
+	return "generic cdxgen collector"
 }

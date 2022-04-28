@@ -49,7 +49,7 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 
 	outputFile := f.Name() + ".json"
 
-	//Fetching licenses can timeout so add a cancelation of 15 minutes
+	//Fetching licenses can time out so add a cancellation of 15 minutes
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	cmd := exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, true, language, outputFile))
 	cmd.Dir = bomRoot
