@@ -18,7 +18,7 @@ RUN add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
     && echo "deb-src [signed-by=${NODE_KEY}] https://deb.nodesource.com/node_12.x focal main" >> nodesource.list
 
 # Install all remaining apt dependencies
-RUN apt-get update && apt-get install rubygems build-essential git ruby-dev default-jre adoptopenjdk-8-hotspot \
+RUN apt-get update && apt-get install rubygems build-essential git ruby-dev adoptopenjdk-8-hotspot \
     cmake maven pkg-config libssl-dev locales unzip clang nodejs cargo -y --no-install-recommends
 
 # Fix up locales
@@ -47,7 +47,7 @@ ENV PATH="${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${AND
 ENV ANDROID_BUILD_TOOLS_VERSION="4333796"
 
 ### Setup Android SDK using Java 8 & Accept EULA
-ENV JAVA_HOME="/usr/lib/jvm/adoptopenjdk-8-hotspot-arm64"
+ENV JAVA_HOME="/usr/lib/jvm/adoptopenjdk-8-hotspot-amd64"
 RUN  mkdir -p ~/.android && touch ~/.android/repositories.cfg && mkdir ~/android-sdk-linux && cd ~/android-sdk-linux \
     && wget https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_BUILD_TOOLS_VERSION}.zip \
     -q --output-document=sdk-tools.zip && unzip sdk-tools.zip && rm sdk-tools.zip \

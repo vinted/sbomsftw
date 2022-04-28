@@ -56,7 +56,7 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 
 	if err = cmd.Run(); err != nil {
 		cancel()
-		log.WithField("error", err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
+		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
 		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Minute)
 		cmd = exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, false, language, outputFile))
 		cmd.Dir = bomRoot
