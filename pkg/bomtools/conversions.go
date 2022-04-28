@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+//StringToCDX convert SBOM in JSON string format to cyclonedx.BOM instance
 func StringToCDX(bom []byte) (*cyclonedx.BOM, error) {
 	cdx := new(cyclonedx.BOM)
 	decoder := cyclonedx.NewBOMDecoder(strings.NewReader(string(bom)), cyclonedx.BOMFileFormatJSON)
@@ -16,6 +17,7 @@ func StringToCDX(bom []byte) (*cyclonedx.BOM, error) {
 	return cdx, nil
 }
 
+//CDXToString convert cyclonedx.BOM instance to a JSON string
 func CDXToString(cdx *cyclonedx.BOM) (string, error) {
 	bomBytes := &bytes.Buffer{}
 	encoder := cyclonedx.NewBOMEncoder(bomBytes, cyclonedx.BOMFileFormatJSON)

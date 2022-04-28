@@ -196,6 +196,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 	}
 }
 
+//UploadBOM uploads BOM to Dependency Track based on the configuration given
 func UploadBOM(conf UploadBOMConfig) (bool, error) {
 	uploadBOM := func() (bool, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
