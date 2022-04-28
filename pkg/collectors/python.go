@@ -43,6 +43,7 @@ func (p Python) MatchLanguageFiles(isDir bool, filepath string) bool {
 	return condaEnvPattern.MatchString(filename)
 }
 
+//GenerateBOM implements LanguageCollector interface
 func (p Python) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	defer func() {
 		if err := os.RemoveAll(bomRoot); err != nil {
@@ -56,7 +57,7 @@ func (p Python) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	return p.executor.bomFromCdxgen(fp.Dir(bomRoot), language, false)
 }
 
-/* BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
+/*BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
 all conda environment.yml files to a single requirements.txt file. This is needed because cdxgen
 doesn't support conda package manager.
 */

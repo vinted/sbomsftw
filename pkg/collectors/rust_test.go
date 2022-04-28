@@ -8,7 +8,7 @@ import (
 )
 
 func TestRustCollector(t *testing.T) {
-	t.Run("Bootstrap language files correctly", func(t *testing.T) {
+	t.Run("bootstrap language files correctly", func(t *testing.T) {
 		languageFiles := []string{
 			"/tmp/some-random-dir/Cargo.lock",
 			"/tmp/some-random-dir/Cargo.toml",

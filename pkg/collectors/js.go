@@ -19,6 +19,7 @@ func NewJSCollector() JS {
 	return JS{executor: DefaultShellExecutor{}}
 }
 
+//MatchLanguageFiles implements LanguageCollector interface
 func (j JS) MatchLanguageFiles(isDir bool, filepath string) bool {
 	for _, p := range strings.Split(fp.Dir(filepath), string(os.PathSeparator)) {
 		if p == "node_modules" { //Ignore files in node_modules directory
@@ -42,11 +43,13 @@ func (j JS) String() string {
 	return "javascript collector"
 }
 
+//GenerateBOM implements LanguageCollector interface
 func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "javascript"
 	return j.executor.bomFromCdxgen(bomRoot, language, false)
 }
 
+//BootstrapLanguageFiles implements LanguageCollector interface
 func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
 	var bootstrappedRoots []string

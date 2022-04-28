@@ -34,6 +34,7 @@ func (j JVM) String() string {
 	return "jvm collector"
 }
 
+//GenerateBOM implements LanguageCollector interface
 func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 
 	isBOMEmpty := func(bom *cdx.BOM) bool {
@@ -61,7 +62,7 @@ func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	return bomtools.MergeBoms(singleModeBom, multiModeBom)
 }
 
-//GenerateBOM implements LanguageCollector interface
+//BootstrapLanguageFiles implements LanguageCollector interface
 func (j JVM) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "./gradlew"
 	for dir, files := range SplitPaths(bomRoots) {

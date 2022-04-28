@@ -30,6 +30,7 @@ func (g Rust) BootstrapLanguageFiles(bomRoots []string) []string {
 	return SquashToDirs(bomRoots)
 }
 
+//GenerateBOM implements LanguageCollector interface
 func (g Rust) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "rust"
 	return g.executor.bomFromCdxgen(bomRoot, language, false)

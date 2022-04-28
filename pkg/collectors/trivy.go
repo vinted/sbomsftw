@@ -30,7 +30,7 @@ func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	return bomtools.StringToCDX(out)
 }
 
-//String implements LanguageCollector interface
+//String implements Collector interface
 func (t Trivy) String() string {
 	return "generic trivy collector"
 }

@@ -13,6 +13,7 @@ import (
 
 type Syft struct{}
 
+//GenerateBOM implements Collector interface
 func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	const bomFormat = "cyclonedxjson"
 	input := source.Input{
@@ -48,7 +49,7 @@ func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	return bomtools.StringToCDX(cdxString)
 }
 
-//String implements BOMCollector interface
+//String implements Collector interface
 func (s Syft) String() string {
 	return "generic syft collector"
 }
