@@ -66,7 +66,7 @@ func SBOMsFromOrganization(organizationURL string) {
 		}
 	})
 	if err != nil {
-		log.WithField("error", err).Fatal("Collection failed! Can't recover - exiting")
+		log.WithError(err).Fatal("Collection failed! Can't recover - exiting")
 	}
 }
 
@@ -74,7 +74,7 @@ func SBOMsFromOrganization(organizationURL string) {
 func sbomsFromRepositoryInternal(vcsURL string) {
 	deleteRepository := func(repositoryPath string) {
 		if err := os.RemoveAll(repositoryPath); err != nil {
-			log.WithField("error", err).Errorf("can't remove repository at: %s", repositoryPath)
+			log.WithError(err).Errorf("can't remove repository at: %s", repositoryPath)
 		}
 	}
 
@@ -83,13 +83,13 @@ func sbomsFromRepositoryInternal(vcsURL string) {
 		AccessToken: viper.GetString("GITHUB_TOKEN"),
 	})
 	if err != nil {
-		log.WithField("error", err).Errorf("can't clone %s", vcsURL)
+		log.WithError(err).Errorf("can't clone %s", vcsURL)
 		return
 	}
 	defer deleteRepository(repo.FSPath)
 	bom, err := repo.ExtractBOMs(true)
 	if err != nil {
-		log.WithField("error", err).Errorf("can't collect SBOMs from %s", repo.Name)
+		log.WithError(err).Errorf("can't collect SBOMs from %s", repo.Name)
 		return
 	}
 	if bom == nil || bom.Components == nil || len(*bom.Components) == 0 {
@@ -114,7 +114,7 @@ func uploadSBOMToDependencyTrack(repositoryName string, bom *cdx.BOM) {
 	const errMsg = "can't upload SBOMs to Dependency Track"
 	bomString, err := bomtools.CDXToString(bom)
 	if err != nil {
-		log.WithField("error", err).Error(errMsg)
+		log.WithError(err).Error(errMsg)
 		return
 	}
 
@@ -137,7 +137,7 @@ func uploadSBOMToDependencyTrack(repositoryName string, bom *cdx.BOM) {
 
 	uploadConfig := NewUploadBOMConfig(endpoint, apiToken, repositoryName, bomString)
 	if _, err = UploadBOM(uploadConfig); err != nil {
-		log.WithField("error", err).Error(errMsg)
+		log.WithError(err).Error(errMsg)
 		return
 	}
 	log.Infof("%s bom was successfully uploaded to Dependency Track", repositoryName)
@@ -147,7 +147,7 @@ func uploadSBOMToDependencyTrack(repositoryName string, bom *cdx.BOM) {
 func printSBOMToStdout(bom *cdx.BOM) {
 	bomString, err := bomtools.CDXToString(bom)
 	if err != nil {
-		log.WithField("error", err).Error("can't print SBOMs to stdout")
+		log.WithError(err).Error("can't print SBOMs to stdout")
 		return
 	}
 	fmt.Println(bomString)
@@ -157,11 +157,11 @@ func printSBOMToStdout(bom *cdx.BOM) {
 func writeSBOMToFile(bom *cdx.BOM, resultsFile string) {
 	bomString, err := bomtools.CDXToString(bom)
 	if err != nil {
-		log.WithField("error", err).Error("can't write SBOMs to file")
+		log.WithError(err).Error("can't write SBOMs to file")
 		return
 	}
 	if err = os.WriteFile(resultsFile, []byte(bomString), 0644); err != nil {
-		log.WithField("error", err).Errorf("can't write SBOMs to %s", resultsFile)
+		log.WithError(err).Errorf("can't write SBOMs to %s", resultsFile)
 	}
 }
 
@@ -171,13 +171,13 @@ func cleanup() {
 	log.Debug("cleaning up")
 	if _, err := os.Stat(repository.CheckoutsPath); !os.IsNotExist(err) {
 		if err = os.RemoveAll(repository.CheckoutsPath); err != nil {
-			log.WithField("error", err).Errorf("can't remove %s", repository.CheckoutsPath)
+			log.WithError(err).Errorf("can't remove %s", repository.CheckoutsPath)
 		}
 	}
 	gradleCache := filepath.Join(os.Getenv("HOME"), ".gradle")
 	if _, err := os.Stat(gradleCache); !os.IsNotExist(err) {
 		if err = os.RemoveAll(gradleCache); err != nil {
-			log.WithField("error", err).Errorf("can't remove %s", gradleCache)
+			log.WithError(err).Errorf("can't remove %s", gradleCache)
 		}
 	}
 	os.Exit(0) //TODO Fix this so that we exit with a proper status code
@@ -194,7 +194,7 @@ func setup() {
 	}
 	if _, err := os.Stat(repository.CheckoutsPath); !os.IsNotExist(err) {
 		if err = os.RemoveAll(repository.CheckoutsPath); err != nil {
-			log.WithField("error", err).Errorf("can't remove %s", repository.CheckoutsPath)
+			log.WithError(err).Errorf("can't remove %s", repository.CheckoutsPath)
 		}
 	}
 
