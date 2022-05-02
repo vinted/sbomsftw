@@ -11,7 +11,15 @@ import (
 	"time"
 )
 
-type Trivy struct{}
+type Trivy struct {
+	ctx context.Context
+}
+
+func NewTrivyCollector(ctx context.Context) Trivy {
+	return Trivy{
+		ctx: ctx,
+	}
+}
 
 //GenerateBOM implements Collector interface
 func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
@@ -21,7 +29,7 @@ func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	if !re.MatchString(repositoryPath) {
 		return nil, errors.New("invalid shell command")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(t.ctx, 5*time.Minute)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "bash", "-c", cmd).Output()
 	if err != nil {

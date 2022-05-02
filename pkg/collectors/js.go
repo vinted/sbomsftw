@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"os"
 	fp "path/filepath"
 	"strings"
@@ -12,11 +13,13 @@ import (
 var supportedJSFiles = []string{"yarn.lock", "bower.json", "package.json", "pnpm-lock.yaml", "package-lock.json"}
 
 type JS struct {
-	executor ShellExecutor
+	executor shellExecutor
 }
 
-func NewJSCollector() JS {
-	return JS{executor: DefaultShellExecutor{}}
+func NewJSCollector(ctx context.Context) JS {
+	return JS{
+		executor: newDefaultShellExecutor(ctx),
+	}
 }
 
 //MatchLanguageFiles implements LanguageCollector interface

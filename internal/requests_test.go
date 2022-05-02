@@ -27,6 +27,7 @@ func TestExponentialBackoff(t *testing.T) {
 
 	createUploadBOMConfig := func(url string) UploadBOMConfig {
 		return UploadBOMConfig{
+			ctx:      context.Background(),
 			URL:      url,
 			APIToken: "test-token",
 			BackoffConfig: BackoffConfig{
@@ -46,6 +47,7 @@ func TestExponentialBackoff(t *testing.T) {
 		defer timeoutServer.Close()
 
 		requestConfig := GetRepositoriesConfig{
+			ctx:      context.Background(),
 			URL:      timeoutServer.URL,
 			APIToken: "test-token",
 			BackoffConfig: BackoffConfig{
@@ -249,6 +251,7 @@ func TestUploadBOM(t *testing.T) {
 
 func createGetRepositoriesConfig(url string) GetRepositoriesConfig {
 	return GetRepositoriesConfig{
+		ctx:                         context.Background(),
 		URL:                         url,
 		APIToken:                    "test-token",
 		IncludeArchivedRepositories: false,
@@ -261,6 +264,7 @@ func createGetRepositoriesConfig(url string) GetRepositoriesConfig {
 
 func createUploadBOMConfig(url string) UploadBOMConfig {
 	return UploadBOMConfig{
+		ctx: context.Background(),
 		URL: url,
 		BackoffConfig: BackoffConfig{
 			RequestTimeout: 10 * time.Second,

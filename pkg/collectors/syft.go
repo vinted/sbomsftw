@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"fmt"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -11,11 +12,24 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type Syft struct{}
+type Syft struct {
+	ctx context.Context
+}
 
-//GenerateBOM implements Collector interface
-func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
+func NewSyftCollector(ctx context.Context) Syft {
+	return Syft{
+		ctx: ctx,
+	}
+}
+
+type sbomCollectionResult struct {
+	sbom *cdx.BOM
+	err  error
+}
+
+func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomCollectionResult) {
 	const bomFormat = "cyclonedxjson"
+
 	input := source.Input{
 		Location:    repositoryPath,
 		UserInput:   "dir:" + repositoryPath,
@@ -25,13 +39,32 @@ func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	}
 	src, _, err := source.New(input, nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("invalid repository path supplied for syft collection: %v\n", err)
+		err = fmt.Errorf("%s repository path is invalid: %v\n", repositoryPath, err)
+		select {
+		case <-s.ctx.Done():
+			return
+		default:
+			result <- sbomCollectionResult{sbom: nil, err: err}
+			return
+		}
 	}
+
+	if s.ctx.Err() != nil {
+		return //Return early & don't execute Syft if context is Done.
+	}
+
 	cfg := cataloger.DefaultConfig()
 	cfg.Search.Scope = source.AllLayersScope
 	pkgCatalog, relationships, osRelease, err := syft.CatalogPackages(src, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("syft collection for %s failed: %v\n", repositoryPath, err)
+		err = fmt.Errorf("can't collect SBOMs for %s: %v", repositoryPath, err)
+		select {
+		case <-s.ctx.Done():
+			return
+		default:
+			result <- sbomCollectionResult{sbom: nil, err: err}
+			return
+		}
 	}
 
 	sbom := sbom.SBOM{
@@ -44,9 +77,35 @@ func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	}
 	cdxString, err := syft.Encode(sbom, syft.FormatByName(bomFormat))
 	if err != nil {
-		return nil, fmt.Errorf("can't decode syft bom to %s: %v\n", bomFormat, err)
+		err = fmt.Errorf("can't encode SBOMs to %s format: %v\n", bomFormat, err)
+		select {
+		case <-s.ctx.Done():
+			return
+		default:
+			result <- sbomCollectionResult{sbom: nil, err: err}
+			return
+		}
 	}
-	return bomtools.StringToCDX(cdxString)
+
+	select {
+	case <-s.ctx.Done():
+		return
+	default:
+		finalSBOM, err := bomtools.StringToCDX(cdxString)
+		result <- sbomCollectionResult{sbom: finalSBOM, err: err}
+	}
+}
+
+//GenerateBOM implements Collector interface
+func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
+	worker := make(chan sbomCollectionResult, 1)
+	go s.generateBOMInternal(repositoryPath, worker)
+	select {
+	case <-s.ctx.Done():
+		return nil, s.ctx.Err()
+	case result := <-worker:
+		return result.sbom, result.err
+	}
 }
 
 //String implements Collector interface

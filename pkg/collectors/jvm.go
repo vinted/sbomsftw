@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	fp "path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -10,11 +11,13 @@ import (
 )
 
 type JVM struct {
-	executor ShellExecutor
+	executor shellExecutor
 }
 
-func NewJVMCollector() JVM {
-	return JVM{executor: DefaultShellExecutor{}}
+func NewJVMCollector(ctx context.Context) JVM {
+	return JVM{
+		executor: newDefaultShellExecutor(ctx),
+	}
 }
 
 //MatchLanguageFiles Implements LanguageCollector interface

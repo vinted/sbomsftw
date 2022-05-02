@@ -1,17 +1,16 @@
 package internal
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"math/rand"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/vinted/software-assets/pkg/bomtools"
@@ -27,11 +26,14 @@ func SBOMsFromRepository(vcsURL string) {
 	defer cleanup()
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		<-sigs
-		cleanup()
+		cancel()
 	}()
-	sbomsFromRepositoryInternal(vcsURL)
+	sbomsFromRepositoryInternal(ctx, vcsURL)
 }
 
 /*
@@ -44,50 +46,58 @@ func SBOMsFromOrganization(organizationURL string) {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		<-sigs
-		cleanup()
+		cancel()
 	}()
 
 	githubUsername := viper.GetString("GITHUB_USERNAME")
 	githubAPIToken := viper.GetString("GITHUB_TOKEN")
 
-	reqConfig := NewGetRepositoriesConfig(organizationURL, githubUsername, githubAPIToken)
+	reqConfig := NewGetRepositoriesConfig(ctx, organizationURL, githubUsername, githubAPIToken)
 	err := WalkRepositories(reqConfig, func(repositoryURLs []string) {
 		for _, u := range repositoryURLs {
-			sbomsFromRepositoryInternal(u)
-			if viper.GetBool("delay") {
-				min := 10
-				max := 20
-				delay := rand.Intn(max-min) + min
-				log.Infof("sleeping for %d seconds before cloning another repository", delay)
-				time.Sleep(time.Second * time.Duration(delay))
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				sbomsFromRepositoryInternal(ctx, u)
 			}
 		}
 	})
-	if err != nil {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		log.WithError(err).Fatal("Collection failed! Can't recover - exiting")
 	}
 }
 
 //sbomsFromRepositoryInternal collect SBOMs from a single repository, given the VCS URL of the repository
-func sbomsFromRepositoryInternal(vcsURL string) {
+func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 	deleteRepository := func(repositoryPath string) {
 		if err := os.RemoveAll(repositoryPath); err != nil {
 			log.WithError(err).Errorf("can't remove repository at: %s", repositoryPath)
 		}
 	}
 
-	repo, err := repository.New(vcsURL, repository.Credentials{
+	repo, err := repository.New(ctx, vcsURL, repository.Credentials{
 		Username:    viper.GetString("GITHUB_USERNAME"),
 		AccessToken: viper.GetString("GITHUB_TOKEN"),
 	})
+	if errors.Is(err, context.Canceled) {
+		return
+	}
 	if err != nil {
 		log.WithError(err).Errorf("can't clone %s", vcsURL)
 		return
 	}
+
 	defer deleteRepository(repo.FSPath)
-	bom, err := repo.ExtractBOMs(true)
+	bom, err := repo.ExtractSBOMs(true)
+	if errors.Is(err, context.Canceled) {
+		return
+	}
 	if err != nil {
 		log.WithError(err).Errorf("can't collect SBOMs from %s", repo.Name)
 		return
@@ -101,7 +111,7 @@ func sbomsFromRepositoryInternal(vcsURL string) {
 	outputLocation := viper.GetString("output")
 	switch outputLocation {
 	case "dtrack":
-		uploadSBOMToDependencyTrack(repo.Name, bom)
+		uploadSBOMToDependencyTrack(ctx, repo.Name, bom)
 	case "stdout":
 		printSBOMToStdout(bom)
 	default:
@@ -110,7 +120,7 @@ func sbomsFromRepositoryInternal(vcsURL string) {
 }
 
 //uploadSBOMToDependencyTrack SBOM Output function: Dependency track
-func uploadSBOMToDependencyTrack(repositoryName string, bom *cdx.BOM) {
+func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom *cdx.BOM) {
 	const errMsg = "can't upload SBOMs to Dependency Track"
 	bomString, err := bomtools.CDXToString(bom)
 	if err != nil {
@@ -135,8 +145,12 @@ func uploadSBOMToDependencyTrack(repositoryName string, bom *cdx.BOM) {
 		return
 	}
 
-	uploadConfig := NewUploadBOMConfig(endpoint, apiToken, repositoryName, bomString)
-	if _, err = UploadBOM(uploadConfig); err != nil {
+	uploadConfig := NewUploadBOMConfig(ctx, endpoint, apiToken, repositoryName, bomString)
+	_, err = UploadBOM(uploadConfig)
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+	if err != nil {
 		log.WithError(err).Error(errMsg)
 		return
 	}
@@ -168,7 +182,7 @@ func writeSBOMToFile(bom *cdx.BOM, resultsFile string) {
 //Setup & cleanup functions
 
 func cleanup() {
-	log.Debug("cleaning up")
+	log.Debug("cleaning up - bye!")
 	if _, err := os.Stat(repository.CheckoutsPath); !os.IsNotExist(err) {
 		if err = os.RemoveAll(repository.CheckoutsPath); err != nil {
 			log.WithError(err).Errorf("can't remove %s", repository.CheckoutsPath)

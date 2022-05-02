@@ -14,15 +14,20 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type ShellExecutor interface {
-	bomFromCdxgen(bomRoot, language string, multiModuleMode bool) (*cdx.BOM, error)
+type shellExecutor interface {
 	shellOut(bomRoot string, bootstrapCmd string) error
+	bomFromCdxgen(bomRoot, language string, multiModuleMode bool) (*cdx.BOM, error)
 }
 
-type DefaultShellExecutor struct{}
+type defaultShellExecutor struct {
+	ctx context.Context
+}
 
-func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
+func newDefaultShellExecutor(ctx context.Context) defaultShellExecutor {
+	return defaultShellExecutor{ctx: ctx}
+}
 
+func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
 	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
 		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
 		var multiModuleModeConfig string
@@ -50,14 +55,14 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 	outputFile := f.Name() + ".json"
 
 	//Fetching licenses can time out so add a cancellation of 15 minutes
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	ctx, cancel := context.WithTimeout(d.ctx, 15*time.Minute)
 	cmd := exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, true, language, outputFile))
 	cmd.Dir = bomRoot
 
 	if err = cmd.Run(); err != nil {
 		cancel()
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
-		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Minute)
+		ctx, cancel = context.WithTimeout(d.ctx, 10*time.Minute)
 		cmd = exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, false, language, outputFile))
 		cmd.Dir = bomRoot
 		if err = cmd.Run(); err != nil {
@@ -75,8 +80,10 @@ func (d DefaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 	return bomtools.StringToCDX(output)
 }
 
-func (d DefaultShellExecutor) shellOut(execDir, shellCmd string) error {
-	cmd := exec.Command("bash", "-c", shellCmd)
+func (d defaultShellExecutor) shellOut(execDir, shellCmd string) error {
+	ctx, cancel := context.WithTimeout(d.ctx, 10*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-c", shellCmd)
 	cmd.Dir = execDir
 	return cmd.Run()
 }

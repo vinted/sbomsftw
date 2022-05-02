@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	fp "path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -14,10 +15,14 @@ const (
 	gemfileLock = "Gemfile.lock"
 )
 
-type Ruby struct{ executor ShellExecutor }
+type Ruby struct {
+	executor shellExecutor
+}
 
-func NewRubyCollector() Ruby {
-	return Ruby{executor: DefaultShellExecutor{}}
+func NewRubyCollector(ctx context.Context) Ruby {
+	return Ruby{
+		executor: newDefaultShellExecutor(ctx),
+	}
 }
 
 //MatchLanguageFiles implements LanguageCollector interface
@@ -42,7 +47,7 @@ func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
 		if len(files) == 1 && files[0] == gemfile {
 			/*
 				BootstrapLanguageFiles by running bundler install. This runs three versions of bundler.
-				Latest bundler, 19 & 1.17.3 bundler, this is needed for compatability reasons
+				Latest bundler, 1.9 & 1.17.3 bundler, this is needed for compatability reasons
 				when working with old ruby projects.
 			*/
 			f := log.Fields{

@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -19,10 +20,14 @@ var condaDependencyPattern = regexp.MustCompile(`- .*=\d.*`)
 var condaLooseDependencyPattern = regexp.MustCompile(`^[\w-]*=\d.*$`)
 var supportedPythonFiles = []string{"setup.py", "requirements.txt", "Pipfile.lock", "poetry.lock"}
 
-type Python struct{ executor ShellExecutor }
+type Python struct {
+	executor shellExecutor
+}
 
-func NewPythonCollector() Python {
-	return Python{executor: DefaultShellExecutor{}}
+func NewPythonCollector(ctx context.Context) Python {
+	return Python{
+		executor: newDefaultShellExecutor(ctx),
+	}
 }
 
 //MatchLanguageFiles implements LanguageCollector interface
