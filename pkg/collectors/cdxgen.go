@@ -12,7 +12,15 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type CDXGen struct{}
+type CDXGen struct {
+	ctx context.Context
+}
+
+func NewCDXGenCollector(ctx context.Context) CDXGen {
+	return CDXGen{
+		ctx: ctx,
+	}
+}
 
 //GenerateBOM TODO Refactor this and don't shell out
 func (c CDXGen) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
@@ -31,18 +39,18 @@ func (c CDXGen) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	outputFile := f.Name() + ".json"
 
 	cdxgenCmd := fmt.Sprintf("export FETCH_LICENSE=false && cdxgen --recursive -o %s", outputFile)
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	ctx, cancel := context.WithTimeout(c.ctx, 15*time.Minute)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "-c", cdxgenCmd)
 	cmd.Dir = repositoryPath
 
 	if err = cmd.Run(); err != nil {
-		return nil, fmt.Errorf("%s: can't collect BOMs for %s: %v", c, repositoryPath, err)
+		return nil, fmt.Errorf("can't collect BOMs for %s: %v", repositoryPath, err)
 	}
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
-		return nil, fmt.Errorf("%s: can't collect BOMs for %s", c, repositoryPath)
+		return nil, fmt.Errorf("can't collect BOMs for %s", repositoryPath)
 	}
 	return bomtools.StringToCDX(output)
 }

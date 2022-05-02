@@ -20,12 +20,14 @@ type BackoffConfig struct {
 
 type GetRepositoriesConfig struct {
 	BackoffConfig
+	ctx                         context.Context
 	URL, Username, APIToken     string
 	IncludeArchivedRepositories bool
 }
 
 type UploadBOMConfig struct {
 	BackoffConfig
+	ctx                                     context.Context
 	AutoCreate                              bool
 	URL, APIToken, ProjectName, BOMContents string
 }
@@ -39,8 +41,9 @@ func (b BadStatusError) Error() string {
 	return fmt.Sprintf("did not get 200 from %s, got %d", b.URL, b.Status)
 }
 
-func NewGetRepositoriesConfig(url, username, apiToken string) GetRepositoriesConfig {
+func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken string) GetRepositoriesConfig {
 	return GetRepositoriesConfig{
+		ctx:                         ctx,
 		URL:                         url,
 		Username:                    username,
 		APIToken:                    apiToken,
@@ -52,8 +55,9 @@ func NewGetRepositoriesConfig(url, username, apiToken string) GetRepositoriesCon
 	}
 }
 
-func NewUploadBOMConfig(url, apiToken, projectName, bomContents string) UploadBOMConfig {
+func NewUploadBOMConfig(ctx context.Context, url, apiToken, projectName, bomContents string) UploadBOMConfig {
 	return UploadBOMConfig{
+		ctx:         ctx,
 		URL:         url,
 		APIToken:    apiToken,
 		AutoCreate:  true, // 99% of times we want this
@@ -117,7 +121,7 @@ func exponentialBackoff[T response](request func() (T, error), backoff ...time.D
 //too many requests error. Returns a slice of repositories fetched or an error if something goes wrong.
 func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 	getRepositories := func() ([]repositoryMapping, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
+		ctx, cancel := context.WithTimeout(conf.ctx, conf.RequestTimeout)
 		defer cancel()
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, conf.URL, nil)
 		if err != nil {
@@ -199,7 +203,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 //UploadBOM uploads BOM to Dependency Track based on the configuration given
 func UploadBOM(conf UploadBOMConfig) (bool, error) {
 	uploadBOM := func() (bool, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
+		ctx, cancel := context.WithTimeout(conf.ctx, conf.RequestTimeout)
 		defer cancel()
 		// Build the required payload for Dependency Track
 		payload, err := json.Marshal(map[string]string{

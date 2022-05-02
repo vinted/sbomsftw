@@ -1,18 +1,19 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"path/filepath"
-	"strings"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	log "github.com/sirupsen/logrus"
 	"github.com/vinted/software-assets/pkg"
 	"github.com/vinted/software-assets/pkg/bomtools"
 	"github.com/vinted/software-assets/pkg/collectors"
+	"path/filepath"
+	"strings"
+	"sync"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"
@@ -23,6 +24,7 @@ type Credentials struct {
 }
 
 type Repository struct {
+	ctx                context.Context
 	Name               string
 	FSPath             string
 	genericCollectors  []pkg.Collector
@@ -37,10 +39,10 @@ func (b BadVCSURLError) Error() string {
 	return fmt.Sprintf("invalid VCS URL supplied %s\n", b.URL)
 }
 
-/*New clones the repository supplied in vcsURL parameter and returns a new Repository instance.
+/*New clones the repository supplied in the vcsURL parameter and returns a new Repository instance.
 If repository is private credentials must be supplied.
 */
-func New(vcsURL string, credentials Credentials) (*Repository, error) {
+func New(ctx context.Context, vcsURL string, credentials Credentials) (*Repository, error) {
 	urlPaths := strings.Split(vcsURL, "/")
 	if len(urlPaths) == 0 {
 		return nil, BadVCSURLError{URL: vcsURL}
@@ -49,10 +51,10 @@ func New(vcsURL string, credentials Credentials) (*Repository, error) {
 
 	fsPath := filepath.Join(CheckoutsPath, name)
 	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
-	_, err := git.PlainClone(fsPath, false, &git.CloneOptions{URL: vcsURL})
+	_, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{URL: vcsURL})
 	if err != nil {
 		//Retry to clone the repo with credentials if failed
-		_, err = git.PlainClone(fsPath, false, &git.CloneOptions{
+		_, err = git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
 			URL:  vcsURL,
 			Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
 		})
@@ -61,86 +63,157 @@ func New(vcsURL string, credentials Credentials) (*Repository, error) {
 		}
 	}
 	return &Repository{
-		Name:              name,
-		FSPath:            filepath.Join(CheckoutsPath, name),
-		genericCollectors: []pkg.Collector{collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{}},
+		ctx:    ctx,
+		Name:   name,
+		FSPath: fsPath,
+		genericCollectors: []pkg.Collector{
+			collectors.NewSyftCollector(ctx), collectors.NewTrivyCollector(ctx), collectors.NewCDXGenCollector(ctx),
+		},
 		languageCollectors: []pkg.LanguageCollector{
-			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
-			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector()},
+			collectors.NewPythonCollector(ctx), collectors.NewRustCollector(ctx), collectors.NewJVMCollector(ctx),
+			collectors.NewGolangCollector(ctx), collectors.NewJSCollector(ctx), collectors.NewRubyCollector(ctx)},
 	}, nil
 }
 
-/*ExtractBOMs extracts SBOMs for every possible language from the repository.
+/*ExtractSBOMs extracts SBOMs for every possible language from the repository.
 If includeGenericCollectors is set to true then additional collectors such as:
-syft & trivy and executed against the repository as well. This tends to produce richer SBOM results
+syft & trivy & cdxgen are executed against the repository as well. This tends to produce richer SBOM results
 */
-func (r Repository) ExtractBOMs(includeGenericCollectors bool) (*cdx.BOM, error) {
-	var collectedBOMs []*cdx.BOM
-	if includeGenericCollectors { //Generate base BOM with generic collectors (syft & trivy)
+func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error) {
+	var collectedSBOMs []*cdx.BOM
+	//Generate base SBOM with generic collectors (syft/trivy/cdxgen)
+	if includeGenericCollectors {
 		for _, c := range r.genericCollectors {
-			log.WithField("repository", r).Infof("extracting SBOMs with: %s", c)
-			bom, err := c.GenerateBOM(r.FSPath)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"repository": r,
-					"error":      err,
-				}).Debugf("%s failed to collect SBOMs", c)
+			select {
+			case <-r.ctx.Done():
+				return nil, r.ctx.Err()
+			default:
+				log.WithField("repository", r).Infof("extracting SBOMs with: %s", c)
+				bom, err := c.GenerateBOM(r.FSPath)
+				if err == nil {
+					collectedSBOMs = append(collectedSBOMs, bom)
+					continue
+				}
+				log.WithFields(log.Fields{"repository": r, "error": err}).Debugf("%s failed to collect SBOMs", c)
+			}
+		}
+	}
+
+	if r.ctx.Err() != nil {
+		return nil, r.ctx.Err() //Return early if user cancelled
+	}
+
+	for res := range r.filterApplicableCollectors() {
+		select {
+		case <-r.ctx.Done():
+			return nil, r.ctx.Err()
+		default:
+			collector := res.collector
+			languageFiles := res.languageFiles
+			log.WithField("repository", r).Infof("extracting SBOMs with %s", collector)
+
+			/*
+				Generate SBOMs from every directory that contains language files
+			*/
+			var sbomsFromCollector []*cdx.BOM
+			for _, collectionPath := range collector.BootstrapLanguageFiles(languageFiles) {
+				b, err := collector.GenerateBOM(collectionPath)
+				if err == nil {
+					sbomsFromCollector = append(sbomsFromCollector, b)
+					continue
+				}
+				logFields := log.Fields{"collection path": collectionPath, "error": err}
+				log.WithFields(logFields).Debugf("%s failed for %s", collector, r)
+			}
+			/*
+				Collector traversed the whole repository and generated SBOMs for every collection path.
+				Time to merge those SBOMs into a single one
+			*/
+
+			mergedSBOM, err := bomtools.MergeBoms(sbomsFromCollector...)
+			if err == nil {
+				//Append merged SBOM from this collector & move on to the next one
+				collectedSBOMs = append(collectedSBOMs, mergedSBOM)
 				continue
 			}
-			collectedBOMs = append(collectedBOMs, bom)
+			if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
+				log.WithField("repository", r).Warnf("%s found no SBOMs", collector)
+				continue
+			}
+			logFields := log.Fields{"repository": r, "error": err}
+			log.WithFields(logFields).Debugf("%s failed to merge SBOMs", collector)
 		}
 	}
+	select {
+	case <-r.ctx.Done():
+		return nil, r.ctx.Err()
+	default:
+		//All collectors are finished - merge collected SBOMs into a single one
+		merged, err := bomtools.MergeBoms(collectedSBOMs...)
+		if err != nil {
+			return nil, fmt.Errorf("%s: ExtractSBOMs can't merge sboms - %s", r, err)
+		}
 
-	for _, c := range r.languageCollectors {
-		bom := r.bomsFromCollector(c)
-		if bom != nil {
-			collectedBOMs = append(collectedBOMs, bom)
-		}
+		/*
+			Filter optional SBOM components. Some libraries are only used for development purposes: E.g. junit/mockito.
+			These libraries aren't included in release builds & we don't want to track them for vulnerabilities.
+			These test libraries have the CycloneDX optional scope attached to them - so we filter out all optional
+			components before returning the final SBOM.
+		*/
+		return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
 	}
-	merged, err := bomtools.MergeBoms(collectedBOMs...)
-	if err != nil {
-		return nil, fmt.Errorf("%s: ExtractBOMs can't merge sboms - %s", r, err)
-	}
-	return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
 }
 
-func (r Repository) bomsFromCollector(collector pkg.LanguageCollector) *cdx.BOM {
-	languageFiles, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)
-	if err != nil {
+type applicableCollector struct {
+	collector     pkg.LanguageCollector
+	languageFiles []string
+}
+
+/*filterApplicableCollectors - walk the repository and identify which collectors are applicable. E.g.
+given the following repository structure:
+	/tmp/some-repo/Cargo.toml
+	/tmp/some-repo/file1.rs
+	/tmp/some-repo/file2.rs
+	/tmp/some-repo/inner-dir/yarn.lock
+	/tmp/some-repo/inner-dir/index.js
+
+filterApplicableCollectors would return a closed channel with the following elements:
+	applicableCollector struct {
+		collector:     pkg.Rust
+		languageFiles: ["/tmp/some-repo/Cargo.toml"]
+	},
+	applicableCollector struct {
+		collector:     pkg.JS
+		languageFiles: ["/tmp/some-repo/inner-dir/yarn.lock"]
+	}
+*/
+func (r Repository) filterApplicableCollectors() <-chan applicableCollector {
+	//walk this repository with a given collector - see if it can find any language files
+	filter := func(wg *sync.WaitGroup, collector pkg.LanguageCollector, results chan<- applicableCollector) {
+		defer wg.Done()
+		languageFiles, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)
+		if err == nil {
+			results <- applicableCollector{collector: collector, languageFiles: languageFiles}
+			return
+		}
 		var e noLanguageFilesFoundError
 		if errors.As(err, &e) {
-			log.WithField("repository", r).Debugf("%s found no language files - skipping ❎ ", collector)
-		} else {
-			log.WithFields(log.Fields{
-				"repository": r,
-				"error":      err,
-			}).Warnf("%s can't convert repository to roots ❌ ", collector)
+			log.WithField("repository", r).Debugf("%s found no language files - skipping", collector)
+			return
 		}
-		return nil
+		logFields := log.Fields{"repository": r, "error": err}
+		log.WithFields(logFields).Warnf("%s failed to walk repository for language files", collector)
 	}
-	log.WithField("repository", r).Infof("extracting SBOMs with %s", collector)
-	var collectedBOMs []*cdx.BOM
-	for _, collectionPath := range collector.BootstrapLanguageFiles(languageFiles) {
-		bom, err := collector.GenerateBOM(collectionPath)
-		if err != nil {
-			log.WithField("collection path", collectionPath).Debugf("%s failed for %s", collector, r)
-			continue
-		}
-		collectedBOMs = append(collectedBOMs, bom)
+
+	var wg sync.WaitGroup
+	wg.Add(len(r.languageCollectors))
+	results := make(chan applicableCollector, len(r.languageCollectors))
+	for _, c := range r.languageCollectors {
+		go filter(&wg, c, results)
 	}
-	mergedBOM, err := bomtools.MergeBoms(collectedBOMs...)
-	if err != nil {
-		if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
-			log.WithField("repository", r).Warnf("%s found no SBOMs", collector)
-		} else {
-			log.WithFields(log.Fields{
-				"repository": r,
-				"error":      err,
-			}).Warnf("%s failed to merge SBOMs", collector)
-		}
-		return nil
-	}
-	return mergedBOM
+	wg.Wait()
+	close(results)
+	return results
 }
 
 func (r Repository) String() string {

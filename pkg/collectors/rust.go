@@ -1,14 +1,19 @@
 package collectors
 
 import (
+	"context"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	fp "path/filepath"
 )
 
-type Rust struct{ executor ShellExecutor }
+type Rust struct {
+	executor shellExecutor
+}
 
-func NewRustCollector() Rust {
-	return Rust{executor: DefaultShellExecutor{}}
+func NewRustCollector(ctx context.Context) Rust {
+	return Rust{
+		executor: newDefaultShellExecutor(ctx),
+	}
 }
 
 //MatchLanguageFiles implements LanguageCollector interface

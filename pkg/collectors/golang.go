@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"os"
 	fp "path/filepath"
 	"strings"
@@ -8,10 +9,14 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 )
 
-type Golang struct{ executor ShellExecutor }
+type Golang struct {
+	executor shellExecutor
+}
 
-func NewGolangCollector() Golang {
-	return Golang{executor: DefaultShellExecutor{}}
+func NewGolangCollector(ctx context.Context) Golang {
+	return Golang{
+		executor: newDefaultShellExecutor(ctx),
+	}
 }
 
 //MatchLanguageFiles implements LanguageCollector interface
