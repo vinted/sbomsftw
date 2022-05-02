@@ -137,7 +137,7 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 				continue
 			}
 			if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
-				log.WithField("repository", r).Warnf("%s found no SBOMs", collector)
+				log.WithField("repository", r).Debugf("%s found no SBOMs", collector)
 				continue
 			}
 			logFields := log.Fields{"repository": r, "error": err}
