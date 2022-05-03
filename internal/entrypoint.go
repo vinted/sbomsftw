@@ -107,7 +107,7 @@ func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 		return
 	}
 
-	log.Infof("Wooho! 🎉 Collected %d SBOM components from %s", len(*bom.Components), repo.Name)
+	log.Infof("Collected %d SBOM components from %s", len(*bom.Components), repo.Name)
 	outputLocation := viper.GetString("output")
 	switch outputLocation {
 	case "dtrack":
