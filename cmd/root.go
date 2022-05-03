@@ -42,6 +42,7 @@ func Execute() {
 }
 
 var logLevel string
+var logFormat string
 
 const cantBindFlagTemplate = "can't bind %s flag to viper: %v"
 
@@ -57,14 +58,27 @@ func init() {
 			return errors.New("invalid verbosity level - must be one of: debug/info/warn/error/fatal/panic")
 		}
 		logrus.SetLevel(lvl)
-		logrus.SetFormatter(&logrus.TextFormatter{
-			FullTimestamp: true,
-		})
+		switch logFormat {
+		case "simple":
+			logrus.SetFormatter(&logrus.TextFormatter{
+				FullTimestamp: true,
+			})
+		case "fancy":
+			logrus.SetFormatter(&logrus.TextFormatter{
+				FullTimestamp: true,
+				ForceColors:   true,
+			})
+		case "json":
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+		default:
+			return errors.New("invalid log format - must be one of: simple/fancy/json")
+		}
 		return nil
 	}
 
 	const outputFlag = "output"
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level: debug/info/warn/error/fatal/panic")
+	rootCmd.PersistentFlags().StringVarP(&logFormat, "log-format", "f", "simple", "Log format: simple/fancy/json")
 	rootCmd.PersistentFlags().StringP(outputFlag, "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
 	if err := viper.BindPFlag(outputFlag, rootCmd.PersistentFlags().Lookup(outputFlag)); err != nil {
 		logrus.Fatalf(cantBindFlagTemplate, outputFlag, err)
