@@ -30,13 +30,16 @@ func newDefaultShellExecutor(ctx context.Context) defaultShellExecutor {
 func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
 	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
 		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
-		var multiModuleModeConfig string
+		var (
+			multiModuleModeConfig string
+			template              = "%s && %s && cdxgen --type %s -o %s"
+		)
 		if multiModuleMode {
 			multiModuleModeConfig = "export GRADLE_MULTI_PROJECT_MODE=1"
 		} else {
 			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
 		}
-		const template = "%s && %s && cdxgen --type %s -o %s"
+
 		return fmt.Sprintf(template, licenseConfig, multiModuleModeConfig, language, outputFile)
 	}
 
@@ -65,6 +68,7 @@ func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 		ctx, cancel = context.WithTimeout(d.ctx, 10*time.Minute)
 		cmd = exec.CommandContext(ctx, "bash", "-c", formatCDXGenCmd(multiModuleMode, false, language, outputFile))
 		cmd.Dir = bomRoot
+
 		if err = cmd.Run(); err != nil {
 			cancel()
 			return nil, fmt.Errorf("can't Collect BOM for %s: %v", bomRoot, err)
