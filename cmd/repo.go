@@ -21,6 +21,7 @@ sa-collector repo https://github.com/ffuf/ffuf --output=dtrack --log-level=warn`
 		if _, err := url.ParseRequestURI(args[0]); err != nil {
 			return errors.New("please supply repository URL in a form of: https://github.com/org/repo-name")
 		}
+
 		return cobra.MaximumNArgs(1)(cmd, args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {

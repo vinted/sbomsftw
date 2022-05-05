@@ -22,10 +22,10 @@ func NewJSCollector(ctx context.Context) JS {
 	}
 }
 
-//MatchLanguageFiles implements LanguageCollector interface
+// MatchLanguageFiles implements LanguageCollector interface
 func (j JS) MatchLanguageFiles(isDir bool, filepath string) bool {
 	for _, p := range strings.Split(fp.Dir(filepath), string(os.PathSeparator)) {
-		if p == "node_modules" { //Ignore files in node_modules directory
+		if p == "node_modules" { // Ignore files in node_modules directory
 			return false
 		}
 	}
@@ -46,18 +46,19 @@ func (j JS) String() string {
 	return "javascript collector"
 }
 
-//GenerateBOM implements LanguageCollector interface
+// GenerateBOM implements LanguageCollector interface
 func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	const language = "javascript"
 	return j.executor.bomFromCdxgen(bomRoot, language, false)
 }
 
-//BootstrapLanguageFiles implements LanguageCollector interface
+// BootstrapLanguageFiles implements LanguageCollector interface
 func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
-	var bootstrappedRoots []string
+	bootstrappedRoots := make([]string, 0, len(bomRoots))
+
 	for dir, files := range SplitPaths(bomRoots) {
-		if len(files) == 1 && files[0] == "package.json" { //Create a lock file if none exist yet
+		if len(files) == 1 && files[0] == "package.json" { // Create a lock file if none exist yet
 			if err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
 				log.WithFields(log.Fields{
 					"collector": j,
@@ -68,5 +69,6 @@ func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
 		}
 		bootstrappedRoots = append(bootstrappedRoots, dir)
 	}
+
 	return bootstrappedRoots
 }

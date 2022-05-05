@@ -17,6 +17,7 @@ func TestPythonCollector(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unable to create temp directory for testing: %s", err)
 		}
+
 		return tempDirName
 	}
 
@@ -73,17 +74,16 @@ func TestPythonCollector(t *testing.T) {
 
 	t.Run("don't create requirements.txt if no conda environment files exist", func(t *testing.T) {
 		tempDir := createTempDir(t)
-		err := os.WriteFile(filepath.Join(tempDir, "setup.py"), nil, 0644)
+		err := os.WriteFile(filepath.Join(tempDir, "setup.py"), nil, 0o644)
 		require.NoError(t, err)
 
 		Python{}.BootstrapLanguageFiles([]string{filepath.Join(tempDir, "setup.py")})
 		_, err = ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
-		//assert.NotNil(t, err)
+		// assert.NotNil(t, err)
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("convert conda environments to requirements.txt correctly", func(t *testing.T) {
-
 		/*
 			Setup test environment. Setup function creates the following temp directory structure:
 			/tmp/random-dir/environment_3.7.yml
@@ -97,13 +97,13 @@ func TestPythonCollector(t *testing.T) {
 			contents, err := ioutil.ReadFile("../../integration/testdata/conda-envs/environment_3.7.yml")
 			require.NoError(t, err)
 
-			err = os.WriteFile(filepath.Join(tempDir, "environment_3.7.yml"), contents, 0644)
+			err = os.WriteFile(filepath.Join(tempDir, "environment_3.7.yml"), contents, 0o644)
 			require.NoError(t, err)
 
 			contents, err = ioutil.ReadFile("../../integration/testdata/conda-envs/environment_3.8.yml")
 			require.NoError(t, err)
 
-			err = os.WriteFile(filepath.Join(tempDir, "environment_3.8.yml"), contents, 0644)
+			err = os.WriteFile(filepath.Join(tempDir, "environment_3.8.yml"), contents, 0o644)
 			require.NoError(t, err)
 
 			innerDir, err := ioutil.TempDir(tempDir, "innerDir")
@@ -112,13 +112,13 @@ func TestPythonCollector(t *testing.T) {
 			contents, err = ioutil.ReadFile("../../integration/testdata/conda-envs/environment.yml")
 			require.NoError(t, err)
 
-			err = os.WriteFile(filepath.Join(innerDir, "environment.yml"), contents, 0644)
+			err = os.WriteFile(filepath.Join(innerDir, "environment.yml"), contents, 0o644)
 			require.NoError(t, err)
 
 			contents, err = ioutil.ReadFile("../../integration/testdata/conda-envs/requirements.txt")
 			require.NoError(t, err)
 
-			err = os.WriteFile(filepath.Join(innerDir, "requirements.txt"), contents, 0644)
+			err = os.WriteFile(filepath.Join(innerDir, "requirements.txt"), contents, 0o644)
 			require.NoError(t, err)
 
 			return tempDir, innerDir
@@ -161,6 +161,5 @@ prometheus-client==0.9.0
 pydantic==1.6.1
 python==3.7.6`
 		assert.Equal(t, want, string(got))
-
 	})
 }

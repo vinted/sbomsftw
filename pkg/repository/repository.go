@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"strings"
+	"sync"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -11,9 +15,6 @@ import (
 	"github.com/vinted/software-assets/pkg"
 	"github.com/vinted/software-assets/pkg/bomtools"
 	"github.com/vinted/software-assets/pkg/collectors"
-	"path/filepath"
-	"strings"
-	"sync"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"
@@ -47,13 +48,14 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	if len(urlPaths) == 0 {
 		return nil, BadVCSURLError{URL: vcsURL}
 	}
+
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 
 	fsPath := filepath.Join(CheckoutsPath, name)
 	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
 	_, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{URL: vcsURL})
 	if err != nil {
-		//Retry to clone the repo with credentials if failed
+		// Retry to clone the repo with credentials if failed
 		_, err = git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
 			URL:  vcsURL,
 			Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
@@ -62,6 +64,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 			return nil, err
 		}
 	}
+
 	return &Repository{
 		ctx:    ctx,
 		Name:   name,
@@ -71,7 +74,8 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 		},
 		languageCollectors: []pkg.LanguageCollector{
 			collectors.NewPythonCollector(ctx), collectors.NewRustCollector(ctx), collectors.NewJVMCollector(ctx),
-			collectors.NewGolangCollector(ctx), collectors.NewJSCollector(ctx), collectors.NewRubyCollector(ctx)},
+			collectors.NewGolangCollector(ctx), collectors.NewJSCollector(ctx), collectors.NewRubyCollector(ctx),
+		},
 	}, nil
 }
 
@@ -81,7 +85,7 @@ syft & trivy & cdxgen are executed against the repository as well. This tends to
 */
 func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedSBOMs []*cdx.BOM
-	//Generate base SBOM with generic collectors (syft/trivy/cdxgen)
+	// Generate base SBOM with generic collectors (syft/trivy/cdxgen)
 	if includeGenericCollectors {
 		for _, c := range r.genericCollectors {
 			select {
@@ -90,17 +94,19 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 			default:
 				log.WithField("repository", r).Infof("extracting SBOMs with: %s", c)
 				bom, err := c.GenerateBOM(r.FSPath)
+
 				if err == nil {
 					collectedSBOMs = append(collectedSBOMs, bom)
 					continue
 				}
+
 				log.WithFields(log.Fields{"repository": r, "error": err}).Debugf("%s failed to collect SBOMs", c)
 			}
 		}
 	}
 
 	if r.ctx.Err() != nil {
-		return nil, r.ctx.Err() //Return early if user cancelled
+		return nil, r.ctx.Err() // Return early if user cancelled
 	}
 
 	for res := range r.filterApplicableCollectors() {
@@ -132,7 +138,7 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 
 			mergedSBOM, err := bomtools.MergeBoms(sbomsFromCollector...)
 			if err == nil {
-				//Append merged SBOM from this collector & move on to the next one
+				// Append merged SBOM from this collector & move on to the next one
 				collectedSBOMs = append(collectedSBOMs, mergedSBOM)
 				continue
 			}
@@ -148,7 +154,7 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 	case <-r.ctx.Done():
 		return nil, r.ctx.Err()
 	default:
-		//All collectors are finished - merge collected SBOMs into a single one
+		// All collectors are finished - merge collected SBOMs into a single one
 		merged, err := bomtools.MergeBoms(collectedSBOMs...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: ExtractSBOMs can't merge sboms - %s", r, err)
@@ -188,7 +194,7 @@ filterApplicableCollectors would return a closed channel with the following elem
 	}
 */
 func (r Repository) filterApplicableCollectors() <-chan applicableCollector {
-	//walk this repository with a given collector - see if it can find any language files
+	// walk this repository with a given collector - see if it can find any language files
 	filter := func(wg *sync.WaitGroup, collector pkg.LanguageCollector, results chan<- applicableCollector) {
 		defer wg.Done()
 		languageFiles, err := findLanguageFiles(r.FSPath, collector.MatchLanguageFiles)

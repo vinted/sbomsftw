@@ -46,7 +46,7 @@ func TestJSCollector(t *testing.T) {
 		assert.False(t, jsCollector.MatchLanguageFiles(false, "/etc/passwd"))
 		assert.False(t, jsCollector.MatchLanguageFiles(false, "/tmp/repo/node_modules/yarn.lock"))
 
-		//Special case
+		// Special case
 		assert.True(t, jsCollector.MatchLanguageFiles(true, "/tmp/repo/node_modules"))
 	})
 

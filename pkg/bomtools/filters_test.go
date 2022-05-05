@@ -9,7 +9,6 @@ import (
 )
 
 func TestFilterOptionalDependencies(t *testing.T) {
-
 	t.Run("filter out optional dependencies correctly", func(t *testing.T) {
 		testBOM, err := ioutil.ReadFile("../../integration/testdata/bomtools/bom-optional-dependencies.json")
 		if err != nil {
@@ -44,7 +43,7 @@ func TestFilterOptionalDependencies(t *testing.T) {
 	t.Run("return an error when trying to filter dependencies from malformed BOMs", func(t *testing.T) {
 		assert.Nil(t, FilterOutByScope(nil, cdx.ScopeOptional)) // Return nil when trying to filter from nil
 
-		//Return the same BOM when trying to filter a bom with nil Components
+		// Return the same BOM when trying to filter a bom with nil Components
 		bom := new(cdx.BOM)
 		assert.Equal(t, bom, FilterOutByScope(bom, cdx.ScopeOptional))
 	})

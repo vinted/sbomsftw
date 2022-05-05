@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 )
 

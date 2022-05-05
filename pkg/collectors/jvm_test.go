@@ -28,10 +28,10 @@ func TestJVMCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 
-		//Return an empty BOM on first run
+		// Return an empty BOM on first run
 		executor.On("bomFromCdxgen", bomRoot, "jvm", false).Return(new(cdx.BOM), nil)
 
-		//Regenerate BOM a second time
+		// Regenerate BOM a second time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(new(cdx.BOM), nil)
 		_, _ = JVM{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
@@ -45,9 +45,9 @@ func TestJVMCollector(t *testing.T) {
 		bom := new(cdx.BOM)
 		bom.Components = &components
 
-		//Return a non-empty BOM the first time
+		// Return a non-empty BOM the first time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", false).Return(bom, nil)
-		//But return an empty BOM for the second time
+		// But return an empty BOM for the second time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(new(cdx.BOM), nil)
 		got, _ := JVM{executor: executor}.GenerateBOM(bomRoot)
 		executor.AssertExpectations(t)
@@ -66,9 +66,9 @@ func TestJVMCollector(t *testing.T) {
 		secondBOM := new(cdx.BOM)
 		secondBOM.Components = &secondBOMComponents
 
-		//Return a non-empty BOM the first time
+		// Return a non-empty BOM the first time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", false).Return(firstBOM, nil)
-		//Return a non-empty BOM the second time as well
+		// Return a non-empty BOM the second time as well
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(secondBOM, nil)
 
 		got, _ := JVM{executor: executor}.GenerateBOM(bomRoot)
