@@ -3,6 +3,7 @@ package collectors
 import (
 	"context"
 	"fmt"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft"
@@ -50,7 +51,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 	}
 
 	if s.ctx.Err() != nil {
-		return //Return early & don't execute Syft if context is Done.
+		return // Return early & don't execute Syft if context is Done.
 	}
 
 	cfg := cataloger.DefaultConfig()
@@ -96,7 +97,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 	}
 }
 
-//GenerateBOM implements Collector interface
+// GenerateBOM implements Collector interface
 func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	worker := make(chan sbomCollectionResult, 1)
 	go s.generateBOMInternal(repositoryPath, worker)
@@ -108,7 +109,7 @@ func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	}
 }
 
-//String implements Collector interface
+// String implements Collector interface
 func (s Syft) String() string {
 	return "generic syft collector"
 }

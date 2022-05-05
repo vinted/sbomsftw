@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//Error prefixes used for assertions
+// Error prefixes used for assertions.
 const (
 	requestFailed         = "HTTP Request failed: "
 	parsingJSONFailed     = "unable to parse JSON: "
@@ -24,7 +24,6 @@ const (
 )
 
 func TestExponentialBackoff(t *testing.T) {
-
 	createUploadBOMConfig := func(url string) UploadBOMConfig {
 		return UploadBOMConfig{
 			ctx:      context.Background(),
@@ -98,8 +97,7 @@ func TestExponentialBackoff(t *testing.T) {
 }
 
 func TestGetRepositories(t *testing.T) {
-
-	//Happy path
+	// Happy path
 	t.Run("deserialize repositories correctly on successful response", func(t *testing.T) {
 		hitCounter := 0
 		goodResponseServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -121,7 +119,7 @@ func TestGetRepositories(t *testing.T) {
 		assert.Equal(t, want, repositories)
 	})
 
-	//Errors path
+	// Errors path
 	t.Run("return BadStatusError on non 200 OK responses", func(t *testing.T) {
 		const errorTemplate = "did not get 200 from %s, got %d"
 		hitCounter := 0
@@ -178,7 +176,7 @@ func TestWalkRepositories(t *testing.T) {
 			case "3":
 				content, _ = ioutil.ReadFile("../integration/testdata/requests/repos-page-3.json")
 			default:
-				content = []byte("[]") //empty response
+				content = []byte("[]") // empty response
 			}
 			res.WriteHeader(http.StatusOK)
 			_, _ = res.Write(content)
@@ -211,8 +209,7 @@ func TestWalkRepositories(t *testing.T) {
 }
 
 func TestUploadBOM(t *testing.T) {
-
-	//Happy path
+	// Happy path
 	t.Run("return true and nil error and successful server response", func(t *testing.T) {
 		hitCounter := 0
 		goodResponseServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -226,7 +223,7 @@ func TestUploadBOM(t *testing.T) {
 		assert.True(t, ok)
 	})
 
-	//Errors path
+	// Errors path
 	t.Run("return BadStatusError on non 200 OK responses", func(t *testing.T) {
 		hitCounter := 0
 		teapotServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {

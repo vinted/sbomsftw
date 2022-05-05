@@ -3,7 +3,7 @@ package collectors
 import "path/filepath"
 
 /*
-SquashToDirs - Squash filepaths to directories.
+SquashToDirs - Squash file-paths to directories.
 E.g. given the following input:
 	[]string{
 		"/tmp/test/go.mod",
@@ -20,15 +20,18 @@ this function will return a slice of:
 	}
 */
 func SquashToDirs(pathsToSquash []string) []string {
-	var dirsToFiles = make(map[string][]string)
+	dirsToFiles := make(map[string][]string)
+
 	for _, r := range pathsToSquash {
 		dir := filepath.Dir(r)
 		dirsToFiles[dir] = append(dirsToFiles[dir], filepath.Base(r))
 	}
 	squashed := make([]string, 0, len(dirsToFiles))
+
 	for dir := range dirsToFiles {
 		squashed = append(squashed, dir)
 	}
+
 	return squashed
 }
 
@@ -49,10 +52,12 @@ this function will return a map of:
 	]
 */
 func SplitPaths(bomRoots []string) map[string][]string {
-	var dirsToFiles = make(map[string][]string)
+	dirsToFiles := make(map[string][]string)
+
 	for _, r := range bomRoots {
 		dir := filepath.Dir(r)
 		dirsToFiles[dir] = append(dirsToFiles[dir], filepath.Base(r))
 	}
+
 	return dirsToFiles
 }

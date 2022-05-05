@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const defaultRequestTimeout = 10
+
 type BackoffConfig struct {
 	RequestTimeout time.Duration
 	BackoffPolicy  []time.Duration
@@ -49,7 +51,7 @@ func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken strin
 		APIToken:                    apiToken,
 		IncludeArchivedRepositories: false,
 		BackoffConfig: BackoffConfig{
-			RequestTimeout: 10 * time.Second, //Good defaults
+			RequestTimeout: defaultRequestTimeout * time.Second, // Good defaults
 			BackoffPolicy:  []time.Duration{4 * time.Second, 8 * time.Second, 14 * time.Second},
 		},
 	}
@@ -64,7 +66,7 @@ func NewUploadBOMConfig(ctx context.Context, url, apiToken, projectName, bomCont
 		ProjectName: projectName,
 		BOMContents: bomContents,
 		BackoffConfig: BackoffConfig{
-			RequestTimeout: 10 * time.Second, //Good defaults
+			RequestTimeout: defaultRequestTimeout * time.Second, // Good defaults
 			BackoffPolicy:  []time.Duration{4 * time.Second, 8 * time.Second, 14 * time.Second},
 		},
 	}
@@ -81,7 +83,7 @@ type response interface {
 	[]repositoryMapping | bool
 }
 
-// Exponential backoff
+// Exponential backoff.
 func exponentialBackoff[T response](request func() (T, error), backoff ...time.Duration) (result T, err error) {
 	shouldRetry := func(err error) bool {
 		var e BadStatusError
@@ -91,9 +93,11 @@ func exponentialBackoff[T response](request func() (T, error), backoff ...time.D
 		return errors.Is(err, context.DeadlineExceeded)
 	}
 	result, err = request()
+
 	if err == nil {
 		return result, nil
 	}
+
 	if !shouldRetry(err) {
 		return result, err
 	}
@@ -109,16 +113,16 @@ func exponentialBackoff[T response](request func() (T, error), backoff ...time.D
 			return result, err
 		}
 	}
-	return result, err
 
+	return result, err
 }
 
-//GetRepositories performs HTTP GET request to the provided GitHub URL.
-//The provided URL should be in the form 'https://api.github.com/orgs/ORG-NAME/repos'.
-//This function also takes a timeout for the HTTP request and an optional backoff varargs.
-//If the backoff varargs are supplied and request fails, this function will reattempt the HTTP request
-//with exponential backoff provided. The backoff kicks in only if the error is a timeout error or HTTP
-//too many requests error. Returns a slice of repositories fetched or an error if something goes wrong.
+// GetRepositories performs HTTP GET request to the provided GitHub URL.
+// The provided URL should be in the form 'https://api.github.com/orgs/ORG-NAME/repos'.
+// This function also takes a timeout for the HTTP request and an optional backoff varargs.
+// If the backoff varargs are supplied and request fails, this function will reattempt the HTTP request
+// with exponential backoff provided. The backoff kicks in only if the error is a timeout error or HTTP
+// too many requests error. Returns a slice of repositories fetched or an error if something goes wrong.
 func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 	getRepositories := func() ([]repositoryMapping, error) {
 		ctx, cancel := context.WithTimeout(conf.ctx, conf.RequestTimeout)
@@ -141,6 +145,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 				if closeErr != nil {
 					err = fmt.Errorf("GetRepositories: %w can't close response body %v", err, closeErr)
 				}
+
 				return
 			}
 			err = closeErr
@@ -160,6 +165,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 		if conf.IncludeArchivedRepositories {
 			return repositories, nil
 		}
+
 		var validRepositories []repositoryMapping
 		for _, r := range repositories {
 			if !r.Archived {
@@ -171,6 +177,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 
 	return exponentialBackoff(getRepositories, conf.BackoffPolicy...)
 }
+
 func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string)) error {
 	endpoint, err := url.Parse(conf.URL)
 	if err != nil {
@@ -189,7 +196,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 			return fmt.Errorf("repository walking failed: %w", err)
 		}
 		if len(repositories) == 0 {
-			return nil //Done all repositories have been walked
+			return nil // Done all repositories have been walked
 		}
 		var repositoryURLs []string
 		for _, r := range repositories {
@@ -200,7 +207,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 	}
 }
 
-//UploadBOM uploads BOM to Dependency Track based on the configuration given
+// UploadBOM uploads BOM to Dependency Track based on the configuration given
 func UploadBOM(conf UploadBOMConfig) (bool, error) {
 	uploadBOM := func() (bool, error) {
 		ctx, cancel := context.WithTimeout(conf.ctx, conf.RequestTimeout)

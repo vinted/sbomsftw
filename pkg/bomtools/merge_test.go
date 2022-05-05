@@ -1,15 +1,15 @@
 package bomtools
 
 import (
+	"io/ioutil"
+	"testing"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"testing"
 )
 
 func TestMergeBoms(t *testing.T) {
-
 	bomFromFile := func(filename string) *cdx.BOM {
 		bomString, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -19,6 +19,7 @@ func TestMergeBoms(t *testing.T) {
 		if err != nil {
 			t.Fatalf("can't convert BOM string to *cdx.BOM file: %s\n", err)
 		}
+
 		return bom
 	}
 
@@ -52,7 +53,6 @@ func TestMergeBoms(t *testing.T) {
 	})
 
 	t.Run("merge multiple BOMs correctly", func(t *testing.T) {
-
 		firstBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-1.json")
 		secondBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-2.json")
 		thirdBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-3.json")

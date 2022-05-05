@@ -12,7 +12,6 @@ import (
 )
 
 func TestLanguageFilesByPredicate(t *testing.T) {
-
 	var fileMatchAttempts []string
 	predicate := func(isDir bool, filename string) bool {
 		filename = filepath.Base(filename)
@@ -51,8 +50,10 @@ func TestLanguageFilesByPredicate(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedBOMRoots, bomRoots)
 
-		assert.Equal(t, []string{".", "test-repository", "Packages", "Packages.lock", "ignore.txt", "inner-dir",
-			"Packages", "Packages.lock", "deepest-dir", "Packages.lock", "testing", "Packages"}, fileMatchAttempts)
+		assert.Equal(t, []string{
+			".", "test-repository", "Packages", "Packages.lock", "ignore.txt", "inner-dir",
+			"Packages", "Packages.lock", "deepest-dir", "Packages.lock", "testing", "Packages",
+		}, fileMatchAttempts)
 	})
 
 	t.Run("error is returned whenever FS walk fails", func(t *testing.T) {

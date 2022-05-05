@@ -26,18 +26,21 @@ missing permissions.
 */
 func languageFilesByPredicate(fileSystem fs.FS, predicate languageFilesMatcher) ([]string, error) {
 	var languageFiles []string
-	err := fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
+
+	err := fs.WalkDir(fileSystem, ".", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() && ignoredDirs.MatchString(filepath.Base(path)) {
+		if entry.IsDir() && ignoredDirs.MatchString(filepath.Base(path)) {
 			return fs.SkipDir // Don't even traverse to .git/test/tests directories
 		}
-		if predicate(d.IsDir(), path) {
+		if predicate(entry.IsDir(), path) {
 			languageFiles = append(languageFiles, path)
 		}
+
 		return nil
 	})
+
 	return languageFiles, err
 }
 
@@ -61,6 +64,7 @@ func relativeToAbsolutePaths(parentDir string, relativeRoots ...string) (absolut
 	for _, relativeRoot := range relativeRoots {
 		absoluteRoots = append(absoluteRoots, filepath.Join(parentDir, relativeRoot))
 	}
+
 	return
 }
 
@@ -69,9 +73,12 @@ func findLanguageFiles(repoPath string, predicate languageFilesMatcher) ([]strin
 	if err != nil {
 		return nil, fmt.Errorf("findLanguageFiles: can't walk %s: %v", repoPath, err)
 	}
+
 	languageFiles = relativeToAbsolutePaths(repoPath, languageFiles...)
+
 	if len(languageFiles) == 0 {
 		return nil, noLanguageFilesFoundError("no language files found for the supplied predicate")
 	}
+
 	return languageFiles, nil
 }
