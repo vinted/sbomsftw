@@ -13,9 +13,9 @@ type JVM struct {
 	executor shellExecutor
 }
 
-func NewJVMCollector(ctx context.Context) JVM {
+func NewJVMCollector() JVM {
 	return JVM{
-		executor: newDefaultShellExecutor(ctx),
+		executor: defaultShellExecutor{},
 	}
 }
 
@@ -39,13 +39,13 @@ func (j JVM) String() string {
 }
 
 // GenerateBOM implements LanguageCollector interface
-func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+func (j JVM) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) {
 	isBOMEmpty := func(bom *cdx.BOM) bool {
 		return bom == nil || bom.Components == nil || len(*bom.Components) == 0
 	}
 
 	const language = "jvm"
-	singleModeBom, err := j.executor.bomFromCdxgen(bomRoot, language, false)
+	singleModeBom, err := j.executor.bomFromCdxgen(ctx, bomRoot, language, false)
 
 	if err != nil || isBOMEmpty(singleModeBom) {
 		log.WithFields(log.Fields{
@@ -53,10 +53,10 @@ func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 			"collection path": bomRoot,
 		}).Debugf("can't collect BOMs, retrying collection in multi module mode (gradle)")
 
-		return j.executor.bomFromCdxgen(bomRoot, language, true)
+		return j.executor.bomFromCdxgen(ctx, bomRoot, language, true)
 	}
 
-	multiModeBom, err := j.executor.bomFromCdxgen(bomRoot, language, true)
+	multiModeBom, err := j.executor.bomFromCdxgen(ctx, bomRoot, language, true)
 	if err != nil || isBOMEmpty(multiModeBom) {
 		log.WithFields(log.Fields{
 			"collector":       j,
@@ -70,7 +70,7 @@ func (j JVM) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface
-func (j JVM) BootstrapLanguageFiles(bomRoots []string) []string {
+func (j JVM) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []string {
 	const bootstrapCmd = "./gradlew"
 
 	for dir, files := range SplitPaths(bomRoots) {
@@ -81,7 +81,7 @@ func (j JVM) BootstrapLanguageFiles(bomRoots []string) []string {
 					"collection path": dir,
 				}).Debug("priming gradle cache")
 
-				if err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
+				if err := j.executor.shellOut(ctx, dir, bootstrapCmd); err != nil {
 					log.WithFields(log.Fields{
 						"error":           err,
 						"collector":       j,

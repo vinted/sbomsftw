@@ -100,7 +100,7 @@ func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 	}
 
 	defer deleteRepository(repo.FSPath)
-	bom, err := repo.ExtractSBOMs(true)
+	bom, err := repo.ExtractSBOMs(ctx, true)
 
 	if errors.Is(err, context.Canceled) {
 		return

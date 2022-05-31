@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -15,7 +16,7 @@ func TestGolangCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/go.mod",
 			"/tmp/some-random-dir/inner-dir/deepest-dir/Gopkg.lock",
 		}
-		got := Golang{}.BootstrapLanguageFiles(bomRoots)
+		got := Golang{}.BootstrapLanguageFiles(context.Background(), bomRoots)
 		assert.ElementsMatch(t, []string{
 			"/tmp/some-random-dir",
 			"/tmp/some-random-dir/inner-dir",
@@ -42,7 +43,7 @@ func TestGolangCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", "/tmp/some-random-dir", "golang", false).Return(new(cdx.BOM), nil)
-		_, _ = Golang{executor: executor}.GenerateBOM(bomRoot)
+		_, _ = Golang{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 	})
 }

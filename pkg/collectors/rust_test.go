@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -16,7 +17,7 @@ func TestRustCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/Cargo.toml",
 		}
 
-		got := Rust{}.BootstrapLanguageFiles(languageFiles)
+		got := Rust{}.BootstrapLanguageFiles(context.Background(), languageFiles)
 		assert.ElementsMatch(t, []string{
 			"/tmp/some-random-dir",
 			"/tmp/some-random-dir/inner-dir",
@@ -28,7 +29,7 @@ func TestRustCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", bomRoot, "rust", false).Return(new(cdx.BOM), nil)
-		_, _ = Rust{executor: executor}.GenerateBOM(bomRoot)
+		_, _ = Rust{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 	})
 

@@ -16,9 +16,9 @@ type JS struct {
 	executor shellExecutor
 }
 
-func NewJSCollector(ctx context.Context) JS {
+func NewJSCollector() JS {
 	return JS{
-		executor: newDefaultShellExecutor(ctx),
+		executor: defaultShellExecutor{},
 	}
 }
 
@@ -47,19 +47,19 @@ func (j JS) String() string {
 }
 
 // GenerateBOM implements LanguageCollector interface
-func (j JS) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+func (j JS) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) {
 	const language = "javascript"
-	return j.executor.bomFromCdxgen(bomRoot, language, false)
+	return j.executor.bomFromCdxgen(ctx, bomRoot, language, false)
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface
-func (j JS) BootstrapLanguageFiles(bomRoots []string) []string {
+func (j JS) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []string {
 	const bootstrapCmd = "pnpm install || npm install || yarn install"
 	bootstrappedRoots := make([]string, 0, len(bomRoots))
 
 	for dir, files := range SplitPaths(bomRoots) {
 		if len(files) == 1 && files[0] == "package.json" { // Create a lock file if none exist yet
-			if err := j.executor.shellOut(dir, bootstrapCmd); err != nil {
+			if err := j.executor.shellOut(ctx, dir, bootstrapCmd); err != nil {
 				log.WithFields(log.Fields{
 					"collector": j,
 					"error":     err,

@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -21,7 +22,7 @@ func TestJSCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/package.json",
 		}
 
-		got := JS{executor: executor}.BootstrapLanguageFiles(bomRoots)
+		got := JS{executor: executor}.BootstrapLanguageFiles(context.Background(), bomRoots)
 		executor.AssertExpectations(t)
 		assert.ElementsMatch(t, []string{
 			"/tmp/some-random-dir",
@@ -34,7 +35,7 @@ func TestJSCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", "/tmp/some-random-dir", "javascript", false).Return(new(cdx.BOM), nil)
-		_, _ = JS{executor: executor}.GenerateBOM(bomRoot)
+		_, _ = JS{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 	})
 

@@ -25,7 +25,6 @@ type Credentials struct {
 }
 
 type Repository struct {
-	ctx                context.Context
 	Name               string
 	FSPath             string
 	genericCollectors  []pkg.Collector
@@ -66,15 +65,14 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	}
 
 	return &Repository{
-		ctx:    ctx,
 		Name:   name,
 		FSPath: fsPath,
 		genericCollectors: []pkg.Collector{
-			collectors.NewSyftCollector(ctx), collectors.NewTrivyCollector(ctx), collectors.NewCDXGenCollector(ctx),
+			collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{},
 		},
 		languageCollectors: []pkg.LanguageCollector{
-			collectors.NewPythonCollector(ctx), collectors.NewRustCollector(ctx), collectors.NewJVMCollector(ctx),
-			collectors.NewGolangCollector(ctx), collectors.NewJSCollector(ctx), collectors.NewRubyCollector(ctx),
+			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
+			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector(),
 		},
 	}, nil
 }
@@ -83,17 +81,17 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 If includeGenericCollectors is set to true then additional collectors such as:
 syft & trivy & cdxgen are executed against the repository as well. This tends to produce richer SBOM results
 */
-func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error) {
+func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedSBOMs []*cdx.BOM
 	// Generate base SBOM with generic collectors (syft/trivy/cdxgen)
 	if includeGenericCollectors {
 		for _, c := range r.genericCollectors {
 			select {
-			case <-r.ctx.Done():
-				return nil, r.ctx.Err()
+			case <-ctx.Done():
+				return nil, ctx.Err()
 			default:
 				log.WithField("repository", r).Infof("extracting SBOMs with: %s", c)
-				bom, err := c.GenerateBOM(r.FSPath)
+				bom, err := c.GenerateBOM(ctx, r.FSPath)
 
 				if err == nil {
 					collectedSBOMs = append(collectedSBOMs, bom)
@@ -105,14 +103,14 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 		}
 	}
 
-	if r.ctx.Err() != nil {
-		return nil, r.ctx.Err() // Return early if user cancelled
+	if ctx.Err() != nil {
+		return nil, ctx.Err() // Return early if user cancelled
 	}
 
 	for res := range r.filterApplicableCollectors() {
 		select {
-		case <-r.ctx.Done():
-			return nil, r.ctx.Err()
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		default:
 			collector := res.collector
 			languageFiles := res.languageFiles
@@ -122,8 +120,8 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 				Generate SBOMs from every directory that contains language files
 			*/
 			var sbomsFromCollector []*cdx.BOM
-			for _, collectionPath := range collector.BootstrapLanguageFiles(languageFiles) {
-				b, err := collector.GenerateBOM(collectionPath)
+			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
+				b, err := collector.GenerateBOM(ctx, collectionPath)
 				if err == nil {
 					sbomsFromCollector = append(sbomsFromCollector, b)
 					continue
@@ -151,8 +149,8 @@ func (r Repository) ExtractSBOMs(includeGenericCollectors bool) (*cdx.BOM, error
 		}
 	}
 	select {
-	case <-r.ctx.Done():
-		return nil, r.ctx.Err()
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	default:
 		// All collectors are finished - merge collected SBOMs into a single one
 		merged, err := bomtools.MergeBoms(collectedSBOMs...)
