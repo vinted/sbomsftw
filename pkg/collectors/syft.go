@@ -13,7 +13,9 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type Syft struct{}
+type Syft struct {
+	Exclusions []string
+}
 
 type sbomCollectionResult struct {
 	sbom *cdx.BOM
@@ -30,7 +32,7 @@ func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, re
 		ImageSource: image.UnknownSource,
 		Platform:    "",
 	}
-	src, _, err := source.New(input, nil, nil)
+	src, _, err := source.New(input, nil, s.Exclusions)
 	if err != nil {
 		err = fmt.Errorf("%s repository path is invalid: %v\n", repositoryPath, err)
 		select {
