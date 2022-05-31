@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 
 	"github.com/sirupsen/logrus"
@@ -35,7 +34,6 @@ func init() {
 	orgCmd.Flags().BoolP(delayFlag, "d", false, "whether to add a random delay when cloning repos")
 	if err := viper.BindPFlag(delayFlag, orgCmd.Flags().Lookup(delayFlag)); err != nil {
 		logrus.Fatalf(cantBindFlagTemplate, delayFlag, err)
-		os.Exit(1)
 	}
 	rootCmd.AddCommand(orgCmd)
 }

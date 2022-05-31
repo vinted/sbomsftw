@@ -31,7 +31,10 @@ var rootCmd = &cobra.Command{
 sa-collector repo https://github.com/ffuf/ffuf --output=dtrack      collect SBOMs from ffuf repository & upload them to Dependency Track
 
 sa-collector org evil-corp                                          collect SBOMs from evil-corp organization & output them to stdout
-sa-collector org evil-corp --output=dtrack                          collect SBOMs from evil-corp organization & upload them to Dependency Track`,
+sa-collector org evil-corp --output=dtrack                          collect SBOMs from evil-corp organization & upload them to Dependency Track
+
+sa-collector fs /usr/local/bin                                      collect SBOMs recursively from /usr/local/bin directory
+sa-collector fs / --exclude './root'                                collect SBOMs recursively from root directory while excluding /root directory`,
 }
 
 func Execute() {
@@ -87,7 +90,6 @@ func init() {
 
 	if err := viper.BindPFlag(outputFlag, rootCmd.PersistentFlags().Lookup(outputFlag)); err != nil {
 		logrus.Fatalf(cantBindFlagTemplate, outputFlag, err)
-		os.Exit(1)
 	}
 }
 

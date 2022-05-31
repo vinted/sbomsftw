@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/vinted/software-assets/pkg/collectors"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -78,6 +80,49 @@ func SBOMsFromOrganization(organizationURL string) {
 	}
 }
 
+func SBOMsFromFilesystem(fsPath string) {
+	const errMsg = "File-system SBOM collection failed"
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-sigs
+		cancel()
+	}()
+
+	exclusions := viper.GetStringSlice("exclude")
+	log.WithField("exclusions", exclusions).Infof("Extracting SBOMs from %s", fsPath)
+	sboms, err := collectors.Syft{Exclusions: exclusions}.GenerateBOM(ctx, fsPath)
+
+	if errors.Is(err, context.Canceled) {
+		return // User cancelled - return
+	}
+
+	if err != nil {
+		log.WithError(err).Fatal(errMsg)
+	}
+
+	if sboms == nil || sboms.Components == nil || len(*sboms.Components) == 0 {
+		log.Warnf("no SBOMs were collected from %s", fsPath)
+		return
+	}
+
+	sboms, err = bomtools.MergeBoms(sboms)
+
+	if err != nil {
+		log.WithError(err).Fatal(errMsg)
+	}
+
+	sboms = bomtools.FilterOutByScope(sboms, cdx.ScopeOptional)
+
+	log.Infof("Collected %d SBOM components from %s", len(*sboms.Components), fsPath)
+	outputSBOMs(ctx, sboms, fsPath)
+}
+
 // sbomsFromRepositoryInternal collect SBOMs from a single repository, given the VCS URL of the repository.
 func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 	deleteRepository := func(repositoryPath string) {
@@ -100,7 +145,7 @@ func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 	}
 
 	defer deleteRepository(repo.FSPath)
-	bom, err := repo.ExtractSBOMs(ctx, true)
+	sboms, err := repo.ExtractSBOMs(ctx, true)
 
 	if errors.Is(err, context.Canceled) {
 		return
@@ -111,21 +156,25 @@ func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 		return
 	}
 
-	if bom == nil || bom.Components == nil || len(*bom.Components) == 0 {
+	if sboms == nil || sboms.Components == nil || len(*sboms.Components) == 0 {
 		log.Warnf("no SBOMs were collected from %s", repo.Name)
 		return
 	}
 
-	log.Infof("Collected %d SBOM components from %s", len(*bom.Components), repo.Name)
+	log.Infof("Collected %d SBOM components from %s", len(*sboms.Components), repo.Name)
+	outputSBOMs(ctx, sboms, repo.Name)
+}
+
+func outputSBOMs(ctx context.Context, sboms *cdx.BOM, projectName string) {
 	outputLocation := viper.GetString("output")
 
 	switch outputLocation {
 	case "dtrack":
-		uploadSBOMToDependencyTrack(ctx, repo.Name, bom)
+		uploadSBOMToDependencyTrack(ctx, projectName, sboms)
 	case "stdout":
-		printSBOMToStdout(bom)
+		printSBOMToStdout(sboms)
 	default:
-		writeSBOMToFile(bom, outputLocation)
+		writeSBOMToFile(sboms, outputLocation)
 	}
 }
 
