@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/vinted/software-assets/internal"
 )
 
@@ -30,10 +28,5 @@ sa-collector org evil-corp --output=dtrack --log-level=warn`,
 }
 
 func init() {
-	const delayFlag = "delay"
-	orgCmd.Flags().BoolP(delayFlag, "d", false, "whether to add a random delay when cloning repos")
-	if err := viper.BindPFlag(delayFlag, orgCmd.Flags().Lookup(delayFlag)); err != nil {
-		logrus.Fatalf(cantBindFlagTemplate, delayFlag, err)
-	}
 	rootCmd.AddCommand(orgCmd)
 }
