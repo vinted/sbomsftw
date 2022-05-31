@@ -4,7 +4,10 @@ import (
 	"errors"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/vinted/software-assets/internal"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -23,6 +26,33 @@ To upload SBOMs to Dependency Track a valid API Token and URL must be provided.
 This must be done via environment variables. For example:
 export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
 export SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/`
+
+// Usages for CLI switches
+const (
+	logFormatUsage   = "log format: simple/fancy/json"
+	logLevelUsage    = "log level: debug/info/warn/error/fatal/panic"
+	outputUsage      = "where to output SBOM results: stdout/dtrack/file"
+	projectNameUsage = "project name to use when uploading to dependency-track (optional)"
+)
+
+// Error messages
+const (
+	cantBindFlagTemplate  = "can't bind %s flag to viper: %v"
+	invalidLogFormatError = "invalid log format - must be one of: simple/fancy/json"
+	invalidLogLevelError  = "invalid log level - must be one of: debug/info/warn/error/fatal/panic"
+)
+
+// Log formats
+const (
+	logFormatSimple = "simple"
+	logFormatFancy  = "fancy"
+	logFormatJSON   = "json"
+)
+
+var (
+	logLevel  string
+	logFormat string
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "software-assets [repo/org] [vcs-url] [flags]",
@@ -44,66 +74,61 @@ func Execute() {
 	}
 }
 
-var (
-	logLevel  string
-	logFormat string
-)
+func setupLogrus(logLevel, logFormat string) error {
+	logrus.SetOutput(os.Stdout)
+	lvl, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		return errors.New(invalidLogLevelError)
+	}
+	logrus.SetLevel(lvl)
 
-const cantBindFlagTemplate = "can't bind %s flag to viper: %v"
+	switch logFormat {
+	case logFormatSimple:
+		logrus.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp: true,
+		})
+	case logFormatFancy:
+		logrus.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp: true,
+			ForceColors:   true,
+		})
+	case logFormatJSON:
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		return errors.New(invalidLogFormatError)
+	}
+	return nil
+}
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Setup logrus
-		logrus.SetOutput(os.Stdout)
-		lvl, err := logrus.ParseLevel(logLevel)
-		if err != nil {
-			return errors.New("invalid verbosity level - must be one of: debug/info/warn/error/fatal/panic")
-		}
-		logrus.SetLevel(lvl)
-
-		switch logFormat {
-		case "simple":
-			logrus.SetFormatter(&logrus.TextFormatter{
-				FullTimestamp: true,
-			})
-		case "fancy":
-			logrus.SetFormatter(&logrus.TextFormatter{
-				FullTimestamp: true,
-				ForceColors:   true,
-			})
-		case "json":
-			logrus.SetFormatter(&logrus.JSONFormatter{})
-		default:
-			return errors.New("invalid log format - must be one of: simple/fancy/json")
-		}
-
-		return nil
+		return setupLogrus(logLevel, logFormat)
 	}
 
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level: debug/info/warn/error/fatal/panic")
-	rootCmd.PersistentFlags().StringVarP(&logFormat, "log-format", "f", "simple", "Log format: simple/fancy/json")
+	rootCmd.PersistentFlags().StringVarP(&logFormat, "log-format", "f", logFormatSimple, logFormatUsage)
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), logLevelUsage)
 
 	// Flags that will be later bound to viper
 	const (
 		output      = "output"
 		projectName = "dtrack-project-name"
 	)
-	rootCmd.PersistentFlags().StringP(output, "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
-	rootCmd.PersistentFlags().String(projectName, "", "project name to use when uploading to dependency-track (optional)")
+	rootCmd.PersistentFlags().StringP(output, "o", internal.OutputValueStdout, outputUsage)
+	rootCmd.PersistentFlags().String(projectName, "", projectNameUsage)
 
-	if err := viper.BindPFlag(output, rootCmd.PersistentFlags().Lookup(output)); err != nil {
+	if err := viper.BindPFlag(internal.CLIKeyOutput, rootCmd.PersistentFlags().Lookup(output)); err != nil {
 		logrus.Fatalf(cantBindFlagTemplate, output, err)
 	}
 
-	if err := viper.BindPFlag(projectName, rootCmd.PersistentFlags().Lookup(projectName)); err != nil {
+	if err := viper.BindPFlag(internal.CLIKeyDTrackProjectName, rootCmd.PersistentFlags().Lookup(projectName)); err != nil {
 		logrus.Fatalf(cantBindFlagTemplate, projectName, err)
 	}
 }
 
 func initConfig() {
-	viper.SetEnvPrefix("sac")
+	viper.SetEnvPrefix(strings.ToLower(internal.EnvPrefix))
 	viper.AutomaticEnv() // read in environment variables that match
 }

@@ -60,8 +60,8 @@ func SBOMsFromOrganization(organizationURL string) {
 		cancel()
 	}()
 
-	githubUsername := viper.GetString("GITHUB_USERNAME")
-	githubAPIToken := viper.GetString("GITHUB_TOKEN")
+	githubUsername := viper.GetString(EnvKeyGithubUsername)
+	githubAPIToken := viper.GetString(EnvKeyGithubToken)
 
 	reqConfig := NewGetRepositoriesConfig(ctx, organizationURL, githubUsername, githubAPIToken)
 	err := WalkRepositories(reqConfig, func(repositoryURLs []string) {
@@ -80,6 +80,11 @@ func SBOMsFromOrganization(organizationURL string) {
 	}
 }
 
+/*
+SBOMsFromFilesystem given a filesystem path, collect SBOMs from every subdirectory recursively.
+In order not to recurse into certain subdirectories, pass them via --exclude switch.
+Each collected SBOM will be outputted based on the --output CLI switch.
+*/
 func SBOMsFromFilesystem(fsPath string) {
 	const errMsg = "File-system SBOM collection failed"
 
@@ -94,7 +99,7 @@ func SBOMsFromFilesystem(fsPath string) {
 		cancel()
 	}()
 
-	exclusions := viper.GetStringSlice("exclude")
+	exclusions := viper.GetStringSlice(CLIKeyExclusions)
 	log.WithField("exclusions", exclusions).Infof("Extracting SBOMs from %s", fsPath)
 	sboms, err := collectors.Syft{Exclusions: exclusions}.GenerateBOM(ctx, fsPath)
 
@@ -132,8 +137,8 @@ func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 	}
 
 	repo, err := repository.New(ctx, vcsURL, repository.Credentials{
-		Username:    viper.GetString("GITHUB_USERNAME"),
-		AccessToken: viper.GetString("GITHUB_TOKEN"),
+		Username:    viper.GetString(EnvKeyGithubUsername),
+		AccessToken: viper.GetString(EnvKeyGithubToken),
 	})
 	if errors.Is(err, context.Canceled) {
 		return
@@ -171,15 +176,15 @@ When uploading to Dependency Track - dtrack-project-name CLI switch takes
 precedence over the projectName argument
 */
 func outputSBOMs(ctx context.Context, sboms *cdx.BOM, projectName string) {
-	outputLocation := viper.GetString("output")
-	if viper.GetString("dtrack-project-name") != "" {
-		projectName = viper.GetString("dtrack-project-name")
+	outputLocation := viper.GetString(CLIKeyOutput)
+	if viper.GetString(CLIKeyDTrackProjectName) != "" { // CLI switch takes precedence
+		projectName = viper.GetString(CLIKeyDTrackProjectName)
 	}
 
 	switch outputLocation {
-	case "dtrack":
+	case OutputValueDtrack:
 		uploadSBOMToDependencyTrack(ctx, projectName, sboms)
-	case "stdout":
+	case OutputValueStdout:
 		printSBOMToStdout(sboms)
 	default:
 		writeSBOMToFile(sboms, outputLocation)
@@ -195,22 +200,25 @@ func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom
 		return
 	}
 
-	endpoint := viper.GetString("DEPENDENCY_TRACK_URL")
-	apiToken := viper.GetString("DEPENDENCY_TRACK_TOKEN")
+	endpoint := viper.GetString(EnvKeyDTrackURL)
+	apiToken := viper.GetString(EnvKeyDTrackToken)
 
 	// Validate dependency track environment variables
 	if endpoint == "" {
-		log.WithField("error", "SAC_DEPENDENCY_TRACK_URL env variable is missing").Error(errMsg)
+		reason := fmt.Sprintf("%s_%s env variable is missing", EnvPrefix, EnvKeyDTrackURL)
+		log.WithField("reason", reason).Error(errMsg)
 		return
 	}
 
 	if _, err = url.ParseRequestURI(endpoint); err != nil {
-		log.WithField("error", "SAC_DEPENDENCY_TRACK_URL env variable is not a valid URL").Error(errMsg)
+		reason := fmt.Sprintf("%s_%s env variable is not a valid URL", EnvPrefix, EnvKeyDTrackURL)
+		log.WithField("reason", reason).Error(errMsg)
 		return
 	}
 
 	if apiToken == "" {
-		log.WithField("error", "SAC_DEPENDENCY_TRACK_TOKEN env variable is missing").Error(errMsg)
+		reason := fmt.Sprintf("%s_%s env variable is missing", EnvPrefix, EnvKeyDTrackToken)
+		log.WithField("reason", reason).Error(errMsg)
 		return
 	}
 
@@ -290,13 +298,13 @@ func setup() {
 	}
 
 	const warnTemplate = "env variable %s is not set. Private GitHub repositories won't be cloned"
-	if viper.GetString("GITHUB_USERNAME") == "" {
-		log.Warnf(warnTemplate, "SAC_GITHUB_USERNAME")
+	if viper.GetString(EnvKeyGithubUsername) == "" {
+		log.Warnf(warnTemplate, fmt.Sprintf("%s_%s", EnvPrefix, EnvKeyGithubUsername))
 		return
 	}
 
-	if viper.GetString("GITHUB_TOKEN") == "" {
-		log.Warnf(warnTemplate, "SAC_GITHUB_TOKEN")
+	if viper.GetString(EnvKeyGithubToken) == "" {
+		log.Warnf(warnTemplate, fmt.Sprintf("%s_%s", EnvPrefix, EnvKeyGithubToken))
 		return
 	}
 }
