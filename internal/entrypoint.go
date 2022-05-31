@@ -165,8 +165,16 @@ func sbomsFromRepositoryInternal(ctx context.Context, vcsURL string) {
 	outputSBOMs(ctx, sboms, repo.Name)
 }
 
+/*
+outputSBOMs Output SBOMs depending on the specified CLI flags.
+When uploading to Dependency Track - dtrack-project-name CLI switch takes
+precedence over the projectName argument
+*/
 func outputSBOMs(ctx context.Context, sboms *cdx.BOM, projectName string) {
 	outputLocation := viper.GetString("output")
+	if viper.GetString("dtrack-project-name") != "" {
+		projectName = viper.GetString("dtrack-project-name")
+	}
 
 	switch outputLocation {
 	case "dtrack":

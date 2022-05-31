@@ -83,13 +83,23 @@ func init() {
 		return nil
 	}
 
-	const outputFlag = "output"
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level: debug/info/warn/error/fatal/panic")
 	rootCmd.PersistentFlags().StringVarP(&logFormat, "log-format", "f", "simple", "Log format: simple/fancy/json")
-	rootCmd.PersistentFlags().StringP(outputFlag, "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
 
-	if err := viper.BindPFlag(outputFlag, rootCmd.PersistentFlags().Lookup(outputFlag)); err != nil {
-		logrus.Fatalf(cantBindFlagTemplate, outputFlag, err)
+	// Flags that will be later bound to viper
+	const (
+		output      = "output"
+		projectName = "dtrack-project-name"
+	)
+	rootCmd.PersistentFlags().StringP(output, "o", "stdout", "where to output SBOM results: stdout/dtrack/file")
+	rootCmd.PersistentFlags().String(projectName, "", "project name to use when uploading to dependency-track (optional)")
+
+	if err := viper.BindPFlag(output, rootCmd.PersistentFlags().Lookup(output)); err != nil {
+		logrus.Fatalf(cantBindFlagTemplate, output, err)
+	}
+
+	if err := viper.BindPFlag(projectName, rootCmd.PersistentFlags().Lookup(projectName)); err != nil {
+		logrus.Fatalf(cantBindFlagTemplate, projectName, err)
 	}
 }
 
