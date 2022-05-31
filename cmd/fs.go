@@ -37,7 +37,7 @@ func init() {
 	const exclude = "exclude"
 	fsCmd.Flags().StringArrayP(exclude, "e", nil, "exclude paths from being scanned using a glob expression")
 
-	if err := viper.BindPFlag(exclude, fsCmd.Flags().Lookup(exclude)); err != nil {
+	if err := viper.BindPFlag(internal.CLIKeyExclusions, fsCmd.Flags().Lookup(exclude)); err != nil {
 		logrus.Fatalf(cantBindFlagTemplate, exclude, err)
 	}
 
