@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -17,12 +18,12 @@ type Collector interface {
 	*/
 	fmt.Stringer
 	/*
-		GenerateBOM given a filesystem path - construct a BOM or return an error.
+		GenerateBOM given a ctx & filesystem path - construct a BOM or return an error.
 		Anyone who implements this interface and passes their implementation to Repository
 		struct should be aware that GenerateBOM will be called once per repository and
 		the string parameter passed in will be the filesystem root of that repository.
 	*/
-	GenerateBOM(string) (*cdx.BOM, error)
+	GenerateBOM(context.Context, string) (*cdx.BOM, error)
 }
 
 /*
@@ -54,5 +55,5 @@ type LanguageCollector interface {
 		When passed to Repository struct, the files returned by this method are then looped over with
 		GenerateBOM calls.
 	*/
-	BootstrapLanguageFiles([]string) []string
+	BootstrapLanguageFiles(context.Context, []string) []string
 }

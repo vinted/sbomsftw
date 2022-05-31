@@ -18,9 +18,9 @@ type Ruby struct {
 	executor shellExecutor
 }
 
-func NewRubyCollector(ctx context.Context) Ruby {
+func NewRubyCollector() Ruby {
 	return Ruby{
-		executor: newDefaultShellExecutor(ctx),
+		executor: defaultShellExecutor{},
 	}
 }
 
@@ -40,7 +40,7 @@ func (r Ruby) String() string {
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface.
-func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
+func (r Ruby) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []string {
 	const bootstrapCmd = "bundler install ||  bundler _1.9_ install || bundler _1.17.3_ install"
 	bootstrappedRoots := make([]string, 0, len(bomRoots))
 
@@ -57,7 +57,7 @@ func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
 			}
 			log.WithFields(f).Info("Bootstrapping language files")
 
-			if err := r.executor.shellOut(dir, bootstrapCmd); err != nil {
+			if err := r.executor.shellOut(ctx, dir, bootstrapCmd); err != nil {
 
 				log.WithFields(log.Fields{
 					"collector": r,
@@ -74,7 +74,7 @@ func (r Ruby) BootstrapLanguageFiles(bomRoots []string) []string {
 }
 
 // GenerateBOM implements LanguageCollector interface.
-func (r Ruby) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+func (r Ruby) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) {
 	const language = "ruby"
-	return r.executor.bomFromCdxgen(bomRoot, language, false)
+	return r.executor.bomFromCdxgen(ctx, bomRoot, language, false)
 }

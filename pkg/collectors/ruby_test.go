@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -21,7 +22,7 @@ func TestRubyCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/deepest-dir/Gemfile",
 		}
 
-		got := Ruby{executor: executor}.BootstrapLanguageFiles(languageFiles)
+		got := Ruby{executor: executor}.BootstrapLanguageFiles(context.Background(), languageFiles)
 		executor.AssertExpectations(t)
 		assert.ElementsMatch(t, []string{
 			"/tmp/some-random-dir",
@@ -34,7 +35,7 @@ func TestRubyCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", bomRoot, "ruby", false).Return(new(cdx.BOM), nil)
-		_, _ = Ruby{executor: executor}.GenerateBOM(bomRoot)
+		_, _ = Ruby{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 	})
 

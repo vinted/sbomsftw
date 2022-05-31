@@ -12,18 +12,10 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type Trivy struct {
-	ctx context.Context
-}
-
-func NewTrivyCollector(ctx context.Context) Trivy {
-	return Trivy{
-		ctx: ctx,
-	}
-}
+type Trivy struct{}
 
 // GenerateBOM implements Collector interface.
-func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
+func (t Trivy) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BOM, error) {
 	cmd := fmt.Sprintf("trivy --quiet fs --format cyclonedx %s", repositoryPath)
 	re := regexp.MustCompile(`^[\w./-]*$`)
 
@@ -31,7 +23,7 @@ func (t Trivy) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 		return nil, errors.New("invalid shell command")
 	}
 
-	ctx, cancel := context.WithTimeout(t.ctx, 5*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 
 	defer cancel()
 

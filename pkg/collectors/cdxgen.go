@@ -12,17 +12,9 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type CDXGen struct {
-	ctx context.Context
-}
+type CDXGen struct{}
 
-func NewCDXGenCollector(ctx context.Context) CDXGen {
-	return CDXGen{
-		ctx: ctx,
-	}
-}
-
-func (c CDXGen) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
+func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BOM, error) {
 	f, err := ioutil.TempFile("/tmp", "cdxgen-collector-tmp-output-")
 	if err != nil {
 		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output %v", err)
@@ -38,7 +30,7 @@ func (c CDXGen) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
 	outputFile := f.Name() + ".json"
 
 	cdxgenCmd := fmt.Sprintf("export FETCH_LICENSE=false && cdxgen --recursive -o %s", outputFile)
-	ctx, cancel := context.WithTimeout(c.ctx, 15*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 
 	defer cancel()
 

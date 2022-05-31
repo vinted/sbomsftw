@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -28,7 +29,7 @@ func TestPythonCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/Pipfile.lock",
 			"/tmp/some-random-dir/inner-dir/deepest-dir/poetry.lock",
 		}
-		got := Python{}.BootstrapLanguageFiles(bomRoots)
+		got := Python{}.BootstrapLanguageFiles(context.Background(), bomRoots)
 		assert.ElementsMatch(t, bomRoots, got)
 	})
 
@@ -36,7 +37,7 @@ func TestPythonCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 		executor.On("bomFromCdxgen", bomRoot, "python", false).Return(new(cdx.BOM), nil)
-		_, _ = Python{executor: executor}.GenerateBOM("/tmp/some-random-dir/setup.py")
+		_, _ = Python{executor: executor}.GenerateBOM(context.Background(), "/tmp/some-random-dir/setup.py")
 		executor.AssertExpectations(t)
 	})
 
@@ -77,7 +78,7 @@ func TestPythonCollector(t *testing.T) {
 		err := os.WriteFile(filepath.Join(tempDir, "setup.py"), nil, 0o644)
 		require.NoError(t, err)
 
-		Python{}.BootstrapLanguageFiles([]string{filepath.Join(tempDir, "setup.py")})
+		Python{}.BootstrapLanguageFiles(context.Background(), []string{filepath.Join(tempDir, "setup.py")})
 		_, err = ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
 		// assert.NotNil(t, err)
 		assert.ErrorIs(t, err, os.ErrNotExist)
@@ -133,7 +134,7 @@ func TestPythonCollector(t *testing.T) {
 			filepath.Join(innerDir, "environment.yml"),
 		}
 
-		Python{}.BootstrapLanguageFiles(bomRoots)
+		Python{}.BootstrapLanguageFiles(context.Background(), bomRoots)
 
 		got, err := ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
 		require.NoError(t, err)

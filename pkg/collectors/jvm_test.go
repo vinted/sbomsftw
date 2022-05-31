@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -16,7 +17,7 @@ func TestJVMCollector(t *testing.T) {
 			"/tmp/some-random-dir/inner-dir/pom.xml",
 			"/tmp/some-random-dir/inner-dir/deepest-dir/build.sbt",
 		}
-		got := JVM{}.BootstrapLanguageFiles(bomRoots)
+		got := JVM{}.BootstrapLanguageFiles(context.Background(), bomRoots)
 		assert.ElementsMatch(t, []string{
 			"/tmp/some-random-dir",
 			"/tmp/some-random-dir/inner-dir",
@@ -33,7 +34,7 @@ func TestJVMCollector(t *testing.T) {
 
 		// Regenerate BOM a second time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(new(cdx.BOM), nil)
-		_, _ = JVM{executor: executor}.GenerateBOM(bomRoot)
+		_, _ = JVM{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 	})
 
@@ -49,7 +50,7 @@ func TestJVMCollector(t *testing.T) {
 		executor.On("bomFromCdxgen", bomRoot, "jvm", false).Return(bom, nil)
 		// But return an empty BOM for the second time
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(new(cdx.BOM), nil)
-		got, _ := JVM{executor: executor}.GenerateBOM(bomRoot)
+		got, _ := JVM{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 		assert.Equal(t, got, bom)
 	})
@@ -71,7 +72,7 @@ func TestJVMCollector(t *testing.T) {
 		// Return a non-empty BOM the second time as well
 		executor.On("bomFromCdxgen", bomRoot, "jvm", true).Return(secondBOM, nil)
 
-		got, _ := JVM{executor: executor}.GenerateBOM(bomRoot)
+		got, _ := JVM{executor: executor}.GenerateBOM(context.Background(), bomRoot)
 		executor.AssertExpectations(t)
 
 		require.NotNil(t, got)

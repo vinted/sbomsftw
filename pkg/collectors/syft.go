@@ -13,22 +13,14 @@ import (
 	"github.com/vinted/software-assets/pkg/bomtools"
 )
 
-type Syft struct {
-	ctx context.Context
-}
-
-func NewSyftCollector(ctx context.Context) Syft {
-	return Syft{
-		ctx: ctx,
-	}
-}
+type Syft struct{}
 
 type sbomCollectionResult struct {
 	sbom *cdx.BOM
 	err  error
 }
 
-func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomCollectionResult) {
+func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, result chan<- sbomCollectionResult) {
 	const bomFormat = "cyclonedxjson"
 
 	input := source.Input{
@@ -42,7 +34,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 	if err != nil {
 		err = fmt.Errorf("%s repository path is invalid: %v\n", repositoryPath, err)
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			return
 		default:
 			result <- sbomCollectionResult{sbom: nil, err: err}
@@ -50,7 +42,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 		}
 	}
 
-	if s.ctx.Err() != nil {
+	if ctx.Err() != nil {
 		return // Return early & don't execute Syft if context is Done.
 	}
 
@@ -60,7 +52,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 	if err != nil {
 		err = fmt.Errorf("can't collect SBOMs for %s: %v", repositoryPath, err)
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			return
 		default:
 			result <- sbomCollectionResult{sbom: nil, err: err}
@@ -80,7 +72,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 	if err != nil {
 		err = fmt.Errorf("can't encode SBOMs to %s format: %v\n", bomFormat, err)
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			return
 		default:
 			result <- sbomCollectionResult{sbom: nil, err: err}
@@ -89,7 +81,7 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 	}
 
 	select {
-	case <-s.ctx.Done():
+	case <-ctx.Done():
 		return
 	default:
 		finalSBOM, err := bomtools.StringToCDX(cdxString)
@@ -98,12 +90,12 @@ func (s Syft) generateBOMInternal(repositoryPath string, result chan<- sbomColle
 }
 
 // GenerateBOM implements Collector interface
-func (s Syft) GenerateBOM(repositoryPath string) (*cdx.BOM, error) {
+func (s Syft) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BOM, error) {
 	worker := make(chan sbomCollectionResult, 1)
-	go s.generateBOMInternal(repositoryPath, worker)
+	go s.generateBOMInternal(ctx, repositoryPath, worker)
 	select {
-	case <-s.ctx.Done():
-		return nil, s.ctx.Err()
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	case result := <-worker:
 		return result.sbom, result.err
 	}

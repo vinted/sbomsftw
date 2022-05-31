@@ -11,9 +11,9 @@ type Rust struct {
 	executor shellExecutor
 }
 
-func NewRustCollector(ctx context.Context) Rust {
+func NewRustCollector() Rust {
 	return Rust{
-		executor: newDefaultShellExecutor(ctx),
+		executor: defaultShellExecutor{},
 	}
 }
 
@@ -34,14 +34,14 @@ func (g Rust) MatchLanguageFiles(isDir bool, filepath string) bool {
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface.
-func (g Rust) BootstrapLanguageFiles(bomRoots []string) []string {
+func (g Rust) BootstrapLanguageFiles(_ context.Context, bomRoots []string) []string {
 	return SquashToDirs(bomRoots)
 }
 
 // GenerateBOM implements LanguageCollector interface.
-func (g Rust) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+func (g Rust) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) {
 	const language = "rust"
-	return g.executor.bomFromCdxgen(bomRoot, language, false)
+	return g.executor.bomFromCdxgen(ctx, bomRoot, language, false)
 }
 
 // String implements LanguageCollector interface.

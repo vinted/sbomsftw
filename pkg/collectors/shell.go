@@ -14,19 +14,13 @@ import (
 )
 
 type shellExecutor interface {
-	shellOut(bomRoot string, bootstrapCmd string) error
-	bomFromCdxgen(bomRoot, language string, multiModuleMode bool) (*cdx.BOM, error)
+	shellOut(ctx context.Context, bomRoot string, bootstrapCmd string) error
+	bomFromCdxgen(ctx context.Context, bomRoot, language string, multiModuleMode bool) (*cdx.BOM, error)
 }
 
-type defaultShellExecutor struct {
-	ctx context.Context
-}
+type defaultShellExecutor struct{}
 
-func newDefaultShellExecutor(ctx context.Context) defaultShellExecutor {
-	return defaultShellExecutor{ctx: ctx}
-}
-
-func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
+func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
 	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
 		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
 
@@ -64,7 +58,7 @@ func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 		generateSBOMsWithoutLicenses = 10
 	)
 	// Fetching licenses can time out so add a cancellation of 15 minutes
-	ctx, cancel := context.WithTimeout(d.ctx, time.Duration(generateSBOMsWithLicenses)*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(generateSBOMsWithLicenses)*time.Minute)
 	cdxGenCmd := formatCDXGenCmd(multiModuleMode, true, language, outputFile)
 	cmd := exec.CommandContext(ctx, "bash", "-c", cdxGenCmd) //nolint:gosec
 	cmd.Dir = bomRoot
@@ -72,7 +66,7 @@ func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 	if err = cmd.Run(); err != nil {
 		cancel()
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
-		ctx, cancel = context.WithTimeout(d.ctx, time.Duration(generateSBOMsWithoutLicenses)*time.Minute)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(generateSBOMsWithoutLicenses)*time.Minute)
 		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
 		cmd = exec.CommandContext(ctx, "bash", "-c", cdxGenCmd) //nolint:gosec
 		cmd.Dir = bomRoot
@@ -94,9 +88,9 @@ func (d defaultShellExecutor) bomFromCdxgen(bomRoot string, language string, mul
 	return bomtools.StringToCDX(output)
 }
 
-func (d defaultShellExecutor) shellOut(execDir, shellCmd string) error {
+func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {
 	const shellCmdTimeout = 10
-	ctx, cancel := context.WithTimeout(d.ctx, time.Duration(shellCmdTimeout)*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(shellCmdTimeout)*time.Minute)
 
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "-c", shellCmd) // User controller input doesn't go here

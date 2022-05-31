@@ -25,9 +25,9 @@ type Python struct {
 	executor shellExecutor
 }
 
-func NewPythonCollector(ctx context.Context) Python {
+func NewPythonCollector() Python {
 	return Python{
-		executor: newDefaultShellExecutor(ctx),
+		executor: defaultShellExecutor{},
 	}
 }
 
@@ -52,7 +52,7 @@ func (p Python) MatchLanguageFiles(isDir bool, filepath string) bool {
 }
 
 // GenerateBOM implements LanguageCollector interface
-func (p Python) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+func (p Python) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) {
 	defer func() {
 		if err := os.RemoveAll(bomRoot); err != nil {
 			log.WithFields(log.Fields{
@@ -63,14 +63,14 @@ func (p Python) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
 	}()
 	const language = "python"
 
-	return p.executor.bomFromCdxgen(fp.Dir(bomRoot), language, false)
+	return p.executor.bomFromCdxgen(ctx, fp.Dir(bomRoot), language, false)
 }
 
 /*BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
 all conda environment.yml files to a single requirements.txt file. This is needed because cdxgen
 doesn't support conda package manager.
 */
-func (p Python) BootstrapLanguageFiles(bomRoots []string) []string {
+func (p Python) BootstrapLanguageFiles(_ context.Context, bomRoots []string) []string {
 	// Extract dependencies from conda environment.yml files
 	dependenciesFromCondaEnv := func(condaEnv string) (requirements []string) {
 		for _, dependency := range condaDependencyPattern.FindAllString(condaEnv, -1) {

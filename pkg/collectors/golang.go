@@ -13,9 +13,9 @@ type Golang struct {
 	executor shellExecutor
 }
 
-func NewGolangCollector(ctx context.Context) Golang {
+func NewGolangCollector() Golang {
 	return Golang{
-		executor: newDefaultShellExecutor(ctx),
+		executor: defaultShellExecutor{},
 	}
 }
 
@@ -44,14 +44,14 @@ func (g Golang) MatchLanguageFiles(isDir bool, filepath string) bool {
 }
 
 // GenerateBOM implements LanguageCollector interface
-func (g Golang) GenerateBOM(bomRoot string) (*cdx.BOM, error) {
+func (g Golang) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) {
 	const language = "golang"
 
-	return g.executor.bomFromCdxgen(bomRoot, language, false)
+	return g.executor.bomFromCdxgen(ctx, bomRoot, language, false)
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface.
-func (g Golang) BootstrapLanguageFiles(bomRoots []string) []string {
+func (g Golang) BootstrapLanguageFiles(_ context.Context, bomRoots []string) []string {
 	return SquashToDirs(bomRoots)
 }
 
