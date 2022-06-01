@@ -24,18 +24,6 @@ const (
 )
 
 func TestExponentialBackoff(t *testing.T) {
-	createUploadBOMConfig := func(url string) UploadBOMConfig {
-		return UploadBOMConfig{
-			ctx:      context.Background(),
-			URL:      url,
-			APIToken: "test-token",
-			BackoffConfig: BackoffConfig{
-				RequestTimeout: 100 * time.Millisecond, // Time out after 100 millis
-				BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
-			},
-		}
-	}
-
 	t.Run("retry get repositories request 3 times on context.DeadlineExceeded errors", func(t *testing.T) {
 		hitCounter := 0
 		timeoutServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -60,39 +48,6 @@ func TestExponentialBackoff(t *testing.T) {
 		assert.Equal(t, 3, hitCounter)
 		assert.ErrorIs(t, err, context.DeadlineExceeded)
 		assert.Contains(t, err.Error(), requestFailed)
-	})
-
-	t.Run("retry upload bom request 3 times on context.DeadlineExceeded errors", func(t *testing.T) {
-		hitCounter := 0
-		timeoutServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			hitCounter++
-			time.Sleep(200 * time.Millisecond)
-			res.WriteHeader(http.StatusOK)
-		}))
-		defer timeoutServer.Close()
-
-		ok, err := UploadBOM(createUploadBOMConfig(timeoutServer.URL))
-		assert.False(t, ok)
-		assert.Equal(t, 3, hitCounter)
-		assert.ErrorIs(t, err, context.DeadlineExceeded)
-		assert.Contains(t, err.Error(), requestFailed)
-	})
-
-	t.Run("retry request 3 times on http.StatusTooManyRequests errors", func(t *testing.T) {
-		const errorTemplate = "did not get 200 from %s, got %d"
-		hitCounter := 0
-		tooManyReqsServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			hitCounter++
-			res.WriteHeader(http.StatusTooManyRequests)
-		}))
-		defer tooManyReqsServer.Close()
-
-		repositories, err := UploadBOM(createUploadBOMConfig(tooManyReqsServer.URL))
-		want := BadStatusError{URL: tooManyReqsServer.URL, Status: http.StatusTooManyRequests}
-		assert.Empty(t, repositories)
-		assert.Equal(t, 3, hitCounter)
-		assert.ErrorIs(t, err, want)
-		assert.Equal(t, fmt.Sprintf(errorTemplate, tooManyReqsServer.URL, http.StatusTooManyRequests), err.Error())
 	})
 }
 
@@ -208,61 +163,12 @@ func TestWalkRepositories(t *testing.T) {
 	})
 }
 
-func TestUploadBOM(t *testing.T) {
-	// Happy path
-	t.Run("return true and nil error and successful server response", func(t *testing.T) {
-		hitCounter := 0
-		goodResponseServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			hitCounter++
-			res.WriteHeader(http.StatusOK)
-		}))
-		defer goodResponseServer.Close()
-
-		ok, err := UploadBOM(createUploadBOMConfig(goodResponseServer.URL))
-		require.NoError(t, err)
-		assert.True(t, ok)
-	})
-
-	// Errors path
-	t.Run("return BadStatusError on non 200 OK responses", func(t *testing.T) {
-		hitCounter := 0
-		teapotServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			hitCounter++
-			res.WriteHeader(http.StatusTeapot)
-		}))
-		defer teapotServer.Close()
-		ok, err := UploadBOM(createUploadBOMConfig(teapotServer.URL))
-
-		assert.False(t, ok)
-		assert.ErrorIs(t, err, BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
-	})
-
-	t.Run("returns url.InvalidHostError whenever URL is invalid", func(t *testing.T) {
-		ok, err := UploadBOM(createUploadBOMConfig("http://bad url.com"))
-		var e url.InvalidHostError
-		assert.ErrorAs(t, err, &e)
-		assert.False(t, ok)
-		assert.Contains(t, err.Error(), requestCreationFailed)
-	})
-}
-
 func createGetRepositoriesConfig(url string) GetRepositoriesConfig {
 	return GetRepositoriesConfig{
 		ctx:                         context.Background(),
 		URL:                         url,
 		APIToken:                    "test-token",
 		IncludeArchivedRepositories: false,
-		BackoffConfig: BackoffConfig{
-			RequestTimeout: 10 * time.Second,
-			BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
-		},
-	}
-}
-
-func createUploadBOMConfig(url string) UploadBOMConfig {
-	return UploadBOMConfig{
-		ctx: context.Background(),
-		URL: url,
 		BackoffConfig: BackoffConfig{
 			RequestTimeout: 10 * time.Second,
 			BackoffPolicy:  []time.Duration{10 * time.Millisecond, 20 * time.Millisecond},
