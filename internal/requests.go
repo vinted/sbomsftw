@@ -1,9 +1,7 @@
 package internal
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,13 +25,6 @@ type GetRepositoriesConfig struct {
 	IncludeArchivedRepositories bool
 }
 
-type UploadBOMConfig struct {
-	BackoffConfig
-	ctx                                     context.Context
-	AutoCreate                              bool
-	URL, APIToken, ProjectName, BOMContents string
-}
-
 type BadStatusError struct {
 	URL    string
 	Status int
@@ -50,21 +41,6 @@ func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken strin
 		Username:                    username,
 		APIToken:                    apiToken,
 		IncludeArchivedRepositories: false,
-		BackoffConfig: BackoffConfig{
-			RequestTimeout: defaultRequestTimeout * time.Second, // Good defaults
-			BackoffPolicy:  []time.Duration{4 * time.Second, 8 * time.Second, 14 * time.Second},
-		},
-	}
-}
-
-func NewUploadBOMConfig(ctx context.Context, url, apiToken, projectName, bomContents string) UploadBOMConfig {
-	return UploadBOMConfig{
-		ctx:         ctx,
-		URL:         url,
-		APIToken:    apiToken,
-		AutoCreate:  true, // 99% of times we want this
-		ProjectName: projectName,
-		BOMContents: bomContents,
 		BackoffConfig: BackoffConfig{
 			RequestTimeout: defaultRequestTimeout * time.Second, // Good defaults
 			BackoffPolicy:  []time.Duration{4 * time.Second, 8 * time.Second, 14 * time.Second},
@@ -208,48 +184,3 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 }
 
 // UploadBOM uploads BOM to Dependency Track based on the configuration given
-func UploadBOM(conf UploadBOMConfig) (bool, error) {
-	uploadBOM := func() (bool, error) {
-		ctx, cancel := context.WithTimeout(conf.ctx, conf.RequestTimeout)
-		defer cancel()
-		// Build the required payload for Dependency Track
-		payload, err := json.Marshal(map[string]string{
-			"projectName":    conf.ProjectName,
-			"autoCreate":     strconv.FormatBool(conf.AutoCreate),
-			"projectVersion": time.Now().Format("2006-01-02 15:04:05"),
-			"bom":            base64.StdEncoding.EncodeToString([]byte(conf.BOMContents)),
-		})
-		if err != nil {
-			return false, fmt.Errorf("unable to create JSON payload for uploading to Dependency track %w", err)
-		}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPut, conf.URL, bytes.NewBuffer(payload))
-		if err != nil {
-			return false, fmt.Errorf("unable to construct HTTP request: %w", err)
-		}
-		req.Header.Set("X-Api-Key", conf.APIToken)
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return false, fmt.Errorf("uploadBOM: HTTP Request failed: %w", err)
-		}
-		defer func() {
-			closeErr := resp.Body.Close()
-			if err != nil {
-				if closeErr != nil {
-					err = fmt.Errorf("UploadBOM: %w can't close response body %v", err, closeErr)
-				}
-				return
-			}
-			err = closeErr
-		}()
-		if resp.StatusCode != http.StatusOK {
-			err = BadStatusError{Status: resp.StatusCode, URL: conf.URL}
-			return false, err
-		}
-		return true, err
-	}
-
-	return exponentialBackoff(uploadBOM, conf.BackoffPolicy...)
-}

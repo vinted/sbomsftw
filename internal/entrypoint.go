@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/vinted/software-assets/pkg/clients"
+
 	"github.com/vinted/software-assets/pkg/collectors"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -222,18 +224,24 @@ func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom
 		return
 	}
 
-	uploadConfig := NewUploadBOMConfig(ctx, endpoint, apiToken, repositoryName, bomString)
-	_, err = UploadBOM(uploadConfig)
+	// TODO Creating new instance on every upload - not very efficient. Remove after requests.go is refactored
+	dtrackClient, err := clients.NewDependencyTrackClient(endpoint, apiToken)
+	if err != nil {
+		log.WithField("reason", err).Error(errMsg)
+		return
+	}
+
+	err = dtrackClient.UploadSBOMs(ctx, repositoryName, true, bomString)
 
 	if errors.Is(err, context.Canceled) {
 		return
 	}
 
 	if err != nil {
-		log.WithError(err).Error(errMsg)
-
+		log.WithField("reason", err).Error(errMsg)
 		return
 	}
+
 	log.Infof("%s bom was successfully uploaded to Dependency Track", repositoryName)
 }
 
