@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-git/go-git/v5/plumbing/object"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -27,6 +29,7 @@ type Credentials struct {
 type Repository struct {
 	Name               string
 	FSPath             string
+	codeOwners         string
 	genericCollectors  []pkg.Collector
 	languageCollectors []pkg.LanguageCollector
 }
@@ -49,13 +52,13 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	}
 
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
-
 	fsPath := filepath.Join(CheckoutsPath, name)
+
 	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
-	_, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{URL: vcsURL})
+	clonedRepository, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{URL: vcsURL})
 	if err != nil {
 		// Retry to clone the repo with credentials if failed
-		_, err = git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
+		clonedRepository, err = git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
 			URL:  vcsURL,
 			Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
 		})
@@ -65,8 +68,9 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	}
 
 	return &Repository{
-		Name:   name,
-		FSPath: fsPath,
+		Name:       name,
+		FSPath:     fsPath,
+		codeOwners: parseCodeOwners(name, clonedRepository),
 		genericCollectors: []pkg.Collector{
 			collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{},
 		},
@@ -75,6 +79,42 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector(),
 		},
 	}, nil
+}
+
+func parseCodeOwners(repositoryName string, repository *git.Repository) string {
+	const (
+		codeOwners     = "CODE OWNERS:\n"
+		errMsgTemplate = "can't parse code owners from %s"
+	)
+
+	commitIterator, err := repository.Log(&git.LogOptions{All: true})
+	if err != nil {
+		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
+
+		return codeOwners
+	}
+
+	contributors := make(map[string]bool) // Map to collect only unique contributors
+
+	err = commitIterator.ForEach(func(c *object.Commit) error {
+		if !contributors[c.Author.Email] {
+			contributors[c.Author.Email] = true
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
+
+		return codeOwners
+	}
+
+	uniqueContributors := make([]string, 0, len(contributors))
+	for c := range contributors {
+		uniqueContributors = append(uniqueContributors, c)
+	}
+
+	return codeOwners + strings.Join(uniqueContributors, "\n")
 }
 
 /*ExtractSBOMs extracts SBOMs for every possible language from the repository.
