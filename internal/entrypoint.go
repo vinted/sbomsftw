@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/vinted/software-assets/pkg/clients"
+	"github.com/vinted/software-assets/pkg/dtrack"
 
 	"github.com/vinted/software-assets/pkg/collectors"
 
@@ -194,13 +194,8 @@ func outputSBOMs(ctx context.Context, sboms *cdx.BOM, projectName string) {
 }
 
 // uploadSBOMToDependencyTrack SBOM Output function: Dependency track.
-func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom *cdx.BOM) {
+func uploadSBOMToDependencyTrack(ctx context.Context, projectName string, sboms *cdx.BOM) {
 	const errMsg = "can't upload SBOMs to Dependency Track"
-	bomString, err := bomtools.CDXToString(bom)
-	if err != nil {
-		log.WithError(err).Error(errMsg)
-		return
-	}
 
 	endpoint := viper.GetString(EnvKeyDTrackURL)
 	apiToken := viper.GetString(EnvKeyDTrackToken)
@@ -212,7 +207,7 @@ func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom
 		return
 	}
 
-	if _, err = url.ParseRequestURI(endpoint); err != nil {
+	if _, err := url.ParseRequestURI(endpoint); err != nil {
 		reason := fmt.Sprintf("%s_%s env variable is not a valid URL", EnvPrefix, EnvKeyDTrackURL)
 		log.WithField("reason", reason).Error(errMsg)
 		return
@@ -225,13 +220,17 @@ func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom
 	}
 
 	// TODO Creating new instance on every upload - not very efficient. Remove after requests.go is refactored
-	dtrackClient, err := clients.NewDependencyTrackClient(endpoint, apiToken)
+	client, err := dtrack.NewClient(endpoint, apiToken)
 	if err != nil {
 		log.WithField("reason", err).Error(errMsg)
 		return
 	}
 
-	err = dtrackClient.UploadSBOMs(ctx, repositoryName, true, bomString)
+	projectUUID, err := client.CreateProject(ctx, dtrack.CreateProjectPayload{
+		Name:       projectName,
+		Tags:       []string{"vinted"}, // Hardcoded for now - use tags from repo on next commit
+		CodeOwners: "",                 // Add code owners later on
+	})
 
 	if errors.Is(err, context.Canceled) {
 		return
@@ -242,7 +241,21 @@ func uploadSBOMToDependencyTrack(ctx context.Context, repositoryName string, bom
 		return
 	}
 
-	log.Infof("%s bom was successfully uploaded to Dependency Track", repositoryName)
+	err = client.UploadSBOMs(ctx, dtrack.UploadSBOMsPayload{
+		Sboms:       sboms,
+		ProjectUUID: projectUUID,
+	})
+
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+
+	if err != nil {
+		log.WithField("reason", err).Error(errMsg)
+		return
+	}
+
+	log.Infof("SBOMS from %s were successfully uploaded to Dependency Track", projectName)
 }
 
 // printSBOMToStdout SBOM Output function: Stdout.
