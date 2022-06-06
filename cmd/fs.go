@@ -3,10 +3,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/vinted/software-assets/internal/app"
 	"os"
 	"strings"
-
-	"github.com/vinted/software-assets/internal"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -52,7 +51,7 @@ sa-collector fs / --exclusions './root' --log-level=warn --code-owners 'sre@evil
 	},
 }
 
-func createSBOMsFromFilesystemConfig(cmd *cobra.Command, args []string) (*internal.SBOMsFromFilesystemConfig, error) {
+func createSBOMsFromFilesystemConfig(cmd *cobra.Command, args []string) (*app.SBOMsFromFilesystemConfig, error) {
 	const errTemplate = "can't parse %s flag: %v"
 
 	codeOwners, err := cmd.Flags().GetStringSlice(codeOwnersFlag)
@@ -70,7 +69,7 @@ func createSBOMsFromFilesystemConfig(cmd *cobra.Command, args []string) (*intern
 		return nil, fmt.Errorf(errTemplate, dTrackProjectNameFlag, err)
 	}
 
-	return &internal.SBOMsFromFilesystemConfig{
+	return &app.SBOMsFromFilesystemConfig{
 		FilesystemPath: args[0],
 		CodeOwners:     "CODE OWNERS: \n" + strings.Join(codeOwners, "\n"), // TODO move this formatting out later on
 		Exclusions:     exclusions,
