@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/vinted/software-assets/internal"
 	"net/url"
 	"os"
 	"os/signal"
 	"path"
 	"path/filepath"
 	"syscall"
+
+	"github.com/vinted/software-assets/internal"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"

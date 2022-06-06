@@ -3,9 +3,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/vinted/software-assets/internal/app"
 	"os"
 	"strings"
+
+	"github.com/vinted/software-assets/internal/app"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
