@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/vinted/software-assets/internal/app"
 
 	log "github.com/sirupsen/logrus"
