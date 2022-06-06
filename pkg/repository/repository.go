@@ -29,7 +29,7 @@ type Credentials struct {
 type Repository struct {
 	Name               string
 	FSPath             string
-	codeOwners         string
+	CodeOwners         string
 	genericCollectors  []pkg.Collector
 	languageCollectors []pkg.LanguageCollector
 }
@@ -70,7 +70,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	return &Repository{
 		Name:       name,
 		FSPath:     fsPath,
-		codeOwners: parseCodeOwners(name, clonedRepository),
+		CodeOwners: parseCodeOwners(name, clonedRepository),
 		genericCollectors: []pkg.Collector{
 			collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{},
 		},

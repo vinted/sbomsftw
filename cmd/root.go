@@ -7,42 +7,45 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vinted/software-assets/internal"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const subCommandHelpMsg = `
-Output collect SBOMs to stdout/file or Dependency track for further analysis.
+Output collected SBOMs to stdout/file or Dependency Track for further analysis.
 
 To Collect SBOMs from private GitHub repositories a valid set of credentials must be provided.
 This must be done via environment variables. For example:
 export SAC_GITHUB_USERNAME=Shelly 
 export SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
 
-To upload SBOMs to Dependency Track a valid API Token and URL must be provided.
+To upload SBOMs to Dependency Track a valid API Token and base URL must be provided.
 This must be done via environment variables. For example:
 export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
 export SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/`
 
-// Usages for CLI switches
+// Root & Persistent CLI flags.
 const (
-	logFormatUsage   = "log format: simple/fancy/json"
-	logLevelUsage    = "log level: debug/info/warn/error/fatal/panic"
-	outputUsage      = "where to output SBOM results: stdout/dtrack/file"
-	projectNameUsage = "project name to use when uploading to dependency-track (optional)"
+	logLevelFlag  = "log-level"
+	logFormatFlag = "log-format"
+
+	tagsFlag           = "tags"
+	outputFlag         = "output"
+	uploadToDTrackFlag = "upload-to-dependency-track"
 )
 
-// Error messages
+// ENV keys.
 const (
-	cantBindFlagTemplate  = "can't bind %s flag to viper: %v"
-	invalidLogFormatError = "invalid log format - must be one of: simple/fancy/json"
-	invalidLogLevelError  = "invalid log level - must be one of: debug/info/warn/error/fatal/panic"
+	envKeyGithubUsername = "GITHUB_USERNAME"
+	envKeyGithubToken    = "GITHUB_TOKEN" //nolint:gosec
+	envKeyDTrackURL      = "DEPENDENCY_TRACK_URL"
+	envKeyDTrackToken    = "DEPENDENCY_TRACK_TOKEN"
 )
 
-// Log formats
+const envPrefix = "SAC" // Software Asset Collector.
+
+// Log formats.
 const (
 	logFormatSimple = "simple"
 	logFormatFancy  = "fancy"
@@ -55,26 +58,30 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "software-assets [repo/org] [vcs-url] [flags]",
+	Use:   "org [repo/org] [vcs-url] [flags]",
 	Short: "Collects CycloneDX SBOMs from Github repositories",
-	Example: `sa-collector repo https://github.com/ReactiveX/RxJava               collect SBOMs from RxJava repository & output them to stdout
-sa-collector repo https://github.com/ffuf/ffuf --output=dtrack      collect SBOMs from ffuf repository & upload them to Dependency Track
+	Example: `sa-collector repo https://github.com/ReactiveX/RxJava                  collect SBOMs from RxJava repository & output them to stdout
+sa-collector repo https://github.com/ffuf/ffuf --output sboms.json     collect SBOMs from ffuf repository & write results to sboms.json
 
-sa-collector org evil-corp                                          collect SBOMs from evil-corp organization & output them to stdout
-sa-collector org evil-corp --output=dtrack                          collect SBOMs from evil-corp organization & upload them to Dependency Track
+sa-collector org https://api.github.com/orgs/evil-corp/repos           collect SBOMs from evil-corp organization & output them to stdout
 
-sa-collector fs /usr/local/bin                                      collect SBOMs recursively from /usr/local/bin directory
-sa-collector fs / --exclude './root'                                collect SBOMs recursively from root directory while excluding /root directory`,
+sa-collector fs /usr/local/bin --upload-to-dependency-track            collect SBOMs recursively from /usr/local/bin directory & upload them to Dependency Track
+sa-collector fs / --exclusions './root'                                collect SBOMs recursively from root directory while excluding /root directory`,
 }
 
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
 
 func setupLogrus(logLevel, logFormat string) error {
+	// Error messages.
+	const (
+		invalidLogFormatError = "invalid log format - must be one of: simple/fancy/json"
+		invalidLogLevelError  = "invalid log level - must be one of: debug/info/warn/error/fatal/panic"
+	)
+
 	logrus.SetOutput(os.Stdout)
 	lvl, err := logrus.ParseLevel(logLevel)
 	if err != nil {
@@ -97,6 +104,7 @@ func setupLogrus(logLevel, logFormat string) error {
 	default:
 		return errors.New(invalidLogFormatError)
 	}
+
 	return nil
 }
 
@@ -108,27 +116,25 @@ func init() {
 		return setupLogrus(logLevel, logFormat)
 	}
 
-	rootCmd.PersistentFlags().StringVarP(&logFormat, "log-format", "f", logFormatSimple, logFormatUsage)
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), logLevelUsage)
-
-	// Flags that will be later bound to viper
+	// Usages.
 	const (
-		output      = "output"
-		projectName = "dtrack-project-name"
+		logLevelUsage  = "log level: debug/info/warn/error/fatal/panic"
+		logFormatUsage = "log format: simple/fancy/json"
+
+		outputUsage                  = "where to output SBOM results: (defaults to stdout when unspecified)"
+		uploadToDependencyTrackUsage = "whether to upload collected SBOMs to Dependency Track (default: false)"
+		tagsUsage                    = "tags to use when SBOMs are uploaded to Dependency Track (optional)"
 	)
-	rootCmd.PersistentFlags().StringP(output, "o", internal.OutputValueStdout, outputUsage)
-	rootCmd.PersistentFlags().String(projectName, "", projectNameUsage)
 
-	if err := viper.BindPFlag(internal.CLIKeyOutput, rootCmd.PersistentFlags().Lookup(output)); err != nil {
-		logrus.Fatalf(cantBindFlagTemplate, output, err)
-	}
+	rootCmd.PersistentFlags().StringVarP(&logFormat, logFormatFlag, "f", logFormatSimple, logFormatUsage)
+	rootCmd.PersistentFlags().StringVarP(&logLevel, logLevelFlag, "l", logrus.InfoLevel.String(), logLevelUsage)
 
-	if err := viper.BindPFlag(internal.CLIKeyDTrackProjectName, rootCmd.PersistentFlags().Lookup(projectName)); err != nil {
-		logrus.Fatalf(cantBindFlagTemplate, projectName, err)
-	}
+	rootCmd.PersistentFlags().StringP(outputFlag, "o", "", outputUsage)
+	rootCmd.PersistentFlags().StringSliceP(tagsFlag, "t", nil, tagsUsage)
+	rootCmd.PersistentFlags().BoolP(uploadToDTrackFlag, "u", false, uploadToDependencyTrackUsage)
 }
 
 func initConfig() {
-	viper.SetEnvPrefix(strings.ToLower(internal.EnvPrefix))
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvPrefix(strings.ToLower(envPrefix))
+	viper.AutomaticEnv() // read in environment variables that match.
 }
