@@ -1,9 +1,10 @@
-package internal
+package app
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vinted/software-assets/internal"
 	"net/url"
 	"os"
 	"os/signal"
@@ -158,8 +159,8 @@ func (a App) SBOMsFromOrganization(organizationURL string) {
 		cancel()
 	}()
 
-	c := NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken)
-	err := WalkRepositories(c, func(repositoryURLs []string) {
+	c := internal.NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken)
+	err := internal.WalkRepositories(c, func(repositoryURLs []string) {
 		for _, repositoryURL := range repositoryURLs {
 			select {
 			case <-ctx.Done():
