@@ -72,7 +72,7 @@ func createSBOMsFromFilesystemConfig(cmd *cobra.Command, args []string) (*intern
 
 	return &internal.SBOMsFromFilesystemConfig{
 		FilesystemPath: args[0],
-		CodeOwners:     "CODE OWNERS: \n" + strings.Join(codeOwners, "\n"), // todo moves this out later on
+		CodeOwners:     "CODE OWNERS: \n" + strings.Join(codeOwners, "\n"), // TODO move this formatting out later on
 		Exclusions:     exclusions,
 		ProjectName:    projectName,
 	}, nil
