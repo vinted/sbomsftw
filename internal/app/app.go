@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"syscall"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/vinted/software-assets/pkg/collectors"
 	"github.com/vinted/software-assets/pkg/dtrack"
 	"github.com/vinted/software-assets/pkg/repository"
-	"golang.org/x/sys/unix"
 )
 
 type App struct {
@@ -93,11 +91,6 @@ func WithTags(tags []string) Option {
 }
 
 func New(outputFile string, opts ...Option) (*App, error) {
-	// Check if we can write to output file
-	if outputFile != "" && unix.Access(path.Dir(outputFile), unix.W_OK) != nil {
-		return nil, errors.New("can't write to output file")
-	}
-
 	var options options
 	for _, opt := range opts {
 		err := opt(&options)
