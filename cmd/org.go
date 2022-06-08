@@ -27,7 +27,7 @@ sa-collector org https://api.github.com/orgs/evil-corp/repos --upload-to-depende
 		return cobra.MaximumNArgs(1)(cmd, args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		app, err := createAppFromCLI(cmd)
+		app, err := createAppFromCLI(cmd, true)
 		if err != nil {
 			logrus.Fatal(err)
 		}

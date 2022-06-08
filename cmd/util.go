@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func createAppFromCLI(cmd *cobra.Command) (*app.App, error) {
+func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 	const (
 		errTemplate  = "can't parse %s flag - exiting"
 		warnTemplate = "env variable %s is not set. Private GitHub repositories won't be cloned"
@@ -19,10 +19,10 @@ func createAppFromCLI(cmd *cobra.Command) (*app.App, error) {
 	githubUsername := viper.GetString(envKeyGithubUsername)
 	githubToken := viper.GetString(envKeyGithubToken)
 
-	if githubUsername == "" {
+	if githubUsername == "" && verbose {
 		log.Warnf(warnTemplate, fmt.Sprintf("%s_%s", envPrefix, envKeyGithubUsername))
 	}
-	if githubToken == "" {
+	if githubToken == "" && verbose {
 		log.Warnf(warnTemplate, fmt.Sprintf("%s_%s", envPrefix, envKeyGithubToken))
 	}
 
