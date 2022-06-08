@@ -74,7 +74,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		if err = cmd.Run(); err != nil {
 			withoutLicensesCancel()
 
-			return nil, fmt.Errorf("can't Collect BOM for %s: %v", bomRoot, err)
+			return nil, fmt.Errorf("can't Collect SBOMs for %s: %v", bomRoot, err)
 		}
 		withoutLicensesCancel()
 	}
@@ -82,7 +82,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
-		return nil, fmt.Errorf("can't Collect %s BOM for %s", language, bomRoot)
+		return nil, fmt.Errorf("can't Collect %s SBOMs for %s", language, bomRoot)
 	}
 
 	return bomtools.StringToCDX(output)
