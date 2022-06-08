@@ -53,32 +53,32 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 	outputFile := f.Name() + ".json"
 
 	// Timeouts for SBOM generation with CDXGen
-	const (
-		generateSBOMsWithLicenses    = 15
-		generateSBOMsWithoutLicenses = 10
+	var (
+		withLicensesTimeout    = time.Duration(15) * time.Minute
+		withoutLicensesTimeout = time.Duration(10) * time.Minute
 	)
 	// Fetching licenses can time out so add a cancellation of 15 minutes
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(generateSBOMsWithLicenses)*time.Minute)
+	withLicensesCtx, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
 	cdxGenCmd := formatCDXGenCmd(multiModuleMode, true, language, outputFile)
-	cmd := exec.CommandContext(ctx, "bash", "-c", cdxGenCmd) //nolint:gosec
+	cmd := exec.CommandContext(withLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 	cmd.Dir = bomRoot
 
 	if err = cmd.Run(); err != nil {
-		cancel()
+		withLicensesCancel()
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(generateSBOMsWithoutLicenses)*time.Minute)
+		withoutLicensesCtx, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
 		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
-		cmd = exec.CommandContext(ctx, "bash", "-c", cdxGenCmd) //nolint:gosec
+		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 		cmd.Dir = bomRoot
 
 		if err = cmd.Run(); err != nil {
-			cancel()
+			withoutLicensesCancel()
 
 			return nil, fmt.Errorf("can't Collect BOM for %s: %v", bomRoot, err)
 		}
-		cancel()
+		withoutLicensesCancel()
 	}
-	cancel()
+	withLicensesCancel()
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
