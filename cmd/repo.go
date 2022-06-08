@@ -27,7 +27,7 @@ sa-collector repo https://github.com/ffuf/ffuf --output sboms.json --log-level w
 		return cobra.MaximumNArgs(1)(cmd, args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		app, err := createAppFromCLI(cmd)
+		app, err := createAppFromCLI(cmd, true)
 		if err != nil {
 			logrus.Fatal(err)
 		}

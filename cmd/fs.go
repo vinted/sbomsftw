@@ -38,7 +38,7 @@ sa-collector fs / --exclusions './root' --log-level=warn --code-owners 'sre@evil
 		return cobra.MaximumNArgs(1)(cmd, args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		app, err := createAppFromCLI(cmd)
+		app, err := createAppFromCLI(cmd, false)
 		if err != nil {
 			logrus.Fatal(err)
 		}
