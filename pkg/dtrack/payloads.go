@@ -4,10 +4,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
+	"unicode"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/vinted/software-assets/pkg/bomtools"
+)
+
+const (
+	varcharMaxSize   = 255
+	codeOwnersPrefix = "CODE OWNERS:\n"
 )
 
 type BadStatusError struct {
@@ -22,7 +29,53 @@ func (b BadStatusError) Error() string {
 type CreateProjectPayload struct {
 	Name       string
 	Tags       []string
-	CodeOwners string
+	CodeOwners []string
+}
+
+func (c CreateProjectPayload) getCodeOwners() string {
+	codeOwners := codeOwnersPrefix + strings.Join(c.CodeOwners, "\n")
+	if (len(codeOwners)) > varcharMaxSize {
+		return c.getTruncatedCodeOwners()
+	}
+
+	return codeOwners
+}
+
+////TODO: Temporary workaround! Dependency Track only supports project descriptions that are less then 255 characters.
+////TODO: Remove this when DB is Altered from VARCHAR to TEXT column types
+func (c CreateProjectPayload) getTruncatedCodeOwners() string {
+	isASCII := func(s string) bool {
+		for i := 0; i < len(s); i++ {
+			if s[i] > unicode.MaxASCII {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	// FilteredCodeOwners will contain only ASCII code owners & those that don't end with `@users.noreply.github.com`
+	vintedContributors := make([]string, 0, len(c.CodeOwners))
+	otherContributors := make([]string, 0, len(c.CodeOwners))
+
+	for _, codeOwner := range c.CodeOwners {
+		if !isASCII(codeOwner) || strings.HasSuffix(codeOwner, "@users.noreply.github.com") {
+			continue
+		}
+		if strings.HasSuffix(codeOwner, "@vinted.com") { // Temporary solution
+			vintedContributors = append(vintedContributors, codeOwner)
+			continue
+		}
+
+		otherContributors = append(otherContributors, codeOwner)
+	}
+
+	codeOwnersConcat := codeOwnersPrefix + strings.Join(append(vintedContributors, otherContributors...), "\n")
+	if len(codeOwnersConcat) <= varcharMaxSize {
+		return codeOwnersConcat
+	}
+
+	return codeOwnersConcat[:varcharMaxSize]
 }
 
 func (c CreateProjectPayload) MarshalJSON() ([]byte, error) {
@@ -39,7 +92,7 @@ func (c CreateProjectPayload) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"name":        c.Name,
 		"tags":        mappedTags,
-		"description": c.CodeOwners,
+		"description": c.getCodeOwners(),
 		"version":     time.Now().Format("2006-01-02 15:04:05"),
 	})
 }

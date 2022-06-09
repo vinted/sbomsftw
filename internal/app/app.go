@@ -28,8 +28,8 @@ type App struct {
 }
 
 type SBOMsFromFilesystemConfig struct {
-	ProjectName, CodeOwners, FilesystemPath string
-	Exclusions                              []string
+	ProjectName, FilesystemPath string
+	Exclusions, CodeOwners      []string
 }
 
 type options struct {
@@ -302,7 +302,7 @@ func (a App) printSBOMsToStdout(sboms *cdx.BOM) {
 }
 
 // uploadSBOMsToDependencyTrack SBOM Output function: Dependency track.
-func (a App) uploadSBOMsToDependencyTrack(ctx context.Context, projectName string, sboms *cdx.BOM, codeOwners string) {
+func (a App) uploadSBOMsToDependencyTrack(ctx context.Context, projectName string, sboms *cdx.BOM, codeOwners []string) {
 	if a.dependencyTrackClient == nil {
 		return
 	}

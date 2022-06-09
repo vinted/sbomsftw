@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -14,14 +15,14 @@ import (
 func TestMarshal(t *testing.T) {
 	t.Run("marshal CreateProjectPayload instances correctly", func(t *testing.T) {
 		const (
-			testProjectName       = "some-random-project-name"
-			testProjectTag        = "some-random-project-tag"
-			testProjectCodeOwners = "some-random-code-owners"
+			testProjectName      = "some-random-project-name"
+			testProjectTag       = "some-random-project-tag"
+			testProjectCodeOwner = "some-random-code-owner"
 		)
 
 		got, err := json.Marshal(CreateProjectPayload{
 			Name:       testProjectName,
-			CodeOwners: testProjectCodeOwners,
+			CodeOwners: []string{testProjectCodeOwner},
 			Tags:       []string{testProjectTag},
 		})
 		require.NoError(t, err)
@@ -43,7 +44,7 @@ func TestMarshal(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, testProjectName, u.Name)
-		assert.Equal(t, testProjectCodeOwners, u.CodeOwners)
+		assert.Equal(t, "CODE OWNERS:\n"+testProjectCodeOwner, u.CodeOwners)
 		assert.Equal(t, []projectTag{{Name: testProjectTag}}, u.Tags)
 		// Don't check the actual date as it always changes - just assert on regex
 		assert.Regexp(t, regexp.MustCompile(`\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`), u.Version)
@@ -61,5 +62,51 @@ func TestMarshal(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("{\"bom\":\"%s\",\"project\":\"%s\"}", sbomsB64, projectUUID), string(got))
+	})
+}
+
+func TestGetTruncatedCodeOwners(t *testing.T) {
+	t.Run("filter out emails with 'users.noreply.github.com' domains", func(t *testing.T) {
+		got := CreateProjectPayload{
+			Name:       "some-random-name",
+			Tags:       nil,
+			CodeOwners: []string{"7+test@users.noreply.github.com", "john.doe@example.com", "jane.doe@pm.me"},
+		}.getTruncatedCodeOwners()
+
+		want := "CODE OWNERS:\njohn.doe@example.com\njane.doe@pm.me"
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("filter out emails that contain unicode characters", func(t *testing.T) {
+		got := CreateProjectPayload{
+			Name:       "some-random-name",
+			Tags:       nil,
+			CodeOwners: []string{"7+test@ačiū.com", "john.doe@example.com", "jane.doe@pm.me"},
+		}.getTruncatedCodeOwners()
+
+		want := "CODE OWNERS:\njohn.doe@example.com\njane.doe@pm.me"
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("order vinted.com contributors at the top", func(t *testing.T) {
+		got := CreateProjectPayload{
+			Name:       "some-random-name",
+			Tags:       nil,
+			CodeOwners: []string{"john.doe@pm.me", "john.smith@acme.com", "jane.doe@vinted.com", "jane@vinted.com"},
+		}.getTruncatedCodeOwners()
+
+		want := "CODE OWNERS:\njane.doe@vinted.com\njane@vinted.com\njohn.doe@pm.me\njohn.smith@acme.com"
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("truncate code owners to a maximum of 255 characters", func(t *testing.T) {
+		got := CreateProjectPayload{
+			Name:       "some-random-name",
+			Tags:       nil,
+			CodeOwners: []string{strings.Repeat("A", 300)}, // 300 A's
+		}.getTruncatedCodeOwners()
+
+		want := "CODE OWNERS:\n" + strings.Repeat("A", 242)
+		assert.Equal(t, want, got)
 	})
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/vinted/software-assets/internal/app"
 
@@ -72,7 +71,7 @@ func createSBOMsFromFilesystemConfig(cmd *cobra.Command, args []string) (*app.SB
 
 	return &app.SBOMsFromFilesystemConfig{
 		FilesystemPath: args[0],
-		CodeOwners:     "CODE OWNERS: \n" + strings.Join(codeOwners, "\n"), // TODO move this formatting out later on
+		CodeOwners:     codeOwners,
 		Exclusions:     exclusions,
 		ProjectName:    projectName,
 	}, nil

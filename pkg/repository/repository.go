@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/vinted/software-assets/pkg/collectors"
+
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -16,7 +18,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/software-assets/pkg"
 	"github.com/vinted/software-assets/pkg/bomtools"
-	"github.com/vinted/software-assets/pkg/collectors"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"
@@ -29,7 +30,7 @@ type Credentials struct {
 type Repository struct {
 	Name               string
 	FSPath             string
-	CodeOwners         string
+	CodeOwners         []string
 	genericCollectors  []pkg.Collector
 	languageCollectors []pkg.LanguageCollector
 }
@@ -81,17 +82,14 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	}, nil
 }
 
-func parseCodeOwners(repositoryName string, repository *git.Repository) string {
-	const (
-		codeOwners     = "CODE OWNERS:\n"
-		errMsgTemplate = "can't parse code owners from %s"
-	)
+func parseCodeOwners(repositoryName string, repository *git.Repository) []string {
+	const errMsgTemplate = "can't parse code owners from %s"
 
 	commitIterator, err := repository.Log(&git.LogOptions{All: true})
 	if err != nil {
 		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
 
-		return codeOwners
+		return nil
 	}
 
 	contributors := make(map[string]bool) // Map to collect only unique contributors
@@ -106,7 +104,7 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) string {
 	if err != nil {
 		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
 
-		return codeOwners
+		return nil
 	}
 
 	uniqueContributors := make([]string, 0, len(contributors))
@@ -114,7 +112,7 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) string {
 		uniqueContributors = append(uniqueContributors, c)
 	}
 
-	return codeOwners + strings.Join(uniqueContributors, "\n")
+	return uniqueContributors
 }
 
 /*ExtractSBOMs extracts SBOMs for every possible language from the repository.
