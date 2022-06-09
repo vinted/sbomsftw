@@ -54,7 +54,6 @@ func (c CreateProjectPayload) getTruncatedCodeOwners() string {
 		return true
 	}
 
-	// FilteredCodeOwners will contain only ASCII code owners & those that don't end with `@users.noreply.github.com`
 	vintedContributors := make([]string, 0, len(c.CodeOwners))
 	otherContributors := make([]string, 0, len(c.CodeOwners))
 
