@@ -128,7 +128,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			default:
-				log.WithField("repository", r).Infof("extracting SBOMs with: %s", c)
+				log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", c)
 				bom, err := c.GenerateBOM(ctx, r.FSPath)
 
 				if err == nil {
@@ -136,7 +136,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 					continue
 				}
 
-				log.WithFields(log.Fields{"repository": r, "error": err}).Debugf("%s failed to collect SBOMs", c)
+				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
 			}
 		}
 	}
@@ -152,7 +152,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		default:
 			collector := res.collector
 			languageFiles := res.languageFiles
-			log.WithField("repository", r).Infof("extracting SBOMs with %s", collector)
+			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
 
 			/*
 				Generate SBOMs from every directory that contains language files
@@ -179,10 +179,10 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 				continue
 			}
 			if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
-				log.WithField("repository", r).Debugf("%s found no SBOMs", collector)
+				log.WithField("repository", r.Name).Debugf("%s found no SBOMs", collector)
 				continue
 			}
-			logFields := log.Fields{"repository": r, "error": err}
+			logFields := log.Fields{"repository": r.Name, "error": err}
 			log.WithFields(logFields).Debugf("%s failed to merge SBOMs", collector)
 		}
 	}
@@ -240,10 +240,10 @@ func (r Repository) filterApplicableCollectors() <-chan applicableCollector {
 		}
 		var e noLanguageFilesFoundError
 		if errors.As(err, &e) {
-			log.WithField("repository", r).Debugf("%s found no language files - skipping", collector)
+			log.WithField("repository", r.Name).Debugf("%s found no language files - skipping", collector)
 			return
 		}
-		logFields := log.Fields{"repository": r, "error": err}
+		logFields := log.Fields{"repository": r.Name, "error": err}
 		log.WithFields(logFields).Warnf("%s failed to walk repository for language files", collector)
 	}
 
@@ -255,6 +255,7 @@ func (r Repository) filterApplicableCollectors() <-chan applicableCollector {
 	}
 	wg.Wait()
 	close(results)
+
 	return results
 }
 
