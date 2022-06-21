@@ -20,6 +20,7 @@ sa-collector fs / --exclude './usr/local/bin' --exclude './root' --exclude './et
 **Note:**\
 Filesystem scans exclude files relative to the specified directory. For example: scanning `/usr/foo` with `--exclude ./package.json` would exclude `/usr/foo/package.json` and `--exclude '**/package.json'` would exclude all `package.json` files under `/usr/foo`. For filesystem scans, it is required to begin path expressions with `./`, `*/`, or `**/`, all of which will be resolved relative to the specified scan directory. Keep in mind, your shell may attempt to expand wildcards, so put those parameters in single quotes, like: '**/*.json'.
 
+------
 
 ```bash
 Collects CycloneDX SBOMs from Github repositories
