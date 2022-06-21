@@ -209,7 +209,9 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 		log.WithError(err).Fatal(errMsg)
 	}
 
+	sboms = bomtools.FilterOutComponentsWithoutAType(sboms)
 	sboms = bomtools.FilterOutByScope(sboms, cdx.ScopeOptional)
+
 	log.Infof("Collected %d SBOM components from %s", len(*sboms.Components), config.FilesystemPath)
 
 	if a.outputFile == "" {
