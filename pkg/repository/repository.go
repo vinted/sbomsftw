@@ -203,7 +203,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			components before returning the final SBOM.
 		*/
 		result := bomtools.FilterOutComponentsWithoutAType(merged)
-		result = bomtools.FilterOutByScope(merged, cdx.ScopeOptional)
+		result = bomtools.FilterOutByScope(result, cdx.ScopeOptional)
 
 		return result, nil
 	}
