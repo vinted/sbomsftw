@@ -202,7 +202,10 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			These test libraries have the CycloneDX optional scope attached to them - so we filter out all optional
 			components before returning the final SBOM.
 		*/
-		return bomtools.FilterOutByScope(merged, cdx.ScopeOptional), nil
+		result := bomtools.FilterOutComponentsWithoutAType(merged)
+		result = bomtools.FilterOutByScope(merged, cdx.ScopeOptional)
+
+		return result, nil
 	}
 }
 

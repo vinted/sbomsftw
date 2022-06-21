@@ -10,7 +10,8 @@ import (
 
 func TestFilterOptionalDependencies(t *testing.T) {
 	t.Run("filter out optional dependencies correctly", func(t *testing.T) {
-		testBOM, err := ioutil.ReadFile("../../integration/testdata/bomtools/bom-optional-dependencies.json")
+		const testFilePath = "../../integration/testdata/bomtools/bom-with-optional-dependencies.json"
+		testBOM, err := ioutil.ReadFile(testFilePath)
 		if err != nil {
 			t.Fatalf("can't read a test file: %s", err)
 		}
@@ -46,5 +47,40 @@ func TestFilterOptionalDependencies(t *testing.T) {
 		// Return the same BOM when trying to filter a bom with nil Components
 		bom := new(cdx.BOM)
 		assert.Equal(t, bom, FilterOutByScope(bom, cdx.ScopeOptional))
+	})
+}
+
+func TestFilterOutComponentsWithoutAType(t *testing.T) {
+	t.Run("filter out malformed components correctly", func(t *testing.T) {
+		const testFilePath = "../../integration/testdata/bomtools/bom-with-malformed-components.json"
+		testBOM, err := ioutil.ReadFile(testFilePath)
+		if err != nil {
+			t.Fatalf("can't read a test file: %s", err)
+		}
+		bom, err := StringToCDX(testBOM)
+		if err != nil {
+			t.Fatalf("can't convert BOM string to cdx.BOM instance %s", err)
+		}
+
+		got := FilterOutComponentsWithoutAType(bom)
+
+		var actualPURLs []string
+		for _, component := range *got.Components {
+			actualPURLs = append(actualPURLs, component.PackageURL)
+		}
+
+		expectedPURLs := []string{
+			"pkg:npm/actions/http-client@1.0.8",
+			"pkg:cargo/boring@2.0.0",
+		}
+		assert.Equal(t, expectedPURLs, actualPURLs)
+	})
+
+	t.Run("return an error when trying to filter dependencies from malformed BOMs", func(t *testing.T) {
+		assert.Nil(t, FilterOutComponentsWithoutAType(nil)) // Return nil when trying to filter from nil
+
+		// Return the same BOM when trying to filter a bom with nil Components
+		bom := new(cdx.BOM)
+		assert.Equal(t, bom, FilterOutComponentsWithoutAType(bom))
 	})
 }

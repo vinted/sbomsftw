@@ -2,21 +2,42 @@ package bomtools
 
 import cdx "github.com/CycloneDX/cyclonedx-go"
 
-func FilterOutByScope(bom *cdx.BOM, scope cdx.Scope) *cdx.BOM {
-	if bom == nil || bom.Components == nil || len(*bom.Components) == 0 {
-		return bom
+// FilterOutByScope Filter out SBOM components that don't have the specified scope
+func FilterOutByScope(sbom *cdx.BOM, scope cdx.Scope) *cdx.BOM {
+	if sbom == nil || sbom.Components == nil || len(*sbom.Components) == 0 {
+		return sbom
 	}
 	// Filter out each component that matches the supplied scope
-	var requiredComponents []cdx.Component
+	requiredComponents := make([]cdx.Component, 0, len(*sbom.Components))
 
-	for _, c := range *bom.Components {
+	for _, c := range *sbom.Components {
 		if c.Scope == scope {
 			continue
 		}
 		requiredComponents = append(requiredComponents, c)
 	}
 
-	bom.Components = &requiredComponents
+	sbom.Components = &requiredComponents
 
-	return bom
+	return sbom
+}
+
+// FilterOutComponentsWithoutAType Filter SBOM components that have an empty type
+func FilterOutComponentsWithoutAType(sbom *cdx.BOM) *cdx.BOM {
+	if sbom == nil || sbom.Components == nil || len(*sbom.Components) == 0 {
+		return sbom
+	}
+
+	requiredComponents := make([]cdx.Component, 0, len(*sbom.Components))
+
+	for _, c := range *sbom.Components {
+		if c.Type == "" { // Every component must have a valid type
+			continue
+		}
+		requiredComponents = append(requiredComponents, c)
+	}
+
+	sbom.Components = &requiredComponents
+
+	return sbom
 }
