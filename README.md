@@ -20,8 +20,21 @@ sa-collector fs / --exclude './usr/local/bin' --exclude './root' --exclude './et
 **Note:**\
 Filesystem scans exclude files relative to the specified directory. For example: scanning `/usr/foo` with `--exclude ./package.json` would exclude `/usr/foo/package.json` and `--exclude '**/package.json'` would exclude all `package.json` files under `/usr/foo`. For filesystem scans, it is required to begin path expressions with `./`, `*/`, or `**/`, all of which will be resolved relative to the specified scan directory. Keep in mind, your shell may attempt to expand wildcards, so put those parameters in single quotes, like: '**/*.json'.
 
-------
 
+## Configuration
+To Collect SBOMs from private GitHub repositories a valid set of credentials must be provided.
+This must be done via environment variables. For example:
+```bash
+export SAC_GITHUB_USERNAME=Shelly
+export SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
+```
+Also, to upload SBOMs to Dependency Track a valid API Token and base URL must be provided.
+This must be done via environment variables as well. For example:
+```bash
+export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
+export SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/
+```
+------
 ```bash
 Collects CycloneDX SBOMs from Github repositories
 
