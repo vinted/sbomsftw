@@ -1,11 +1,11 @@
 package dtrack
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 	"unicode"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -17,22 +17,19 @@ const (
 	codeOwnersPrefix = "CODE OWNERS:\n"
 )
 
-type BadStatusError struct {
-	URL    string
-	Status int
+type UploadSBOMsPayload struct {
+	Sboms            *cdx.BOM
+	ProjectName      string
+	Tags, CodeOwners []string
 }
 
-func (b BadStatusError) Error() string {
-	return fmt.Sprintf("did not get a successful response from %s, got %d", b.URL, b.Status)
-}
-
-type CreateProjectPayload struct {
+type createProjectPayload struct {
 	Name       string
 	Tags       []string
 	CodeOwners []string
 }
 
-func (c CreateProjectPayload) getCodeOwners() string {
+func (c createProjectPayload) getCodeOwners() string {
 	codeOwners := codeOwnersPrefix + strings.Join(c.CodeOwners, "\n")
 	if (len(codeOwners)) > varcharMaxSize {
 		return c.getTruncatedCodeOwners()
@@ -43,7 +40,7 @@ func (c CreateProjectPayload) getCodeOwners() string {
 
 ////TODO: Temporary workaround! Dependency Track only supports project descriptions that are less then 255 characters.
 ////TODO: Remove this when DB is Altered from VARCHAR to TEXT column types
-func (c CreateProjectPayload) getTruncatedCodeOwners() string {
+func (c createProjectPayload) getTruncatedCodeOwners() string {
 	isASCII := func(s string) bool {
 		for i := 0; i < len(s); i++ {
 			if s[i] > unicode.MaxASCII {
@@ -77,7 +74,7 @@ func (c CreateProjectPayload) getTruncatedCodeOwners() string {
 	return codeOwnersConcat[:varcharMaxSize]
 }
 
-func (c CreateProjectPayload) MarshalJSON() ([]byte, error) {
+func (c createProjectPayload) MarshalJSON() ([]byte, error) {
 	type projectTag struct {
 		Name string `json:"name"`
 	}
@@ -88,27 +85,35 @@ func (c CreateProjectPayload) MarshalJSON() ([]byte, error) {
 		mappedTags = append(mappedTags, projectTag{Name: t})
 	}
 
+	// project version is the SHA256 sum of all project tags concatenated with '/' + project name
+	versionHash := sha256.Sum256([]byte(strings.Join(append(c.Tags, c.Name), "/")))
+
 	return json.Marshal(map[string]any{
 		"name":        c.Name,
 		"tags":        mappedTags,
 		"description": c.getCodeOwners(),
-		"version":     time.Now().Format("2006-01-02 15:04:05"),
+		"version":     fmt.Sprintf("%x", versionHash),
 	})
 }
 
-type UploadSBOMsPayload struct {
+type updateSBOMsPayload struct {
 	Sboms       *cdx.BOM
-	ProjectUUID string
+	Tags        []string
+	ProjectName string
 }
 
-func (c UploadSBOMsPayload) MarshalJSON() ([]byte, error) {
+func (c updateSBOMsPayload) MarshalJSON() ([]byte, error) {
 	sbomsStr, err := bomtools.CDXToString(c.Sboms)
 	if err != nil {
 		return nil, fmt.Errorf("can't convert *cdx.BOM type Sboms to string")
 	}
 
+	// project version is the SHA256 sum of all project tags concatenated with '/' + project name
+	versionHash := sha256.Sum256([]byte(strings.Join(append(c.Tags, c.ProjectName), "/")))
+
 	return json.Marshal(map[string]string{
-		"project": c.ProjectUUID,
-		"bom":     base64.StdEncoding.EncodeToString([]byte(sbomsStr)),
+		"projectName":    c.ProjectName,
+		"projectVersion": fmt.Sprintf("%x", versionHash),
+		"bom":            base64.StdEncoding.EncodeToString([]byte(sbomsStr)),
 	})
 }

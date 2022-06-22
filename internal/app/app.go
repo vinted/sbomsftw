@@ -309,32 +309,17 @@ func (a App) uploadSBOMsToDependencyTrack(ctx context.Context, projectName strin
 		return
 	}
 
-	const errMsg = "can't upload SBOMs to Dependency Track"
-
-	projectUUID, err := a.dependencyTrackClient.CreateProject(ctx, dtrack.CreateProjectPayload{
-		Tags:       a.tags,
-		CodeOwners: codeOwners,
-		Name:       projectName,
-	})
-
-	if errors.Is(err, context.Canceled) {
-		return
-	} else if err != nil {
-		log.WithField("reason", err).Error(errMsg)
-
-		return
-	}
-
-	err = a.dependencyTrackClient.UploadSBOMs(ctx, dtrack.UploadSBOMsPayload{
+	err := a.dependencyTrackClient.UploadSBOMs(ctx, dtrack.UploadSBOMsPayload{
 		Sboms:       sboms,
-		ProjectUUID: projectUUID,
+		ProjectName: projectName,
+		Tags:        a.tags,
+		CodeOwners:  codeOwners,
 	})
 
 	if errors.Is(err, context.Canceled) {
 		return
 	} else if err != nil {
-		log.WithField("reason", err).Error(errMsg)
-
+		log.WithField("reason", err).Error("can't upload SBOMs to Dependency Track")
 		return
 	}
 

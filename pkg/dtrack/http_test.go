@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/vinted/software-assets/pkg"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/stretchr/testify/assert"
@@ -23,12 +25,13 @@ func executeSBOMsUpload(t *testing.T, endpoint, apiKey string) error {
 		t.Fatalf("can't create dependency track client: %s", err)
 	}
 
-	payload := UploadSBOMsPayload{
+	payload := updateSBOMsPayload{
 		Sboms:       new(cdx.BOM),
-		ProjectUUID: "e1e690f9-e4fb-4ef8-9148-e86fff1b23ff",
+		ProjectName: "some-random-project-name",
+		Tags:        []string{"some-random-project-tag"},
 	}
 
-	return client.UploadSBOMs(context.Background(), payload)
+	return client.updateSBOMs(context.Background(), payload)
 }
 
 // Helper function for creating a project
@@ -40,7 +43,7 @@ func executeCreateProject(t *testing.T, endpoint, apiKey string) (string, error)
 		t.Fatalf("can't create dependency track client: %s", err)
 	}
 
-	return client.CreateProject(context.Background(), CreateProjectPayload{})
+	return client.createProject(context.Background(), createProjectPayload{})
 }
 
 func TestAppendURLPath(t *testing.T) {
@@ -72,7 +75,7 @@ func TestCreateProject(t *testing.T) {
 
 		_, err := executeCreateProject(t, server.URL, apiKeyForTesting)
 
-		var e BadStatusError
+		var e pkg.BadStatusError
 		assert.ErrorAs(t, err, &e)
 	})
 
@@ -135,7 +138,7 @@ func TestUploadSBOMs(t *testing.T) {
 
 		err := executeSBOMsUpload(t, server.URL, apiKeyForTesting)
 
-		var e BadStatusError
+		var e pkg.BadStatusError
 		assert.ErrorAs(t, err, &e)
 	})
 
