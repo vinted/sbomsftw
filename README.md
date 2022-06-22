@@ -41,6 +41,16 @@ This must be done via environment variables as well. For example:
 export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
 export SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/
 ```
+**Note:**\
+When collecting SBOMs inside a Docker container - format your env variables like this:
+```bash
+SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
+SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/
+SAC_GITHUB_USERNAME=Shelly
+SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
+```
+And then pass them to `docker run` with `--env-file` switch.
+
 ------
 ```bash
 Collects CycloneDX SBOMs from Github repositories
