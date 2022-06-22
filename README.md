@@ -14,6 +14,12 @@ Single repository mode:
 docker run --env-file .env -it --rm -v "${PWD}/outputs/":'/tmp/' sbomsftw:latest sa-collector repo https://github.com/cloudflare/quiche \
         --output /tmp/sboms.json --upload-to-dependency-track
 ```
+Organization mode - collect SBOMs from every repository inside the organization
+```bash
+docker run --env-file .env -it --rm sbomsftw:latest sa-collector org https://api.github.com/orgs/vinted/repos \
+        --output /dev/null --tags 'vinted' --upload-to-dependency-track
+```
+
 Filesystem collection mode:
 ```
 sa-collector fs / --exclude './usr/local/bin' --exclude './root' --exclude './etc'  --exclude './dev' --output sboms.json
