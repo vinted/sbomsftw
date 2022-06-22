@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/vinted/software-assets/pkg"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,7 +78,7 @@ func TestGetRepositories(t *testing.T) {
 
 	// Errors path
 	t.Run("return BadStatusError on non 200 OK responses", func(t *testing.T) {
-		const errorTemplate = "did not get 200 from %s, got %d"
+		const errorTemplate = "did not get a successful response from %s, got %d"
 		hitCounter := 0
 		teapotServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			hitCounter++
@@ -85,7 +87,7 @@ func TestGetRepositories(t *testing.T) {
 		defer teapotServer.Close()
 		repositories, err := GetRepositories(createGetRepositoriesConfig(teapotServer.URL))
 
-		assert.ErrorIs(t, err, BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
+		assert.ErrorIs(t, err, pkg.BadStatusError{URL: teapotServer.URL, Status: http.StatusTeapot})
 		assert.Empty(t, repositories)
 		assert.Equal(t, 1, hitCounter)
 		assert.Equal(t, fmt.Sprintf(errorTemplate, teapotServer.URL, http.StatusTeapot), err.Error())

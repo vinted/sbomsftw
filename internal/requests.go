@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/vinted/software-assets/pkg"
 )
 
 const defaultRequestTimeout = 10
@@ -23,15 +25,6 @@ type GetRepositoriesConfig struct {
 	ctx                         context.Context
 	URL, Username, APIToken     string
 	IncludeArchivedRepositories bool
-}
-
-type BadStatusError struct {
-	URL    string
-	Status int
-}
-
-func (b BadStatusError) Error() string {
-	return fmt.Sprintf("did not get 200 from %s, got %d", b.URL, b.Status)
 }
 
 func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken string) GetRepositoriesConfig {
@@ -62,7 +55,7 @@ type response interface {
 // Exponential backoff.
 func exponentialBackoff[T response](request func() (T, error), backoff ...time.Duration) (result T, err error) {
 	shouldRetry := func(err error) bool {
-		var e BadStatusError
+		var e pkg.BadStatusError
 		if ok := errors.As(err, &e); ok && e.Status == http.StatusTooManyRequests {
 			return true
 		}
@@ -128,7 +121,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 		}()
 
 		if resp.StatusCode != http.StatusOK {
-			err = BadStatusError{Status: resp.StatusCode, URL: conf.URL}
+			err = pkg.BadStatusError{Status: resp.StatusCode, URL: conf.URL}
 			return nil, err
 		}
 

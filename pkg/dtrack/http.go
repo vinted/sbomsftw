@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/vinted/software-assets/pkg"
 )
 
 const (
@@ -38,11 +41,11 @@ func (d DependencyTrackClient) setRequiredHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 }
 
-/*CreateProject create a project inside Dependency Track based on the payload supplied.
+/*createProject create a project inside Dependency Track based on the payload supplied.
 Upon successful project creation this method returns a project UUID. This UUID can later on
 be used for SBOM upload.
 */
-func (d DependencyTrackClient) CreateProject(ctx context.Context, payload CreateProjectPayload) (string, error) {
+func (d DependencyTrackClient) createProject(ctx context.Context, payload createProjectPayload) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
 	defer cancel()
 
@@ -78,7 +81,7 @@ func (d DependencyTrackClient) CreateProject(ctx context.Context, payload Create
 
 	if resp.StatusCode != http.StatusCreated {
 		// Don't return the error straight up - mind the defer above.
-		err = BadStatusError{Status: resp.StatusCode, URL: requestURL}
+		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
 		return "", err
 	}
 
@@ -95,8 +98,8 @@ func (d DependencyTrackClient) CreateProject(ctx context.Context, payload Create
 	return metadata.UUID, err // Return only UUID since it's the only relevant field we need from project creation.
 }
 
-// UploadSBOMs uploads SBOMs to Dependency Track based on the payload supplied.
-func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSBOMsPayload) error {
+// updateSBOMs updates SBOMs inside Dependency Track based on the payload supplied
+func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSBOMsPayload) error {
 	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
 	defer cancel()
 
@@ -131,9 +134,35 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 
 	if resp.StatusCode != http.StatusOK {
 		// Don't return the error straight up - mind the defer above.
-		err = BadStatusError{Status: resp.StatusCode, URL: requestURL}
+		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
 		return err
 	}
 
 	return err
+}
+
+/*UploadSBOMs upload SBOMs to Dependency Track based on the payload supplied. If the project doesn't exist - it is
+automatically created.
+*/
+func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSBOMsPayload) error {
+	_, err := d.createProject(ctx, createProjectPayload{
+		Tags:       payload.Tags,
+		CodeOwners: payload.CodeOwners,
+		Name:       payload.ProjectName,
+	})
+	if err != nil {
+		var e pkg.BadStatusError
+		if ok := errors.As(err, &e); !ok {
+			return err
+		}
+		if e.Status != http.StatusConflict {
+			return err
+		}
+	}
+
+	return d.updateSBOMs(ctx, updateSBOMsPayload{
+		Sboms:       payload.Sboms,
+		Tags:        payload.Tags,
+		ProjectName: payload.ProjectName,
+	})
 }

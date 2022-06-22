@@ -1,9 +1,9 @@
 package dtrack
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -13,14 +13,15 @@ import (
 )
 
 func TestMarshal(t *testing.T) {
-	t.Run("marshal CreateProjectPayload instances correctly", func(t *testing.T) {
-		const (
-			testProjectName      = "some-random-project-name"
-			testProjectTag       = "some-random-project-tag"
-			testProjectCodeOwner = "some-random-code-owner"
-		)
+	const (
+		testProjectName      = "some-random-project-name"
+		testProjectTag       = "some-random-project-tag"
+		testProjectCodeOwner = "some-random-code-owner"
+		sbomsB64             = "ewogICJib21Gb3JtYXQiOiAiIiwKICAic3BlY1ZlcnNpb24iOiAiIiwKICAidmVyc2lvbiI6IDAKfQo="
+	)
 
-		got, err := json.Marshal(CreateProjectPayload{
+	t.Run("marshal createProjectPayload instances correctly", func(t *testing.T) {
+		got, err := json.Marshal(createProjectPayload{
 			Name:       testProjectName,
 			CodeOwners: []string{testProjectCodeOwner},
 			Tags:       []string{testProjectTag},
@@ -46,28 +47,32 @@ func TestMarshal(t *testing.T) {
 		assert.Equal(t, testProjectName, u.Name)
 		assert.Equal(t, "CODE OWNERS:\n"+testProjectCodeOwner, u.CodeOwners)
 		assert.Equal(t, []projectTag{{Name: testProjectTag}}, u.Tags)
-		// Don't check the actual date as it always changes - just assert on regex
-		assert.Regexp(t, regexp.MustCompile(`\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`), u.Version)
+
+		// Version is the sha256 sum of project tags joined together with "/" + projectName
+		projectVersion := strings.Join(append([]string{testProjectTag}, testProjectName), "/")
+		assert.Equal(t, fmt.Sprintf("%x", sha256.Sum256([]byte(projectVersion))), u.Version)
 	})
 
-	t.Run("marshal UploadSBOMsPayload instances correctly", func(t *testing.T) {
-		const (
-			projectUUID = "9488d60b-eb11-4569-8a7c-129d37b111e3"
-			sbomsB64    = "ewogICJib21Gb3JtYXQiOiAiIiwKICAic3BlY1ZlcnNpb24iOiAiIiwKICAidmVyc2lvbiI6IDAKfQo="
-		)
-
-		got, err := json.Marshal(UploadSBOMsPayload{
+	t.Run("marshal updateSBOMsPayload instances correctly", func(t *testing.T) {
+		got, err := json.Marshal(updateSBOMsPayload{
 			Sboms:       new(cdx.BOM), // zeroed mem value - b64 is always the same
-			ProjectUUID: projectUUID,
+			ProjectName: testProjectName,
+			Tags:        []string{testProjectTag},
 		})
 		require.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf("{\"bom\":\"%s\",\"project\":\"%s\"}", sbomsB64, projectUUID), string(got))
+
+		template := "{\"bom\":\"%s\",\"projectName\":\"%s\",\"projectVersion\":\"%s\"}"
+		// Version is the sha256 sum of project tags joined together with "/" + projectName
+		projectVersion := strings.Join(append([]string{testProjectTag}, testProjectName), "/")
+		expectedProjectVersion := fmt.Sprintf("%x", sha256.Sum256([]byte(projectVersion)))
+
+		assert.Equal(t, fmt.Sprintf(template, sbomsB64, testProjectName, expectedProjectVersion), string(got))
 	})
 }
 
 func TestGetTruncatedCodeOwners(t *testing.T) {
 	t.Run("filter out emails with 'users.noreply.github.com' domains", func(t *testing.T) {
-		got := CreateProjectPayload{
+		got := createProjectPayload{
 			Name:       "some-random-name",
 			Tags:       nil,
 			CodeOwners: []string{"7+test@users.noreply.github.com", "john.doe@example.com", "jane.doe@pm.me"},
@@ -78,7 +83,7 @@ func TestGetTruncatedCodeOwners(t *testing.T) {
 	})
 
 	t.Run("filter out emails that contain unicode characters", func(t *testing.T) {
-		got := CreateProjectPayload{
+		got := createProjectPayload{
 			Name:       "some-random-name",
 			Tags:       nil,
 			CodeOwners: []string{"7+test@ačiū.com", "john.doe@example.com", "jane.doe@pm.me"},
@@ -89,7 +94,7 @@ func TestGetTruncatedCodeOwners(t *testing.T) {
 	})
 
 	t.Run("order vinted.com contributors at the top", func(t *testing.T) {
-		got := CreateProjectPayload{
+		got := createProjectPayload{
 			Name:       "some-random-name",
 			Tags:       nil,
 			CodeOwners: []string{"john.doe@pm.me", "john.smith@acme.com", "jane.doe@vinted.com", "jane@vinted.com"},
@@ -100,7 +105,7 @@ func TestGetTruncatedCodeOwners(t *testing.T) {
 	})
 
 	t.Run("truncate code owners to a maximum of 255 characters", func(t *testing.T) {
-		got := CreateProjectPayload{
+		got := createProjectPayload{
 			Name:       "some-random-name",
 			Tags:       nil,
 			CodeOwners: []string{strings.Repeat("A", 300)}, // 300 A's
