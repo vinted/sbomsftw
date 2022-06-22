@@ -11,7 +11,8 @@ docker build --tag sbomsftw -f build/Dockerfile .
 ## Examples
 Single repository mode:
 ```bash
-docker run -it --rm -v "${PWD}/outputs/":'/tmp/' sbomsftw:latest sa-collector repo https://github.com/cloudflare/quiche --output /tmp/sboms.json
+docker run --env-file .env -it --rm -v "${PWD}/outputs/":'/tmp/' sbomsftw:latest sa-collector repo https://github.com/cloudflare/quiche \
+        --output /tmp/sboms.json --upload-to-dependency-track
 ```
 Filesystem collection mode:
 ```
