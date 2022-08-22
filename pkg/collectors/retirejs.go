@@ -1,0 +1,41 @@
+package collectors
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os/exec"
+	"regexp"
+	"time"
+
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/vinted/software-assets/pkg/bomtools"
+)
+
+type RetireJS struct{}
+
+// GenerateBOM implements Collector interface.
+func (r RetireJS) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BOM, error) {
+	const cmdTemplate = "retire --js --jspath %s --outputformat cyclonedx --exitwith 0 --outputpath /dev/stdout"
+	re := regexp.MustCompile(`^[\w./-]*$`)
+
+	if !re.MatchString(repositoryPath) {
+		return nil, errors.New("invalid shell command")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+
+	defer cancel()
+
+	out, err := exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf(cmdTemplate, repositoryPath)).Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return bomtools.XMLStringToJSONCDX(out)
+}
+
+// String implements Collector interface.
+func (r RetireJS) String() string {
+	return "generic retireJS collector"
+}
