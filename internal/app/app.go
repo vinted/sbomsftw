@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+
+	"github.com/vinted/software-assets/pkg"
 
 	"github.com/vinted/software-assets/internal"
 
@@ -309,21 +312,57 @@ func (a App) uploadSBOMsToDependencyTrack(ctx context.Context, projectName strin
 		return
 	}
 
-	err := a.dependencyTrackClient.UploadSBOMs(ctx, dtrack.UploadSBOMsPayload{
-		Sboms:       sboms,
-		ProjectName: projectName,
-		Tags:        a.tags,
-		CodeOwners:  codeOwners,
-	})
+	uploadSBOMs := func() error {
+		return a.dependencyTrackClient.UploadSBOMs(ctx, dtrack.UploadSBOMsPayload{
+			Sboms:       sboms,
+			ProjectName: projectName,
+			Tags:        a.tags,
+			CodeOwners:  codeOwners,
+		})
+	}
 
-	if errors.Is(err, context.Canceled) {
-		return
-	} else if err != nil {
-		log.WithField("reason", err).Error("can't upload SBOMs to Dependency Track")
+	const (
+		successMessage = "SBOMS from %s were successfully uploaded to Dependency Track"
+		errorMessage   = "can't upload SBOMs to Dependency Track"
+	)
+
+	err := uploadSBOMs()
+
+	if err == nil {
+		log.Infof(successMessage, projectName)
 		return
 	}
 
-	log.Infof("SBOMS from %s were successfully uploaded to Dependency Track", projectName)
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+
+	var e pkg.BadStatusError
+	if ok := errors.As(err, &e); !ok {
+		log.WithField("reason", err).Error(errorMessage)
+		return
+	}
+
+	if e.Status < http.StatusInternalServerError {
+		log.WithField("reason", err).Error(errorMessage)
+		return
+	}
+
+	log.WithField("reason", err).Debugf("can't upload SBOMs due to server error - retrying")
+
+	// We have a 500 error here - retry SBOM upload one more time before giving up
+	err = uploadSBOMs()
+
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+
+	if err != nil {
+		log.WithField("reason", err).Error(errorMessage)
+		return
+	}
+
+	log.Infof(successMessage, projectName)
 }
 
 // Setup & cleanup functions.
