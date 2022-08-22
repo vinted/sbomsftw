@@ -44,21 +44,25 @@ func languageFilesByPredicate(fileSystem fs.FS, predicate languageFilesMatcher) 
 	return languageFiles, err
 }
 
-/*relativeToAbsolutePaths takes in a slice of relative paths and a parent directory.
+/*
+relativeToAbsolutePaths takes in a slice of relative paths and a parent directory.
 Returns absolute paths prefixed with parent dir. E.g. given relative paths:
-[]string{
-		"Packages",
-		"Packages.lock",
-		"inner-dir/Packages.lock",
-		"inner-dir/deepest-dir/Packages.lock",
-	}
+
+	[]string{
+			"Packages",
+			"Packages.lock",
+			"inner-dir/Packages.lock",
+			"inner-dir/deepest-dir/Packages.lock",
+		}
+
 and a parent directory of '/tmp/test-repository' returns
-[]string{
-		"/tmp/test-repository/Packages",
-		"/tmp/test-repository/Packages.lock",
-		"/tmp/test-repository/inner-dir/Packages.lock",
-		"/tmp/test-repository/inner-dir/deepest-dir/Packages.lock",
-	}
+
+	[]string{
+			"/tmp/test-repository/Packages",
+			"/tmp/test-repository/Packages.lock",
+			"/tmp/test-repository/inner-dir/Packages.lock",
+			"/tmp/test-repository/inner-dir/deepest-dir/Packages.lock",
+		}
 */
 func relativeToAbsolutePaths(parentDir string, relativeRoots ...string) (absoluteRoots []string) {
 	for _, relativeRoot := range relativeRoots {
