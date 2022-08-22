@@ -3,7 +3,6 @@ package collectors
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
@@ -15,7 +14,7 @@ import (
 type CDXGen struct{}
 
 func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BOM, error) {
-	f, err := ioutil.TempFile("/tmp", "cdxgen-collector-tmp-output-")
+	f, err := os.CreateTemp("/tmp", "cdxgen-collector-tmp-output-")
 	if err != nil {
 		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output %v", err)
 	}

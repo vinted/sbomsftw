@@ -3,7 +3,6 @@ package collectors
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
@@ -38,7 +37,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		return fmt.Sprintf(template, licenseConfig, multiModuleModeConfig, language, outputFile)
 	}
 
-	f, err := ioutil.TempFile("/tmp", "sa-collector-tmp-output-")
+	f, err := os.CreateTemp("/tmp", "sa-collector-tmp-output-")
 	if err != nil {
 		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output %v", err)
 	}
