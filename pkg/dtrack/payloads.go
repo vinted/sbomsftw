@@ -38,8 +38,8 @@ func (c createProjectPayload) getCodeOwners() string {
 	return codeOwners
 }
 
-////TODO: Temporary workaround! Dependency Track only supports project descriptions that are less then 255 characters.
-////TODO: Remove this when DB is Altered from VARCHAR to TEXT column types
+// //TODO: Temporary workaround! Dependency Track only supports project descriptions that are less then 255 characters.
+// //TODO: Remove this when DB is Altered from VARCHAR to TEXT column types
 func (c createProjectPayload) getTruncatedCodeOwners() string {
 	isASCII := func(s string) bool {
 		for i := 0; i < len(s); i++ {

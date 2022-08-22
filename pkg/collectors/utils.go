@@ -5,6 +5,7 @@ import "path/filepath"
 /*
 SquashToDirs - Squash file-paths to directories.
 E.g. given the following input:
+
 	[]string{
 		"/tmp/test/go.mod",
 		"/tmp/test/go.sum",
@@ -12,7 +13,9 @@ E.g. given the following input:
 		"/tmp/inner-dir/go.sum",
 		"/tmp/inner-dir/deepest-dir/go.mod",
 	}
+
 this function will return a slice of:
+
 	[]string{
 		"/tmp/test",
 		"/tmp/inner-dir",
@@ -37,14 +40,17 @@ func SquashToDirs(pathsToSquash []string) []string {
 
 /*
 SplitPaths - Split filesystem paths to directory -> file mappings.
-E.g. given the following input: []string{
-		"/tmp/test/go.mod",
-		"/tmp/test/go.sum",
-		"/tmp/inner-dir/go.mod",
-		"/tmp/inner-dir/go.sum",
-		"/tmp/inner-dir/deepest-dir/go.mod",
-	}
+
+	E.g. given the following input: []string{
+			"/tmp/test/go.mod",
+			"/tmp/test/go.sum",
+			"/tmp/inner-dir/go.mod",
+			"/tmp/inner-dir/go.sum",
+			"/tmp/inner-dir/deepest-dir/go.mod",
+		}
+
 this function will return a map of:
+
 	[
 		"/tmp/test" => ["go.mod", "go.sum"],
 		"/tmp/inner-dir" => ["go.mod", "go.sum"],

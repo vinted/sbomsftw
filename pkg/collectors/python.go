@@ -66,7 +66,8 @@ func (p Python) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, erro
 	return p.executor.bomFromCdxgen(ctx, fp.Dir(bomRoot), language, false)
 }
 
-/*BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
+/*
+BootstrapLanguageFiles implements LanguageCollector interface. Traverses bom roots and converts
 all conda environment.yml files to a single requirements.txt file. This is needed because cdxgen
 doesn't support conda package manager.
 */

@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Infosec Team <infosec@vinted.com>
+Copyright © 2022 InfoSec Team <infosec@vinted.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

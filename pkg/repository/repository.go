@@ -43,7 +43,8 @@ func (b BadVCSURLError) Error() string {
 	return fmt.Sprintf("invalid VCS URL supplied %s\n", b.URL)
 }
 
-/*New clones the repository supplied in the vcsURL parameter and returns a new Repository instance.
+/*
+New clones the repository supplied in the vcsURL parameter and returns a new Repository instance.
 If repository is private credentials must be supplied.
 */
 func New(ctx context.Context, vcsURL string, credentials Credentials) (*Repository, error) {
@@ -115,7 +116,8 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 	return uniqueContributors
 }
 
-/*ExtractSBOMs extracts SBOMs for every possible language from the repository.
+/*
+ExtractSBOMs extracts SBOMs for every possible language from the repository.
 If includeGenericCollectors is set to true then additional collectors such as:
 syft & trivy & cdxgen are executed against the repository as well. This tends to produce richer SBOM results
 */
@@ -214,8 +216,10 @@ type applicableCollector struct {
 	languageFiles []string
 }
 
-/*filterApplicableCollectors - walk the repository and identify which collectors are applicable. E.g.
+/*
+filterApplicableCollectors - walk the repository and identify which collectors are applicable. E.g.
 given the following repository structure:
+
 	/tmp/some-repo/Cargo.toml
 	/tmp/some-repo/file1.rs
 	/tmp/some-repo/file2.rs
@@ -223,6 +227,7 @@ given the following repository structure:
 	/tmp/some-repo/inner-dir/index.js
 
 filterApplicableCollectors would return a closed channel with the following elements:
+
 	applicableCollector struct {
 		collector:     pkg.Rust
 		languageFiles: ["/tmp/some-repo/Cargo.toml"]

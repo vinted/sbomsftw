@@ -41,7 +41,8 @@ func (d DependencyTrackClient) setRequiredHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 }
 
-/*createProject create a project inside Dependency Track based on the payload supplied.
+/*
+createProject create a project inside Dependency Track based on the payload supplied.
 Upon successful project creation this method returns a project UUID. This UUID can later on
 be used for SBOM upload.
 */
@@ -141,7 +142,8 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	return err
 }
 
-/*UploadSBOMs upload SBOMs to Dependency Track based on the payload supplied. If the project doesn't exist - it is
+/*
+UploadSBOMs upload SBOMs to Dependency Track based on the payload supplied. If the project doesn't exist - it is
 automatically created.
 */
 func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSBOMsPayload) error {
