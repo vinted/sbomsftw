@@ -3,7 +3,6 @@ package collectors
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	fp "path/filepath"
 	"regexp"
@@ -114,7 +113,7 @@ func (p Python) BootstrapLanguageFiles(_ context.Context, bomRoots []string) []s
 		var requirements []string
 		for _, f := range files {
 			if condaEnvPattern.MatchString(f) {
-				condaEnv, err := ioutil.ReadFile(fp.Join(dir, f))
+				condaEnv, err := os.ReadFile(fp.Join(dir, f))
 				if err != nil {
 					log.WithFields(log.Fields{
 						"collector": p,

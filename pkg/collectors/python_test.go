@@ -2,7 +2,6 @@ package collectors
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,7 +13,7 @@ import (
 
 func TestPythonCollector(t *testing.T) {
 	createTempDir := func(t *testing.T) string {
-		tempDirName, err := ioutil.TempDir("/tmp", "sa")
+		tempDirName, err := os.MkdirTemp("/tmp", "sa")
 		if err != nil {
 			t.Fatalf("unable to create temp directory for testing: %s", err)
 		}
@@ -79,7 +78,7 @@ func TestPythonCollector(t *testing.T) {
 		require.NoError(t, err)
 
 		Python{}.BootstrapLanguageFiles(context.Background(), []string{filepath.Join(tempDir, "setup.py")})
-		_, err = ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
+		_, err = os.ReadFile(filepath.Join(tempDir, "requirements.txt"))
 		// assert.NotNil(t, err)
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
@@ -95,28 +94,28 @@ func TestPythonCollector(t *testing.T) {
 		setup := func() (string, string) {
 			tempDir := createTempDir(t)
 
-			contents, err := ioutil.ReadFile("../../integration/testdata/conda-envs/environment_3.7.yml")
+			contents, err := os.ReadFile("../../integration/testdata/conda-envs/environment_3.7.yml")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(tempDir, "environment_3.7.yml"), contents, 0o644)
 			require.NoError(t, err)
 
-			contents, err = ioutil.ReadFile("../../integration/testdata/conda-envs/environment_3.8.yml")
+			contents, err = os.ReadFile("../../integration/testdata/conda-envs/environment_3.8.yml")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(tempDir, "environment_3.8.yml"), contents, 0o644)
 			require.NoError(t, err)
 
-			innerDir, err := ioutil.TempDir(tempDir, "innerDir")
+			innerDir, err := os.MkdirTemp(tempDir, "innerDir")
 			require.NoError(t, err)
 
-			contents, err = ioutil.ReadFile("../../integration/testdata/conda-envs/environment.yml")
+			contents, err = os.ReadFile("../../integration/testdata/conda-envs/environment.yml")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(innerDir, "environment.yml"), contents, 0o644)
 			require.NoError(t, err)
 
-			contents, err = ioutil.ReadFile("../../integration/testdata/conda-envs/requirements.txt")
+			contents, err = os.ReadFile("../../integration/testdata/conda-envs/requirements.txt")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(innerDir, "requirements.txt"), contents, 0o644)
@@ -136,7 +135,7 @@ func TestPythonCollector(t *testing.T) {
 
 		Python{}.BootstrapLanguageFiles(context.Background(), bomRoots)
 
-		got, err := ioutil.ReadFile(filepath.Join(tempDir, "requirements.txt"))
+		got, err := os.ReadFile(filepath.Join(tempDir, "requirements.txt"))
 		require.NoError(t, err)
 		want := `Fastapi==0.65.1
 gunicorn==20.1.0
@@ -151,7 +150,7 @@ statsd==3.3.0
 uvicorn==0.13.4`
 		assert.Equal(t, want, string(got))
 
-		got, err = ioutil.ReadFile(filepath.Join(innerDir, "requirements.txt"))
+		got, err = os.ReadFile(filepath.Join(innerDir, "requirements.txt"))
 		require.NoError(t, err)
 		want = `gcsfs==0.6.0
 google-cloud-storage==1.24.1

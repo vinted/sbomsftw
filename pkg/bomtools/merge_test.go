@@ -1,7 +1,7 @@
 package bomtools
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -11,7 +11,7 @@ import (
 
 func TestMergeBoms(t *testing.T) {
 	bomFromFile := func(filename string) *cdx.BOM {
-		bomString, err := ioutil.ReadFile(filename)
+		bomString, err := os.ReadFile(filename)
 		if err != nil {
 			t.Fatalf("can't read BOM from file: %s\n", err)
 		}
