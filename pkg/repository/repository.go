@@ -74,7 +74,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 		FSPath:     fsPath,
 		CodeOwners: parseCodeOwners(name, clonedRepository),
 		genericCollectors: []pkg.Collector{
-			collectors.Syft{}, collectors.Trivy{}, collectors.CDXGen{}, collectors.RetireJS{},
+			collectors.Syft{}, collectors.CDXGen{}, collectors.RetireJS{},
 		},
 		languageCollectors: []pkg.LanguageCollector{
 			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
