@@ -25,6 +25,7 @@ type UploadSBOMsPayload struct {
 
 type createProjectPayload struct {
 	Name       string
+	Classifier string
 	Tags       []string
 	CodeOwners []string
 }
@@ -91,6 +92,7 @@ func (c createProjectPayload) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"name":        c.Name,
 		"tags":        mappedTags,
+		"classifier":  strings.ToUpper(c.Classifier),
 		"description": c.getCodeOwners(),
 		"version":     fmt.Sprintf("%x", versionHash),
 	})

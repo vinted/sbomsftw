@@ -150,6 +150,7 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 	_, err := d.createProject(ctx, createProjectPayload{
 		Tags:       payload.Tags,
 		CodeOwners: payload.CodeOwners,
+		Classifier: d.classifier,
 		Name:       payload.ProjectName,
 	})
 	if err != nil {

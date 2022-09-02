@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/vinted/software-assets/pkg/dtrack"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -32,6 +35,7 @@ const (
 
 	tagsFlag           = "tags"
 	outputFlag         = "output"
+	classifierFlag     = "classifier"
 	uploadToDTrackFlag = "upload-to-dependency-track"
 )
 
@@ -126,11 +130,16 @@ func init() {
 		tagsUsage                    = "tags to use when SBOMs are uploaded to Dependency Track (optional)"
 	)
 
+	const classifierUsageTemplate = "classifier to use when uploading to Dependency Track. Valid values are: %s"
+	classifierUsage := fmt.Sprintf(classifierUsageTemplate, dtrack.GetValidClassifiersString())
+
 	rootCmd.PersistentFlags().StringVarP(&logFormat, logFormatFlag, "f", logFormatSimple, logFormatUsage)
 	rootCmd.PersistentFlags().StringVarP(&logLevel, logLevelFlag, "l", logrus.InfoLevel.String(), logLevelUsage)
 
 	rootCmd.PersistentFlags().StringP(outputFlag, "o", "", outputUsage)
 	rootCmd.PersistentFlags().StringSliceP(tagsFlag, "t", nil, tagsUsage)
+
+	rootCmd.PersistentFlags().StringP(classifierFlag, "c", dtrack.ValidClassifiers[0], classifierUsage)
 	rootCmd.PersistentFlags().BoolP(uploadToDTrackFlag, "u", false, uploadToDependencyTrackUsage)
 }
 

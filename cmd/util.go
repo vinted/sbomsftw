@@ -38,9 +38,14 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 	}
 
 	if uploadToDependencyTrack {
+		classifier, err := cmd.Flags().GetString(classifierFlag)
+		if err != nil {
+			return nil, fmt.Errorf(errTemplate, classifierFlag)
+		}
+
 		baseURL := viper.GetString(envKeyDTrackURL)
 		apiToken := viper.GetString(envKeyDTrackToken)
-		options = append(options, app.WithDependencyTrack(baseURL, apiToken))
+		options = append(options, app.WithDependencyTrack(baseURL, apiToken, classifier))
 	}
 
 	tags, err := cmd.Flags().GetStringSlice(tagsFlag)

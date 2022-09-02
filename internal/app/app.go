@@ -43,7 +43,7 @@ type options struct {
 
 type Option func(options *options) error
 
-func WithDependencyTrack(baseURL, apiToken string) Option {
+func WithDependencyTrack(baseURL, apiToken, classifier string) Option {
 	return func(options *options) error {
 		if baseURL == "" {
 			return errors.New("dependency track base URL can't be empty")
@@ -57,7 +57,7 @@ func WithDependencyTrack(baseURL, apiToken string) Option {
 			return errors.New("dependency track API token can't be empty")
 		}
 
-		client, err := dtrack.NewClient(baseURL, apiToken)
+		client, err := dtrack.NewClient(baseURL, apiToken, dtrack.WithClassifier(classifier))
 		if err != nil {
 			return fmt.Errorf("can't create dependency track client: %v", err)
 		}
