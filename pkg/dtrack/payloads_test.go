@@ -17,6 +17,7 @@ func TestMarshal(t *testing.T) {
 		testProjectName      = "some-random-project-name"
 		testProjectTag       = "some-random-project-tag"
 		testProjectCodeOwner = "some-random-code-owner"
+		testClassifier       = "some-random-classifier"
 		sbomsB64             = "ewogICJib21Gb3JtYXQiOiAiIiwKICAic3BlY1ZlcnNpb24iOiAiIiwKICAidmVyc2lvbiI6IDAKfQo="
 	)
 
@@ -24,6 +25,7 @@ func TestMarshal(t *testing.T) {
 		got, err := json.Marshal(createProjectPayload{
 			Name:       testProjectName,
 			CodeOwners: []string{testProjectCodeOwner},
+			Classifier: testClassifier,
 			Tags:       []string{testProjectTag},
 		})
 		require.NoError(t, err)
@@ -37,6 +39,7 @@ func TestMarshal(t *testing.T) {
 			Tags       []projectTag `json:"tags"`
 			CodeOwners string       `json:"description"`
 			Version    string       `json:"version"`
+			Classifier string       `json:"classifier"`
 		}
 
 		var u unmarshalled
@@ -47,6 +50,7 @@ func TestMarshal(t *testing.T) {
 		assert.Equal(t, testProjectName, u.Name)
 		assert.Equal(t, "CODE OWNERS:\n"+testProjectCodeOwner, u.CodeOwners)
 		assert.Equal(t, []projectTag{{Name: testProjectTag}}, u.Tags)
+		assert.Equal(t, strings.ToUpper(testClassifier), u.Classifier)
 
 		// Version is the sha256 sum of project tags joined together with "/" + projectName
 		projectVersion := strings.Join(append([]string{testProjectTag}, testProjectName), "/")
