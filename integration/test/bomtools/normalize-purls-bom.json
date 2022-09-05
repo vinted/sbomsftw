@@ -157,14 +157,6 @@
           "value": "go.mod"
         }
       ]
-    },
-    {
-      "name" : "busybox",
-      "version" : "1:1.30.1-4",
-      "cpe" : "cpe:2.3:a:busybox:busybox:1\\:1.30.1-4:*:*:*:*:*:*:*",
-      "purl" : "pkg:deb/busybox@1%3A1.30.1-4",
-      "type" : "library",
-      "bom-ref" : "f277a6bf-cea5-443a-8751-4d521b8dbe5c"
     }
   ],
   "externalReferences": [

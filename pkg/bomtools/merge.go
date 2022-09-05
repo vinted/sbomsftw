@@ -39,21 +39,13 @@ func normalizePURLs(bom *cdx.BOM) *cdx.BOM {
 		if versionedPurlRe.MatchString(normalizedPURL) {
 			normalizedPURL = strings.Replace(normalizedPURL, "@v", "@", 1)
 		}
-		wrapped, err := url.ParseRequestURI(normalizedPURL)
+		wrapped, err := url.Parse(normalizedPURL)
 		if err != nil {
 			c.PackageURL = normalizedPURL
 			normalized = append(normalized, c)
 			continue
 		}
-		unescapedURL := wrapped.Scheme + ":" + wrapped.Opaque
-		escapedURL, err := url.QueryUnescape(unescapedURL)
-
-		if err == nil {
-			c.PackageURL = escapedURL
-		} else {
-			c.PackageURL = unescapedURL
-		}
-
+		c.PackageURL = wrapped.Scheme + ":" + wrapped.Opaque
 		normalized = append(normalized, c)
 	}
 	bom.Components = &normalized

@@ -39,7 +39,6 @@ func TestMergeBoms(t *testing.T) {
 			"pkg:npm/actions/artifact@0.3.2",
 			"pkg:golang/github.com/pelletier/go-toml@1.8.1",
 			"pkg:golang/github.com/pelletier/go-toml@1.8.1",
-			"pkg:deb/busybox@1:1.30.1-4",
 		}, gotPURLs)
 	})
 
