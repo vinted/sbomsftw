@@ -10,7 +10,7 @@ import (
 
 func TestStringToCDX(t *testing.T) {
 	t.Run("convert valid SBOM string to CycloneDX instance", func(t *testing.T) {
-		bomString, err := os.ReadFile("../../integration/testdata/bomtools/sample-bom.json")
+		bomString, err := os.ReadFile("../../integration/test/bomtools/sample-bom.json")
 		require.NoError(t, err)
 
 		cdx, err := StringToCDX(bomString)
@@ -34,7 +34,7 @@ func TestStringToCDX(t *testing.T) {
 }
 
 func TestXMLStringToJSONCDX(t *testing.T) {
-	bomString, err := os.ReadFile("../../integration/testdata/bomtools/sample-bom.xml")
+	bomString, err := os.ReadFile("../../integration/test/bomtools/sample-bom.xml")
 	require.NoError(t, err)
 
 	cdx, err := XMLStringToJSONCDX(bomString)

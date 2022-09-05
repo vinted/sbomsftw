@@ -24,7 +24,7 @@ func TestMergeBoms(t *testing.T) {
 	}
 
 	t.Run("normalize PURLs correctly", func(t *testing.T) {
-		got := normalizePURLs(bomFromFile("../../integration/testdata/bomtools/normalize-purls-bom.json"))
+		got := normalizePURLs(bomFromFile("../../integration/test/bomtools/normalize-purls-bom.json"))
 		require.NotNil(t, got)
 		require.NotNil(t, got.Components)
 
@@ -53,11 +53,11 @@ func TestMergeBoms(t *testing.T) {
 	})
 
 	t.Run("merge multiple BOMs correctly", func(t *testing.T) {
-		firstBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-1.json")
-		secondBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-2.json")
-		thirdBOM := bomFromFile("../../integration/testdata/bomtools/bom-to-merge-3.json")
+		firstBOM := bomFromFile("../../integration/test/bomtools/bom-to-merge-1.json")
+		secondBOM := bomFromFile("../../integration/test/bomtools/bom-to-merge-2.json")
+		thirdBOM := bomFromFile("../../integration/test/bomtools/bom-to-merge-3.json")
 
-		expectedBOM := bomFromFile("../../integration/testdata/bomtools/expected-merged-boms.json")
+		expectedBOM := bomFromFile("../../integration/test/bomtools/expected-merged-boms.json")
 		got, err := MergeBoms(firstBOM, secondBOM, thirdBOM)
 		require.NoError(t, err)
 
