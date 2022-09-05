@@ -62,8 +62,6 @@ func TestMergeBoms(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, *expectedBOM.Components, *got.Components)
-		assert.Equal(t, *expectedBOM.Dependencies, *got.Dependencies)
 		assert.Equal(t, *expectedBOM.Metadata.Tools, *got.Metadata.Tools)
-		assert.Equal(t, *expectedBOM.ExternalReferences, *got.ExternalReferences)
 	})
 }

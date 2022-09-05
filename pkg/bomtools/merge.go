@@ -228,21 +228,6 @@ func MergeBoms(boms ...*cdx.BOM) (*cdx.BOM, error) {
 			},
 		},
 	}
-	// Reattach dependency graph
-	for _, b := range boms {
-		isDependencyGraphPresent := b.Dependencies != nil && len(*b.Dependencies) > 0
-		if isDependencyGraphPresent {
-			bom.Dependencies = b.Dependencies
-			break
-		}
-	}
-	// Reattach external refs
-	for _, b := range boms {
-		areExternalRefsPresent := b.ExternalReferences != nil && len(*b.ExternalReferences) > 0
-		if areExternalRefsPresent {
-			bom.ExternalReferences = b.ExternalReferences
-			break
-		}
-	}
+
 	return bom, nil
 }
