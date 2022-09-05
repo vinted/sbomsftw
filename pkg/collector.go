@@ -8,7 +8,7 @@ import (
 )
 
 /*
-Collector interface used by external collectors such as syft or trivy collector.
+Collector interface used by external collectors such as syft or retirejs collector.
 Implementations of this interface can be passed to Repository struct to generate a base BOM.
 */
 type Collector interface {

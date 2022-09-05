@@ -224,7 +224,7 @@ func MergeBoms(boms ...*cdx.BOM) (*cdx.BOM, error) {
 			{
 				Vendor:  "vinted",
 				Name:    "sa-collector",
-				Version: "0.1.0", // TODO Extract somewhere else later on
+				Version: "0.5.0", // TODO Extract somewhere else later on
 			},
 		},
 	}

@@ -119,11 +119,11 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 /*
 ExtractSBOMs extracts SBOMs for every possible language from the repository.
 If includeGenericCollectors is set to true then additional collectors such as:
-syft & trivy & cdxgen are executed against the repository as well. This tends to produce richer SBOM results
+syft & retirejs & cdxgen are executed against the repository as well. This tends to produce richer SBOM results
 */
 func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedSBOMs []*cdx.BOM
-	// Generate base SBOM with generic collectors (syft/trivy/cdxgen)
+	// Generate base SBOM with generic collectors (syft/retirejs/cdxgen)
 	if includeGenericCollectors {
 		for _, c := range r.genericCollectors {
 			select {

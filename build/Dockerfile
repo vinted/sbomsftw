@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install apt-utils software-properties-common gnupg
 
 # Import third-party PGP keys
 RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
-    && wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add - \
     && curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee ${NODE_KEY} >/dev/null \
     && curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" \
     | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/scalasbt-release.gpg --import \
@@ -22,11 +21,10 @@ RUN add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
     && echo "deb-src [signed-by=${NODE_KEY}] https://deb.nodesource.com/node_12.x bullseye main" >> nodesource.list \
     && echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list \
     && echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee /etc/apt/sources.list.d/sbt_old.list \
-    && echo deb https://aquasecurity.github.io/trivy-repo/deb bullseye main | tee -a /etc/apt/sources.list.d/trivy.list
 
 # Install all remaining apt dependencies
 RUN apt-get update && apt-get install rubygems build-essential git ruby-dev adoptopenjdk-8-hotspot \
-    cmake maven pkg-config libssl-dev locales unzip clang nodejs trivy -y --no-install-recommends
+    cmake maven pkg-config libssl-dev locales unzip clang nodejs -y --no-install-recommends
 
 # Fix up locales
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
