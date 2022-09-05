@@ -10,7 +10,7 @@ import (
 
 func TestFilterOptionalDependencies(t *testing.T) {
 	t.Run("filter out optional dependencies correctly", func(t *testing.T) {
-		const testFilePath = "../../integration/testdata/bomtools/bom-with-optional-dependencies.json"
+		const testFilePath = "../../integration/test/bomtools/bom-with-optional-dependencies.json"
 		testBOM, err := os.ReadFile(testFilePath)
 		if err != nil {
 			t.Fatalf("can't read a test file: %s", err)
@@ -52,7 +52,7 @@ func TestFilterOptionalDependencies(t *testing.T) {
 
 func TestFilterOutComponentsWithoutAType(t *testing.T) {
 	t.Run("filter out malformed components correctly", func(t *testing.T) {
-		const testFilePath = "../../integration/testdata/bomtools/bom-with-malformed-components.json"
+		const testFilePath = "../../integration/test/bomtools/bom-with-malformed-components.json"
 		testBOM, err := os.ReadFile(testFilePath)
 		if err != nil {
 			t.Fatalf("can't read a test file: %s", err)

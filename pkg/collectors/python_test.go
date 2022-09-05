@@ -94,13 +94,13 @@ func TestPythonCollector(t *testing.T) {
 		setup := func() (string, string) {
 			tempDir := createTempDir(t)
 
-			contents, err := os.ReadFile("../../integration/testdata/conda-envs/environment_3.7.yml")
+			contents, err := os.ReadFile("../../integration/test/conda-envs/environment_3.7.yml")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(tempDir, "environment_3.7.yml"), contents, 0o644)
 			require.NoError(t, err)
 
-			contents, err = os.ReadFile("../../integration/testdata/conda-envs/environment_3.8.yml")
+			contents, err = os.ReadFile("../../integration/test/conda-envs/environment_3.8.yml")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(tempDir, "environment_3.8.yml"), contents, 0o644)
@@ -109,13 +109,13 @@ func TestPythonCollector(t *testing.T) {
 			innerDir, err := os.MkdirTemp(tempDir, "innerDir")
 			require.NoError(t, err)
 
-			contents, err = os.ReadFile("../../integration/testdata/conda-envs/environment.yml")
+			contents, err = os.ReadFile("../../integration/test/conda-envs/environment.yml")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(innerDir, "environment.yml"), contents, 0o644)
 			require.NoError(t, err)
 
-			contents, err = os.ReadFile("../../integration/testdata/conda-envs/requirements.txt")
+			contents, err = os.ReadFile("../../integration/test/conda-envs/requirements.txt")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(innerDir, "requirements.txt"), contents, 0o644)
