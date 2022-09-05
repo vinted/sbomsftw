@@ -20,7 +20,7 @@ RUN add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
     && echo "deb [signed-by=${NODE_KEY}] https://deb.nodesource.com/node_12.x bullseye main" > nodesource.list \
     && echo "deb-src [signed-by=${NODE_KEY}] https://deb.nodesource.com/node_12.x bullseye main" >> nodesource.list \
     && echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list \
-    && echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee /etc/apt/sources.list.d/sbt_old.list \
+    && echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee /etc/apt/sources.list.d/sbt_old.list
 
 # Install all remaining apt dependencies
 RUN apt-get update && apt-get install rubygems build-essential git ruby-dev adoptopenjdk-8-hotspot \
