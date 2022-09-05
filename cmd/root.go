@@ -63,7 +63,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "subcommand [repo/org/fs] [vcs-url/filesystem-path] [flags]",
-	Short: "Collects CycloneDX SBOMs from Github repositories",
+	Short: "Collects CycloneDX SBOMs from Github repositories and filesystems",
 	Example: `sa-collector repo https://github.com/ReactiveX/RxJava                  collect SBOMs from RxJava repository & output them to stdout
 sa-collector repo https://github.com/ffuf/ffuf --output sboms.json     collect SBOMs from ffuf repository & write results to sboms.json
 
