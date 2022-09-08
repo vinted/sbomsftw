@@ -14,14 +14,17 @@ jobs:
       GOOS: linux
       GOARCH: amd64
       RELEASE: ${{ github.ref_name }}
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4 # For cloudsmith-cli
+        with:
+          python-version: '3.10'
       - uses: actions/setup-go@v3
         with:
           go-version: '>=1.18'
-      - run: go build -ldflags "-s -w" -o bin && tar -czvf sa-collector-$(echo $RELEASE | tr '/' -)-$GOOS-$GOARCH.tar.gz bin
+      - run: ./build/push-to-cloudsmith.sh
         shell: bash
 
 #      - name: Push
