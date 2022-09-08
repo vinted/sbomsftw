@@ -1,13 +1,7 @@
 name: Release-Jobs
-#on:
-#  release:
-#    types: [created]
 on:
-  push:
-    branches:
-      - master
-      - main
-  pull_request:
+  release:
+    types: [created]
 
 jobs:
   push:
