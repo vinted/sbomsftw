@@ -1,4 +1,7 @@
-name: Releaser
+name: Release-Jobs
+#on:
+#  release:
+#    types: [created]
 on:
   push:
     branches:
