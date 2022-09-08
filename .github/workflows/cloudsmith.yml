@@ -1,4 +1,4 @@
-name: Release to Cloudsmith
+name: Releaser
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ on:
 jobs:
   push:
     runs-on: ubuntu-latest
-    name: Raw File Push Demo
+    name: Push to Cloudsmith
     env:
       GOOS: linux
       GOARCH: amd64
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '>=1.18'
-      - run: go build -ldflags "-s -w" -o bin && tar -czvf sa-collector-$RELEASE-$GOOS-$GOARCH.tar.gz bin
+      - run: go build -ldflags "-s -w" -o /tmp/bin && tar -czvf /tmp/sa-collector-$RELEASE-$GOOS-$GOARCH.tar.gz /tmp/bin
         shell: bash
 
 #      - name: Push
