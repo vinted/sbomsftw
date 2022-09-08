@@ -24,9 +24,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '>=1.18'
-      - run: ./build/push-to-cloudsmith.sh
-        shell: bash
-
+      - run: /bin/bash ./build/push-to-cloudsmith.sh
 #      - name: Push
 #        id: push
 #        uses: cloudsmith-io/action@v0.5.2 # pin 0.5.2: its code reviewed
