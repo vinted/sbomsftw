@@ -37,6 +37,7 @@ const (
 	outputFlag         = "output"
 	classifierFlag     = "classifier"
 	uploadToDTrackFlag = "upload-to-dependency-track"
+	purgeCacheFlag     = "purge-cache"
 )
 
 // ENV keys.
@@ -128,6 +129,7 @@ func init() {
 		outputUsage                  = "where to output SBOM results: (defaults to stdout when unspecified)"
 		uploadToDependencyTrackUsage = "whether to upload collected SBOMs to Dependency Track (default: false)"
 		tagsUsage                    = "tags to use when SBOMs are uploaded to Dependency Track (optional)"
+		purgeCacheUsage              = "whether to purge gradle and go caches after a successful run (default: false)"
 	)
 
 	const classifierUsageTemplate = "classifier to use when uploading to Dependency Track. Valid values are: %s"
@@ -141,6 +143,8 @@ func init() {
 
 	rootCmd.PersistentFlags().StringP(classifierFlag, "c", dtrack.ValidClassifiers[0], classifierUsage)
 	rootCmd.PersistentFlags().BoolP(uploadToDTrackFlag, "u", false, uploadToDependencyTrackUsage)
+
+	rootCmd.PersistentFlags().BoolP(purgeCacheFlag, "p", false, purgeCacheUsage)
 }
 
 func initConfig() {
