@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const delayFlag = "delay"
+
 var orgCmd = &cobra.Command{
 	Use:   "org [GitHub Organization URL]",
 	Short: "Collect SBOMs from every repository inside the given organization",
@@ -32,10 +34,18 @@ sa-collector org https://api.github.com/orgs/evil-corp/repos --upload-to-depende
 			logrus.Fatal(err)
 		}
 
-		app.SBOMsFromOrganization(args[0])
+		delayAmount, err := cmd.Flags().GetUint16(delayFlag)
+		if err != nil {
+			logrus.Fatal(fmt.Errorf("can't parse %s flag: %v", delayFlag, err))
+		}
+
+		app.SBOMsFromOrganization(args[0], delayAmount)
 	},
 }
 
 func init() {
+	const delayUsage = "delay in seconds to wait before processing next organisation repository (default 0)"
+
+	orgCmd.Flags().Uint16(delayFlag, 0, delayUsage)
 	rootCmd.AddCommand(orgCmd)
 }

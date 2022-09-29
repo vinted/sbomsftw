@@ -19,5 +19,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
+          skip-go-installation: true
           version: latest
-          args: --enable=gofumpt
+          args: --enable=gofumpt --timeout 3m --verbose
