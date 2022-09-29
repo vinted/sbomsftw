@@ -36,7 +36,7 @@ sa-collector org https://api.github.com/orgs/evil-corp/repos --upload-to-depende
 
 		delayAmount, err := cmd.Flags().GetUint16(delayFlag)
 		if err != nil {
-			logrus.Fatal(fmt.Errorf("can't parse %s flag: %v", delayFlag, err))
+			logrus.Fatalf("can't parse %s flag: %v", delayFlag, err)
 		}
 
 		app.SBOMsFromOrganization(args[0], delayAmount)
