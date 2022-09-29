@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/vinted/software-assets/pkg"
 
@@ -140,7 +141,7 @@ func (a App) SBOMsFromRepository(repositoryURL string) {
 SBOMsFromOrganization given a GitHub organization URL, collect SBOMs from every single repository.
 Each collected SBOM will be outputted based on the --output CLI switch.
 */
-func (a App) SBOMsFromOrganization(organizationURL string) {
+func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 	setup()
 
 	defer cleanup()
@@ -156,17 +157,32 @@ func (a App) SBOMsFromOrganization(organizationURL string) {
 		cancel()
 	}()
 
-	c := internal.NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken)
-	err := internal.WalkRepositories(c, func(repositoryURLs []string) {
-		for _, repositoryURL := range repositoryURLs {
+	/*
+		Collect SBOMs From repositories using a timer. Where we wait for [delayAmount uint16]secs to pass before
+		processing next repository.
+	*/
+
+	collectSBOMsFromRepositories := func(repositoryURLs []string) {
+		for idx, repositoryURL := range repositoryURLs {
+			if idx == 0 {
+				a.sbomsFromRepositoryInternal(ctx, repositoryURL)
+				continue
+			}
+
+			delay := time.NewTimer(time.Duration(delayAmount) * time.Second)
+
 			select {
 			case <-ctx.Done():
+				delay.Stop()
 				return
-			default:
+			case <-delay.C:
 				a.sbomsFromRepositoryInternal(ctx, repositoryURL)
 			}
 		}
-	})
+	}
+
+	c := internal.NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken)
+	err := internal.WalkRepositories(c, collectSBOMsFromRepositories)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
 		log.WithError(err).Fatal("Collection failed! Can't recover - exiting")
