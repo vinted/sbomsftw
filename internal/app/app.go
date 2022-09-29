@@ -29,6 +29,7 @@ type App struct {
 	tags                           []string
 	githubUsername, githubAPIToken string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient          *dtrack.DependencyTrackClient
+	purgeCache                     bool
 }
 
 type SBOMsFromFilesystemConfig struct {
@@ -40,6 +41,7 @@ type options struct {
 	tags                           []string
 	githubUsername, githubAPIToken string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient          *dtrack.DependencyTrackClient
+	purgeCache                     bool
 }
 
 type Option func(options *options) error
@@ -86,6 +88,13 @@ func WithGitHubCredentials(username, apiToken string) Option {
 	}
 }
 
+func WithCachePurge() Option {
+	return func(options *options) error {
+		options.purgeCache = true
+		return nil
+	}
+}
+
 func WithTags(tags []string) Option {
 	return func(options *options) error {
 		options.tags = tags
@@ -111,6 +120,8 @@ func New(outputFile string, opts ...Option) (*App, error) {
 	app.githubAPIToken = options.githubAPIToken
 
 	app.tags = options.tags
+
+	app.purgeCache = options.purgeCache
 	app.dependencyTrackClient = options.dependencyTrackClient
 
 	return app, nil
@@ -121,9 +132,9 @@ SBOMsFromRepository given a VCS URL, collect SBOMs from a single repository.
 Collected SBOMs will be outputted based on the --output CLI switch.
 */
 func (a App) SBOMsFromRepository(repositoryURL string) {
-	setup()
+	a.setup()
 
-	defer cleanup()
+	defer a.cleanup()
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -142,9 +153,9 @@ SBOMsFromOrganization given a GitHub organization URL, collect SBOMs from every 
 Each collected SBOM will be outputted based on the --output CLI switch.
 */
 func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
-	setup()
+	a.setup()
 
-	defer cleanup()
+	defer a.cleanup()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -383,25 +394,43 @@ func (a App) uploadSBOMsToDependencyTrack(ctx context.Context, projectName strin
 
 // Setup & cleanup functions.
 
-func cleanup() {
+func (a App) cleanup() {
+	exitCode := 0
+
 	log.Debug("cleaning up - bye!")
 
-	if _, err := os.Stat(repository.CheckoutsPath); !os.IsNotExist(err) {
-		if err = os.RemoveAll(repository.CheckoutsPath); err != nil {
-			log.WithError(err).Errorf("can't remove %s", repository.CheckoutsPath)
-		}
-	}
-	gradleCache := filepath.Join(os.Getenv("HOME"), ".gradle")
+	/*
+		Remove a directory if it exists.
+		If for some reason directory removal fails. Log the error and set the appropriate exit code
+	*/
+	removeDirectory := func(directoryPath string) {
+		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
+			if err = os.RemoveAll(directoryPath); err != nil {
+				exitCode = 2 // ENOENT
 
-	if _, err := os.Stat(gradleCache); !os.IsNotExist(err) {
-		if err = os.RemoveAll(gradleCache); err != nil {
-			log.WithError(err).Errorf("can't remove %s", gradleCache)
+				log.WithError(err).Errorf("can't remove %s", directoryPath)
+			}
 		}
 	}
-	os.Exit(0) // TODO Fix this so that we exit with a proper status code
+
+	removeDirectory(repository.CheckoutsPath) // Always remove checkouts directory
+
+	if a.purgeCache {
+		// Build caches
+		const (
+			goCache     = "go"
+			gradleCache = ".gradle"
+		)
+
+		// Purge go & .gradle caches if user desires
+		removeDirectory(filepath.Join(os.Getenv("HOME"), goCache))
+		removeDirectory(filepath.Join(os.Getenv("HOME"), gradleCache))
+	}
+
+	os.Exit(exitCode)
 }
 
-func setup() {
+func (a App) setup() {
 	if err := os.Setenv("GEM_HOME", filepath.Join(os.Getenv("HOME"), ".gem")); err != nil {
 		log.Fatal("Can't set GEM_HOME env variable. Exiting")
 	}

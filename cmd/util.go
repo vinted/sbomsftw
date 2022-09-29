@@ -37,6 +37,15 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 		return nil, fmt.Errorf(errTemplate, uploadToDTrackFlag)
 	}
 
+	purgeCaches, err := cmd.Flags().GetBool(purgeCacheFlag)
+	if err != nil {
+		return nil, fmt.Errorf(errTemplate, purgeCacheFlag)
+	}
+
+	if purgeCaches {
+		options = append(options, app.WithCachePurge())
+	}
+
 	if uploadToDependencyTrack {
 		classifier, err := cmd.Flags().GetString(classifierFlag)
 		if err != nil {
