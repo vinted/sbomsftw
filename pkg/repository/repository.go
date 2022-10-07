@@ -57,12 +57,16 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	fsPath := filepath.Join(CheckoutsPath, name)
 
 	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
-	clonedRepository, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{URL: vcsURL})
+	clonedRepository, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
+		Depth: 1,
+		URL:   vcsURL,
+	})
 	if err != nil {
 		// Retry to clone the repo with credentials if failed
 		clonedRepository, err = git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
-			URL:  vcsURL,
-			Auth: &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
+			Depth: 1,
+			URL:   vcsURL,
+			Auth:  &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
 		})
 		if err != nil {
 			return nil, err
