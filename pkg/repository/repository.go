@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -56,18 +57,21 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 	fsPath := filepath.Join(CheckoutsPath, name)
 
+	const cloneDepth = 100 // Clone only 100 most recent commits, this saves bandwidth & disk-space
+
+	cloneOptions := &git.CloneOptions{
+		URL:          vcsURL,
+		SingleBranch: true,
+		Tags:         git.NoTags,
+		Depth:        cloneDepth,
+	}
+
 	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
-	clonedRepository, err := git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
-		Depth: 1,
-		URL:   vcsURL,
-	})
+	clonedRepository, err := git.PlainCloneContext(ctx, fsPath, false, cloneOptions)
 	if err != nil {
 		// Retry to clone the repo with credentials if failed
-		clonedRepository, err = git.PlainCloneContext(ctx, fsPath, false, &git.CloneOptions{
-			Depth: 1,
-			URL:   vcsURL,
-			Auth:  &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken},
-		})
+		cloneOptions.Auth = &http.BasicAuth{Username: credentials.Username, Password: credentials.AccessToken}
+		clonedRepository, err = git.PlainCloneContext(ctx, fsPath, false, cloneOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -97,27 +101,31 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 		return nil
 	}
 
-	contributors := make(map[string]bool) // Map to collect only unique contributors
+	// Map contributor email to its commit count
+	contributorsToCommitCount := make(map[string]int)
 
 	err = commitIterator.ForEach(func(c *object.Commit) error {
-		if !contributors[c.Author.Email] {
-			contributors[c.Author.Email] = true
-		}
-
+		contributorsToCommitCount[c.Author.Email] = contributorsToCommitCount[c.Author.Email] + 1
 		return nil
 	})
+
 	if err != nil {
 		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
 
 		return nil
 	}
 
-	uniqueContributors := make([]string, 0, len(contributors))
-	for c := range contributors {
-		uniqueContributors = append(uniqueContributors, c)
+	contributorEmails := make([]string, 0, len(contributorsToCommitCount))
+	for email := range contributorsToCommitCount {
+		contributorEmails = append(contributorEmails, email)
 	}
 
-	return uniqueContributors
+	// Sort contributors by their commit count in descending order
+	sort.Slice(contributorEmails, func(i, j int) bool {
+		return contributorsToCommitCount[contributorEmails[i]] > contributorsToCommitCount[contributorEmails[j]]
+	})
+
+	return contributorEmails
 }
 
 /*
