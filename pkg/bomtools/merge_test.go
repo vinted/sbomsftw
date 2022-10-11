@@ -39,15 +39,32 @@ func TestMergeBoms(t *testing.T) {
 			"pkg:npm/actions/artifact@0.3.2",
 			"pkg:golang/github.com/pelletier/go-toml@1.8.1",
 			"pkg:golang/github.com/pelletier/go-toml@1.8.1",
+			"pkg:npm/next@11.1.4",
 		}, gotPURLs)
 	})
 
+	t.Run("normalize CPEs correctly", func(t *testing.T) {
+		got := normalizeCPEs(bomFromFile("../../integration/test/bomtools/normalize-cpes-bom.json"))
+		require.NotNil(t, got)
+		require.NotNil(t, got.Components)
+
+		var gotCPEs []string
+		for _, c := range *got.Components {
+			gotCPEs = append(gotCPEs, c.CPE)
+		}
+
+		assert.ElementsMatch(t, []string{
+			"cpe:2.3:a:pelletier:go-toml:v1.8.1:*:*:*:*:*:*:*",
+			"cpe:2.3:a:next:next:11.1.4:*:*:*:*:*:*:*",
+		}, gotCPEs)
+	})
+
 	t.Run("return errors when merging nil or empty list collectors", func(t *testing.T) {
-		got, err := MergeBoms([]*cdx.BOM{}...)
+		got, err := MergeSBOMs([]*cdx.BOM{}...)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
 
-		got, err = MergeBoms(nil, nil)
+		got, err = MergeSBOMs(nil, nil)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
 	})
@@ -58,7 +75,7 @@ func TestMergeBoms(t *testing.T) {
 		thirdBOM := bomFromFile("../../integration/test/bomtools/bom-to-merge-3.json")
 
 		expectedBOM := bomFromFile("../../integration/test/bomtools/expected-merged-boms.json")
-		got, err := MergeBoms(firstBOM, secondBOM, thirdBOM)
+		got, err := MergeSBOMs(firstBOM, secondBOM, thirdBOM)
 		require.NoError(t, err)
 
 		assert.Equal(t, *expectedBOM.Components, *got.Components)
