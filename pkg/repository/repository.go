@@ -186,7 +186,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 				Time to merge those SBOMs into a single one
 			*/
 
-			mergedSBOM, err := bomtools.MergeBoms(sbomsFromCollector...)
+			mergedSBOM, err := bomtools.MergeSBOMs(sbomsFromCollector...)
 			if err == nil {
 				// Append merged SBOM from this collector & move on to the next one
 				collectedSBOMs = append(collectedSBOMs, mergedSBOM)
@@ -205,7 +205,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		return nil, ctx.Err()
 	default:
 		// All collectors are finished - merge collected SBOMs into a single one
-		merged, err := bomtools.MergeBoms(collectedSBOMs...)
+		merged, err := bomtools.MergeSBOMs(collectedSBOMs...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: ExtractSBOMs can't merge sboms - %s", r, err)
 		}

@@ -157,6 +157,45 @@
           "value": "go.mod"
         }
       ]
+    },
+    {
+      "bom-ref": "pkg:npm/next@11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd",
+      "type": "library",
+      "name": "next",
+      "version": "11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "196409ad66247c028ff2f9abcc97027d148abfde792a1ca3a9de638a94dc54a0c683e487f8d7e30cc585b42c00adc4251cfbf38ac1aed4444b634f84a23ec6fa"
+        }
+      ],
+      "licenses": [],
+      "cpe": "cpe:2.3:a:next:next:11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd:*:*:*:*:*:*:*",
+      "purl": "pkg:npm/next@11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd",
+      "externalReferences": [],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "javascript-lock-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "javascript"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "npm"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:*:next:11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "client/pnpm-lock.yaml"
+        }
+      ]
     }
   ],
   "externalReferences": [

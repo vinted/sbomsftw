@@ -234,7 +234,7 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 		return
 	}
 
-	sboms, err = bomtools.MergeBoms(sboms)
+	sboms, err = bomtools.MergeSBOMs(sboms)
 	if err != nil {
 		log.WithError(err).Fatal(errMsg)
 	}

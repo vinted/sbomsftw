@@ -15,6 +15,28 @@ import (
 
 var ErrNoBOMsToMerge = errors.New("merge_boms: can't merge empty list of BOMs")
 
+/*
+stripChecksumIfExists utility function to strip trailing checksums.
+
+Sometimes we will encounter a package PURL or CPE in the following format:
+pkg:npm/next@11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd
+or
+cpe:2.3:a:next:next:11.1.4_6ae8aab56bccab9c135b13f4dcebcfdd:*:*:*:*:*:*:*
+
+These checksums must be stripped off, because Dependency Track analyzer will fail to
+find vulnerabilities for these packages. Call this function for PURL & CPE strings
+*/
+func stripChecksumIfExists(candidate string) string {
+	checksumRe := regexp.MustCompile(`([-.\w]+)_[0-9a-f]{32}`)
+
+	matches := checksumRe.FindStringSubmatch(candidate)
+	if len(matches) >= 2 {
+		return strings.Replace(candidate, matches[0], matches[1], 1)
+	}
+
+	return candidate
+}
+
 func normalizePURLs(bom *cdx.BOM) *cdx.BOM {
 	if bom.Components == nil || len(*bom.Components) == 0 {
 		return bom
@@ -39,6 +61,9 @@ func normalizePURLs(bom *cdx.BOM) *cdx.BOM {
 		if versionedPurlRe.MatchString(normalizedPURL) {
 			normalizedPURL = strings.Replace(normalizedPURL, "@v", "@", 1)
 		}
+
+		normalizedPURL = stripChecksumIfExists(normalizedPURL)
+
 		wrapped, err := url.Parse(normalizedPURL)
 		if err != nil {
 			c.PackageURL = normalizedPURL
@@ -56,7 +81,8 @@ func normalizePackageNames(bom *cdx.BOM) *cdx.BOM {
 	if bom.Components == nil || len(*bom.Components) == 0 {
 		return bom
 	}
-	var normalized []cdx.Component
+
+	normalized := make([]cdx.Component, 0, len(*bom.Components))
 
 	for _, c := range *bom.Components {
 		normalizedName := c.Name
@@ -64,6 +90,24 @@ func normalizePackageNames(bom *cdx.BOM) *cdx.BOM {
 			normalizedName = strings.TrimPrefix(c.Name, "@")
 		}
 		c.Name = normalizedName
+		normalized = append(normalized, c)
+	}
+	bom.Components = &normalized
+	return bom
+}
+
+/*
+normalizeCPEs: strips trailing checksums from CPE strings
+*/
+func normalizeCPEs(bom *cdx.BOM) *cdx.BOM {
+	if bom.Components == nil || len(*bom.Components) == 0 {
+		return bom
+	}
+
+	normalized := make([]cdx.Component, 0, len(*bom.Components))
+
+	for _, c := range *bom.Components {
+		c.CPE = stripChecksumIfExists(c.CPE)
 		normalized = append(normalized, c)
 	}
 	bom.Components = &normalized
@@ -168,12 +212,12 @@ func mergeAllByPURL(component *cdx.Component, allComponents []*cdx.Component) *c
 	return mergedComponent
 }
 
-func MergeBoms(boms ...*cdx.BOM) (*cdx.BOM, error) {
+func MergeSBOMs(sboms ...*cdx.BOM) (*cdx.BOM, error) {
 	// Validate we are working with legit input
-	if len(boms) == 0 {
+	if len(sboms) == 0 {
 		return nil, ErrNoBOMsToMerge
 	}
-	for _, b := range boms {
+	for _, b := range sboms {
 		if b == nil {
 			return nil, ErrNoBOMsToMerge
 		}
@@ -181,8 +225,8 @@ func MergeBoms(boms ...*cdx.BOM) (*cdx.BOM, error) {
 
 	// Gather components from every single cdx.BOM instance
 	var allComponents []*cdx.Component
-	for _, b := range boms {
-		b = normalizePackageNames(normalizePURLs(b))
+	for _, b := range sboms {
+		b = normalizeCPEs(normalizePackageNames(normalizePURLs(b)))
 		if b.Components != nil {
 			components := *b.Components
 			for i := range components {
