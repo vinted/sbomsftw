@@ -35,6 +35,7 @@ type App struct {
 type SBOMsFromFilesystemConfig struct {
 	ProjectName, FilesystemPath string
 	Exclusions, CodeOwners      []string
+	StripCPEs                   bool
 }
 
 type options struct {
@@ -241,6 +242,10 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 
 	sboms = bomtools.FilterOutComponentsWithoutAType(sboms)
 	sboms = bomtools.FilterOutByScope(sboms, cdx.ScopeOptional)
+
+	if config.StripCPEs {
+		sboms = bomtools.StripCPEsFromComponents(sboms)
+	}
 
 	log.Infof("Collected %d SBOM components from %s", len(*sboms.Components), config.FilesystemPath)
 
