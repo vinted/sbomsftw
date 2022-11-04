@@ -41,3 +41,22 @@ func FilterOutComponentsWithoutAType(sbom *cdx.BOM) *cdx.BOM {
 
 	return sbom
 }
+
+// StripCPEsFromComponents Remove CPEs from all SBOM components
+func StripCPEsFromComponents(sbom *cdx.BOM) *cdx.BOM {
+	if sbom == nil || sbom.Components == nil || len(*sbom.Components) == 0 {
+		return sbom
+	}
+
+	requiredComponents := make([]cdx.Component, 0, len(*sbom.Components))
+
+	for _, c := range *sbom.Components {
+		updatedComponent := c
+		updatedComponent.CPE = ""
+		requiredComponents = append(requiredComponents, updatedComponent)
+	}
+
+	sbom.Components = &requiredComponents
+
+	return sbom
+}

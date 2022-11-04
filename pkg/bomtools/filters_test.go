@@ -84,3 +84,21 @@ func TestFilterOutComponentsWithoutAType(t *testing.T) {
 		assert.Equal(t, bom, FilterOutComponentsWithoutAType(bom))
 	})
 }
+
+func TestStripCPEs(t *testing.T) {
+	const testFilePath = "../../integration/test/bomtools/syft-bom-with-cpes.json"
+	testBOM, err := os.ReadFile(testFilePath)
+	if err != nil {
+		t.Fatalf("can't read a test file: %s", err)
+	}
+	bom, err := StringToCDX(testBOM)
+	if err != nil {
+		t.Fatalf("can't convert BOM string to cdx.BOM instance %s", err)
+	}
+
+	got := StripCPEsFromComponents(bom)
+
+	for _, c := range *got.Components {
+		assert.Empty(t, c.CPE)
+	}
+}
