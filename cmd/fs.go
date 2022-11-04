@@ -16,6 +16,7 @@ const (
 	exclusionsFlag        = "exclude"
 	codeOwnersFlag        = "code-owners"
 	dTrackProjectNameFlag = "dtrack-project-name"
+	stripCPEsFlag         = "strip-cpes"
 )
 
 var fsCmd = &cobra.Command{
@@ -69,11 +70,17 @@ func createSBOMsFromFilesystemConfig(cmd *cobra.Command, args []string) (*app.SB
 		return nil, fmt.Errorf(errTemplate, dTrackProjectNameFlag, err)
 	}
 
+	stripCPEs, err := cmd.Flags().GetBool(stripCPEsFlag)
+	if err != nil {
+		return nil, fmt.Errorf(errTemplate, stripCPEsFlag, err)
+	}
+
 	return &app.SBOMsFromFilesystemConfig{
 		FilesystemPath: args[0],
 		CodeOwners:     codeOwners,
 		Exclusions:     exclusions,
 		ProjectName:    projectName,
+		StripCPEs:      stripCPEs,
 	}, nil
 }
 
@@ -83,12 +90,15 @@ func init() {
 		excludeUsage           = "exclude paths from being scanned using a glob expression (optional)"
 		ownersUsage            = "owners of the filesystem - this will be reflected inside Dependency Track (optional)"
 		dTrackProjectNameUsage = "project name to use when uploading to dependency-track (optional)"
+		stripCPEUsage          = "whether to strip CPEs from the final SBOM. Useful to reduce false positives in DT"
 	)
 
 	fsCmd.Flags().StringSlice(codeOwnersFlag, nil, ownersUsage)
 	fsCmd.Flags().String(dTrackProjectNameFlag, "", dTrackProjectNameUsage)
 
 	fsCmd.Flags().StringArray(exclusionsFlag, nil, excludeUsage)
+
+	fsCmd.Flags().BoolP(stripCPEsFlag, "x", false, stripCPEUsage)
 
 	rootCmd.AddCommand(fsCmd)
 }
