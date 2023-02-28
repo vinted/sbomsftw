@@ -19,4 +19,4 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: semgrep --config p/golang --error
+      - run: semgrep --config=p/ci --config p/golang --error
