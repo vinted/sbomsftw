@@ -1,0 +1,22 @@
+name: SAST
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+
+    container:
+      image: returntocorp/semgrep
+
+    # Skip any PR created by dependabot to avoid permission issues:
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: semgrep --config p/golang --error
