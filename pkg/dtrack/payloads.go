@@ -39,8 +39,6 @@ func (c createProjectPayload) getCodeOwners() string {
 	return codeOwners
 }
 
-// //TODO: Temporary workaround! Dependency Track only supports project descriptions that are less then 255 characters.
-// //TODO: Remove this when DB is Altered from VARCHAR to TEXT column types
 func (c createProjectPayload) getTruncatedCodeOwners() string {
 	isASCII := func(s string) bool {
 		for i := 0; i < len(s); i++ {
@@ -52,22 +50,17 @@ func (c createProjectPayload) getTruncatedCodeOwners() string {
 		return true
 	}
 
-	vintedContributors := make([]string, 0, len(c.CodeOwners))
-	otherContributors := make([]string, 0, len(c.CodeOwners))
+	contributors := make([]string, 0, len(c.CodeOwners))
 
 	for _, codeOwner := range c.CodeOwners {
 		if !isASCII(codeOwner) || strings.HasSuffix(codeOwner, "@users.noreply.github.com") {
 			continue
 		}
-		if strings.HasSuffix(codeOwner, "@vinted.com") { // Temporary solution
-			vintedContributors = append(vintedContributors, codeOwner)
-			continue
-		}
 
-		otherContributors = append(otherContributors, codeOwner)
+		contributors = append(contributors, codeOwner)
 	}
 
-	codeOwnersConcat := codeOwnersPrefix + strings.Join(append(vintedContributors, otherContributors...), "\n")
+	codeOwnersConcat := codeOwnersPrefix + strings.Join(contributors, "\n")
 	if len(codeOwnersConcat) <= varcharMaxSize {
 		return codeOwnersConcat
 	}
