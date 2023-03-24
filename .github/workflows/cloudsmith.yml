@@ -12,6 +12,7 @@ jobs:
       GOARCH: amd64
       RELEASE: ${{ github.ref_name }}
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      CS_REPOSITORY: ${{ secrets.CS_REPOSITORY }}
 
     steps:
       - uses: actions/checkout@v3
