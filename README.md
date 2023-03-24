@@ -4,10 +4,34 @@ Tool for SBOM (Software Bill Of Materials) collection from filesystems & GitHub 
 
 ## Building
 Since SBOM collection from repositories depends on many external software - it's highly recommended to collect SBOMs from inside Docker containers, where all the tools are already packaged.
-Clone the repo & build docker from repository root with:
+Clone the repo & build the docker image from repository root with:
 ```bash
 docker build --tag sbomsftw -f build/Dockerfile .
 ```
+
+## Configuration
+To Collect SBOMs from private GitHub repositories a valid set of credentials must be provided.
+This must be done via environment variables. For example:
+```bash
+export SAC_GITHUB_USERNAME=your-username
+export SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
+```
+Also, to upload SBOMs to Dependency Track a valid API Token and base URL of the Dependency Track API endpoint must be provided.
+This must be done via environment variables as well. For example:
+```bash
+export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
+export SAC_DEPENDENCY_TRACK_URL=https://api-dependency-track.evilcorp.com/
+```
+**Note:**\
+When collecting SBOMs inside a Docker container - format your env variables like this:
+```bash
+SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
+SAC_DEPENDENCY_TRACK_URL=https://api-dependency-track.evilcorp.com/
+SAC_GITHUB_USERNAME=your-username
+SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
+```
+And then pass them to `docker run` with `--env-file` switch.
+
 ## Examples
 Single repository mode:
 ```bash
@@ -26,30 +50,6 @@ sa-collector fs / --exclude './usr/local/bin' --exclude './root' --exclude './et
 ```
 **Note:**\
 Filesystem scans exclude files relative to the specified directory. For example: scanning `/usr/foo` with `--exclude ./package.json` would exclude `/usr/foo/package.json` and `--exclude '**/package.json'` would exclude all `package.json` files under `/usr/foo`. For filesystem scans, it is required to begin path expressions with `./`, `*/`, or `**/`, all of which will be resolved relative to the specified scan directory. Keep in mind, your shell may attempt to expand wildcards, so put those parameters in single quotes, like: '**/*.json'.
-
-
-## Configuration
-To Collect SBOMs from private GitHub repositories a valid set of credentials must be provided.
-This must be done via environment variables. For example:
-```bash
-export SAC_GITHUB_USERNAME=Shelly
-export SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
-```
-Also, to upload SBOMs to Dependency Track a valid API Token and base URL of the Dependency Track API must be provided.
-This must be done via environment variables as well. For example:
-```bash
-export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
-export SAC_DEPENDENCY_TRACK_URL=https://api-dependency-track.evilcorp.com/
-```
-**Note:**\
-When collecting SBOMs inside a Docker container - format your env variables like this:
-```bash
-SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
-SAC_DEPENDENCY_TRACK_URL=https://api-dependency-track.evilcorp.com/
-SAC_GITHUB_USERNAME=Shelly
-SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
-```
-And then pass them to `docker run` with `--env-file` switch.
 
 ------
 ```bash
