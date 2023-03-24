@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vinted/software-assets/pkg/dtrack"
+	"github.com/vinted/sbomsftw/pkg/dtrack"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

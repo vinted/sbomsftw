@@ -6,7 +6,7 @@ import (
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/vinted/software-assets/pkg/bomtools"
+	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
 
 type JVM struct {

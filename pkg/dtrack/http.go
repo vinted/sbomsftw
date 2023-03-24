@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/vinted/software-assets/pkg"
+	"github.com/vinted/sbomsftw/pkg"
 )
 
 const (

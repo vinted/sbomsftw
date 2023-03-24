@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vinted/software-assets/pkg/collectors"
+	"github.com/vinted/sbomsftw/pkg/collectors"
 
 	"github.com/go-git/go-git/v5/plumbing/object"
 
@@ -17,8 +17,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
-	"github.com/vinted/software-assets/pkg"
-	"github.com/vinted/software-assets/pkg/bomtools"
+	"github.com/vinted/sbomsftw/pkg"
+	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"

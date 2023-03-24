@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vinted/software-assets/internal/app"
+	"github.com/vinted/sbomsftw/internal/app"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

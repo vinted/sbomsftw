@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/vinted/software-assets/pkg"
+	"github.com/vinted/sbomsftw/pkg"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 

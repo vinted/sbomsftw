@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vinted/software-assets/pkg"
+	"github.com/vinted/sbomsftw/pkg"
 )
 
 const defaultRequestTimeout = 10

@@ -12,16 +12,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/vinted/software-assets/pkg"
+	"github.com/vinted/sbomsftw/pkg"
 
-	"github.com/vinted/software-assets/internal"
+	"github.com/vinted/sbomsftw/internal"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/vinted/software-assets/pkg/bomtools"
-	"github.com/vinted/software-assets/pkg/collectors"
-	"github.com/vinted/software-assets/pkg/dtrack"
-	"github.com/vinted/software-assets/pkg/repository"
+	"github.com/vinted/sbomsftw/pkg/bomtools"
+	"github.com/vinted/sbomsftw/pkg/collectors"
+	"github.com/vinted/sbomsftw/pkg/dtrack"
+	"github.com/vinted/sbomsftw/pkg/repository"
 )
 
 type App struct {

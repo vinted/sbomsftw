@@ -22,7 +22,7 @@ THE SOFTWARE.
 package main
 
 import (
-	"github.com/vinted/software-assets/cmd"
+	"github.com/vinted/sbomsftw/cmd"
 )
 
 func main() {
