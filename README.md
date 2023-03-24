@@ -31,7 +31,7 @@ SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
 And then pass them to `docker run` with `--env-file` switch.
 
 ## Examples
-Single repository mode:
+Single repository mode (output is stored at `outputs/sboms.json`):
 ```bash
 docker run -it --rm -v "${PWD}/outputs/":'/tmp/' sbomsftw:latest sa-collector repo https://github.com/cloudflare/quiche \
 	--output /tmp/sboms.json --log-format fancy
