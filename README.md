@@ -31,14 +31,15 @@ SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
 And then pass them to `docker run` with `--env-file` switch.
 
 ## Examples
-Single repository mode:
+Single repository mode (output is stored at `outputs/sboms.json`):
 ```bash
-docker run -it --rm -v "${PWD}/outputs/":'/tmp/' sbomsftw:latest sa-collector repo https://github.com/cloudflare/quiche --output /tmp/sboms.json
+docker run -it --rm -v "${PWD}/outputs/":'/tmp/' sbomsftw:latest sa-collector repo https://github.com/cloudflare/quiche \
+	--output /tmp/sboms.json --log-format fancy
 ```
 Organization mode - collect SBOMs from every repository inside the organization & upload them to Dependency Track:
 ```bash
 docker run --env-file .env -it --rm sbomsftw:latest sa-collector org https://api.github.com/orgs/vinted/repos \
-        --output /dev/null --tags 'vinted' --upload-to-dependency-track
+        --output /dev/null --tags 'vinted' --upload-to-dependency-track --log-format fancy
 ```
 
 Filesystem collection mode:
