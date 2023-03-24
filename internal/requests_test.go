@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vinted/software-assets/pkg"
+	"github.com/vinted/sbomsftw/pkg"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

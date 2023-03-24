@@ -1,4 +1,4 @@
-module github.com/vinted/software-assets
+module github.com/vinted/sbomsftw
 
 go 1.18
 

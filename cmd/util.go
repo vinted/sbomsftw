@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/vinted/software-assets/internal/app"
+	"github.com/vinted/sbomsftw/internal/app"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

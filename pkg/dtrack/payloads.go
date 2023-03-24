@@ -9,7 +9,7 @@ import (
 	"unicode"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/vinted/software-assets/pkg/bomtools"
+	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/vinted/software-assets/pkg/bomtools"
+	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
 
 type Syft struct {
@@ -62,7 +62,7 @@ func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, re
 		}
 	}
 
-	sbom := sbom.SBOM{
+	bom := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    pkgCatalog,
 			LinuxDistribution: osRelease,
@@ -70,7 +70,7 @@ func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, re
 		Relationships: relationships,
 		Source:        src.Metadata,
 	}
-	cdxString, err := syft.Encode(sbom, syft.FormatByName(bomFormat))
+	cdxString, err := syft.Encode(bom, syft.FormatByName(bomFormat))
 	if err != nil {
 		err = fmt.Errorf("can't encode SBOMs to %s format: %v\n", bomFormat, err)
 		select {
