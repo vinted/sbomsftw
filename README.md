@@ -35,17 +35,17 @@ This must be done via environment variables. For example:
 export SAC_GITHUB_USERNAME=Shelly
 export SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
 ```
-Also, to upload SBOMs to Dependency Track a valid API Token and base URL must be provided.
+Also, to upload SBOMs to Dependency Track a valid API Token and base URL of the Dependency Track API must be provided.
 This must be done via environment variables as well. For example:
 ```bash
 export SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
-export SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/
+export SAC_DEPENDENCY_TRACK_URL=https://api-dependency-track.evilcorp.com/
 ```
 **Note:**\
 When collecting SBOMs inside a Docker container - format your env variables like this:
 ```bash
 SAC_DEPENDENCY_TRACK_TOKEN=dependency-track-access-token-with-write-scope
-SAC_DEPENDENCY_TRACK_URL=https://dependency-track.evilcorp.com/
+SAC_DEPENDENCY_TRACK_URL=https://api-dependency-track.evilcorp.com/
 SAC_GITHUB_USERNAME=Shelly
 SAC_GITHUB_TOKEN=personal-access-token-with-read-scope
 ```

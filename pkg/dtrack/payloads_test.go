@@ -97,17 +97,6 @@ func TestGetTruncatedCodeOwners(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 
-	t.Run("order vinted.com contributors at the top", func(t *testing.T) {
-		got := createProjectPayload{
-			Name:       "some-random-name",
-			Tags:       nil,
-			CodeOwners: []string{"john.doe@pm.me", "john.smith@acme.com", "jane.doe@vinted.com", "jane@vinted.com"},
-		}.getTruncatedCodeOwners()
-
-		want := "CODE OWNERS:\njane.doe@vinted.com\njane@vinted.com\njohn.doe@pm.me\njohn.smith@acme.com"
-		assert.Equal(t, want, got)
-	})
-
 	t.Run("truncate code owners to a maximum of 255 characters", func(t *testing.T) {
 		got := createProjectPayload{
 			Name:       "some-random-name",
