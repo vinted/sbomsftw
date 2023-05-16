@@ -3,10 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/vinted/sbomsftw/pkg/dtrack"
 
@@ -114,7 +112,6 @@ func setupLogrus(logLevel, logFormat string) error {
 }
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
