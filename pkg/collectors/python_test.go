@@ -115,7 +115,7 @@ func TestPythonCollector(t *testing.T) {
 			err = os.WriteFile(filepath.Join(innerDir, "environment.yml"), contents, 0o644)
 			require.NoError(t, err)
 
-			contents, err = os.ReadFile("../../integration/test/conda-envs/test-requirements.txt")
+			contents, err = os.ReadFile("../../integration/test/conda-envs/test-reqs.txt")
 			require.NoError(t, err)
 
 			err = os.WriteFile(filepath.Join(innerDir, "requirements.txt"), contents, 0o644)
