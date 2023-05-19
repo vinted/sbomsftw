@@ -247,6 +247,8 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 		sboms = bomtools.StripCPEsFromComponents(sboms)
 	}
 
+	sboms = bomtools.SetCreatedAtProperty(sboms)
+
 	log.Infof("Collected %d SBOM components from %s", len(*sboms.Components), config.FilesystemPath)
 
 	if a.outputFile == "" {
