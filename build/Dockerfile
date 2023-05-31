@@ -1,5 +1,7 @@
 FROM debian:bullseye-slim
 
+ARG TARGETARCH
+
 ENV DEBIAN_FRONTEND noninteractive
 ENV NODE_KEY="/usr/share/keyrings/nodesource.gpg"
 
@@ -37,8 +39,8 @@ RUN npm install -g @appthreat/cdxgen retire yarn bower && gem install bundler bu
 
 # Install golang
 WORKDIR /opt
-RUN wget https://go.dev/dl/go1.18.1.linux-amd64.tar.gz \
-  && tar -C /usr/local -xzf /opt/go1.18.1.linux-amd64.tar.gz && rm /opt/go1.18.1.linux-amd64.tar.gz
+RUN wget https://go.dev/dl/go1.18.1.linux-${TARGETARCH}.tar.gz \
+  && tar -C /usr/local -xzf /opt/go1.18.1.linux-${TARGETARCH}.tar.gz && rm /opt/go1.18.1.linux-${TARGETARCH}.tar.gz
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 #Install Android SDK & NDK
@@ -48,7 +50,7 @@ ENV PATH="${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${AND
 ENV ANDROID_BUILD_TOOLS_VERSION="4333796"
 
 ### Setup Android SDK using Java 8 & Accept EULA
-ENV JAVA_HOME="/usr/lib/jvm/adoptopenjdk-8-hotspot-amd64"
+ENV JAVA_HOME="/usr/lib/jvm/adoptopenjdk-8-hotspot-${TARGETARCH}"
 RUN  mkdir -p ~/.android && touch ~/.android/repositories.cfg && mkdir ~/android-sdk-linux && cd ~/android-sdk-linux \
     && wget https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_BUILD_TOOLS_VERSION}.zip \
     -q --output-document=sdk-tools.zip && unzip sdk-tools.zip && rm sdk-tools.zip \
