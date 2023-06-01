@@ -11,7 +11,10 @@ import (
 
 	"github.com/vinted/sbomsftw/pkg/collectors"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
@@ -44,6 +47,50 @@ func (b BadVCSURLError) Error() string {
 	return fmt.Sprintf("invalid VCS URL supplied %s\n", b.URL)
 }
 
+func getHeadReference(vcsURL string, credentials Credentials) (plumbing.ReferenceName, error) {
+	endpoint, err := transport.NewEndpoint(vcsURL)
+	if err != nil {
+		return "", fmt.Errorf("can't create VCS endpoint: %w", err)
+	}
+
+	obtainHEADRef := func(endpoint *transport.Endpoint) (plumbing.ReferenceName, error) {
+		gitClient, err := client.NewClient(endpoint)
+		if err != nil {
+			return "", err
+		}
+
+		session, err := gitClient.NewUploadPackSession(endpoint, nil)
+		if err != nil {
+			return "", err
+		}
+
+		info, err := session.AdvertisedReferences()
+		if err != nil {
+			return "", err
+		}
+
+		refs, err := info.AllReferences()
+		if err != nil {
+			return "", err
+		}
+
+		return refs["HEAD"].Target(), nil
+	}
+
+	unauthenticatedHEAD, err := obtainHEADRef(endpoint)
+	if err != nil {
+		const warnMessage = "unable to obtain repo HEAD in an unauthenticated state, retrying with credentials"
+		log.WithField("error", err).Warn(warnMessage)
+
+		endpoint.User = credentials.Username
+		endpoint.Password = credentials.AccessToken
+
+		return obtainHEADRef(endpoint)
+	}
+
+	return unauthenticatedHEAD, nil
+}
+
 /*
 New clones the repository supplied in the vcsURL parameter and returns a new Repository instance.
 If repository is private credentials must be supplied.
@@ -58,12 +105,17 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	fsPath := filepath.Join(CheckoutsPath, name)
 
 	const cloneDepth = 100 // Clone only 100 most recent commits, this saves bandwidth & disk-space
+	headReference, err := getHeadReference(vcsURL, credentials)
+	if err != nil {
+		return nil, err
+	}
 
 	cloneOptions := &git.CloneOptions{
-		URL:          vcsURL,
-		SingleBranch: true,
-		Tags:         git.NoTags,
-		Depth:        cloneDepth,
+		URL:           vcsURL,
+		SingleBranch:  true,
+		ReferenceName: headReference,
+		Tags:          git.NoTags,
+		Depth:         cloneDepth,
 	}
 
 	log.WithField("VCS URL", vcsURL).Infof("cloning %s into %s", name, fsPath)
