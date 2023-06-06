@@ -52,7 +52,7 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
 	defer cancel()
 
-	log.Infof("Create project with payload name: %s", payload.Name)
+	log.WithField("payloadName", payload.Name).Debugf("Create project with payload name: %s", payload.Name)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf(cantMarshalPayload, err)
@@ -67,8 +67,8 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	d.setRequiredHeaders(req)
 
 	resp, err := http.DefaultClient.Do(req)
-	log.Infof("CreateProject request response body: %s", resp.Body)
-	log.Infof("CreateProject request response status code: %v", resp.StatusCode)
+	log.WithField("funcType", "createProject").Debugf("CreateProject request response body: %s", resp.Body)
+	log.WithField("funcType", "createProject").Debugf("CreateProject request response status code: %v", resp.StatusCode)
 	if err != nil {
 		return "", fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
@@ -86,7 +86,7 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	}()
 
 	if resp.StatusCode != http.StatusCreated {
-		log.Info("Returning createProject BadStatusError")
+		log.WithField("funcType", "createProject").Debugf("Returning createProject BadStatusError")
 		// Don't return the error straight up - mind the defer above.
 		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
 		return "", err
@@ -101,7 +101,7 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 		err = fmt.Errorf(cantUnmarshalResponse, requestURL, err)
 		return "", err
 	}
-	log.Infof("Returning metadata UUID: %s", metadata.UUID)
+	log.WithField("metadataUUID", metadata.UUID).Debugf("Returning metadata UUID: %s", metadata.UUID)
 	return metadata.UUID, err // Return only UUID since it's the only relevant field we need from project creation.
 }
 
@@ -111,7 +111,7 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	defer cancel()
 
 	jsonPayload, err := json.Marshal(payload)
-	log.Infof("Updating project with payload: %s", payload.ProjectName)
+	log.WithField("funcType", "updateSBOM").Debugf("Updating project with payload: %s", payload.ProjectName)
 	if err != nil {
 		return fmt.Errorf(cantMarshalPayload, err)
 	}
@@ -125,8 +125,8 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	d.setRequiredHeaders(req)
 
 	resp, err := http.DefaultClient.Do(req)
-	log.Infof("Logging updateSBOM PUT request response body: %s", resp.Body)
-	log.Infof("Logging updateSBOM PUT request response status code: %v", resp.StatusCode)
+	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response body: %s", resp.Body)
+	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response status code: %v", resp.StatusCode)
 	if err != nil {
 		return fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
@@ -145,10 +145,10 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	if resp.StatusCode != http.StatusOK {
 		// Don't return the error straight up - mind the defer above.
 		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
-		log.Infof("Update SBOM response code ( %v ) != 200: %s", resp, err)
+		log.WithField("updateNotOk", resp.StatusCode).Debugf("Update SBOM response code ( %v ) != 200: %s", resp, err)
 		return err
 	}
-	log.Infof("SBOM update finished: %s", err)
+	log.WithField("funcType", "updateSBOM").Debugf("SBOM Update finished: %s", err)
 	return err
 }
 
@@ -163,7 +163,7 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 		Classifier: d.classifier,
 		Name:       payload.ProjectName,
 	})
-	log.Infof("Upload SBOMs err status: %s", err)
+	log.WithField("funcType", "uploadSBOM").Debugf("SBOM Create : %s", err)
 	if err != nil {
 		var e pkg.BadStatusError
 		if ok := errors.As(err, &e); !ok {
@@ -173,8 +173,9 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 			return err
 		}
 	}
-	log.Info("No error so upload SBOM performing update")
+	log.WithField("funcType", "uploadSBOM").Debugf("No error so upload SBOM performing update")
 
+	log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
 	return d.updateSBOMs(ctx, updateSBOMsPayload{
 		Sboms:       payload.Sboms,
 		Tags:        payload.Tags,
