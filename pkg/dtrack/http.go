@@ -173,9 +173,7 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 			return err
 		}
 	}
-	log.WithField("funcType", "uploadSBOM").Debugf("No error so upload SBOM performing update")
-
-	log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
+	log.WithField("funcType", "uploadSBOM").Debugf("SBOM is performing an update")
 	return d.updateSBOMs(ctx, updateSBOMsPayload{
 		Sboms:       payload.Sboms,
 		Tags:        payload.Tags,
