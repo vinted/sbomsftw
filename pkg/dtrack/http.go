@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"path"
@@ -50,6 +51,7 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
 	defer cancel()
 
+	log.Info("Creating project with payload name: %s", payload.Name)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf(cantMarshalPayload, err)
@@ -64,6 +66,8 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	d.setRequiredHeaders(req)
 
 	resp, err := http.DefaultClient.Do(req)
+	log.Info("Logging createProject PUT request response body: %s", resp.Body)
+	log.Info("Logging createProject PUT request response status code: %s", resp.StatusCode)
 	if err != nil {
 		return "", fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
@@ -81,6 +85,7 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	}()
 
 	if resp.StatusCode != http.StatusCreated {
+		log.Info("Returning createProject BadStatusError")
 		// Don't return the error straight up - mind the defer above.
 		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
 		return "", err
@@ -95,7 +100,7 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 		err = fmt.Errorf(cantUnmarshalResponse, requestURL, err)
 		return "", err
 	}
-
+	log.Info("Returning metadata UUID: %s", metadata.UUID)
 	return metadata.UUID, err // Return only UUID since it's the only relevant field we need from project creation.
 }
 
@@ -105,6 +110,7 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	defer cancel()
 
 	jsonPayload, err := json.Marshal(payload)
+	log.Info("Updating project with payload: %s", payload.ProjectName)
 	if err != nil {
 		return fmt.Errorf(cantMarshalPayload, err)
 	}
@@ -118,6 +124,8 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	d.setRequiredHeaders(req)
 
 	resp, err := http.DefaultClient.Do(req)
+	log.Info("Logging updateSBOM PUT request response body: %s", resp.Body)
+	log.Info("Logging updateSBOM PUT request response status code: %s", resp.StatusCode)
 	if err != nil {
 		return fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
@@ -136,9 +144,10 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	if resp.StatusCode != http.StatusOK {
 		// Don't return the error straight up - mind the defer above.
 		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
+		log.Info("Update SBOM response code ( %s ) != 200: %s", resp, err)
 		return err
 	}
-
+	log.Info("SBOM update finished: %s", err)
 	return err
 }
 
@@ -153,6 +162,7 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 		Classifier: d.classifier,
 		Name:       payload.ProjectName,
 	})
+	log.Info("Upload SBOMs err status: %s", err)
 	if err != nil {
 		var e pkg.BadStatusError
 		if ok := errors.As(err, &e); !ok {
@@ -162,6 +172,7 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 			return err
 		}
 	}
+	log.Info("No error so upload SBOM performing update")
 
 	return d.updateSBOMs(ctx, updateSBOMsPayload{
 		Sboms:       payload.Sboms,
