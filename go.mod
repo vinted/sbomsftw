@@ -1,6 +1,8 @@
 module github.com/vinted/sbomsftw
 
-go 1.18
+go 1.21.0
+
+toolchain go1.21.1
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.6.0
