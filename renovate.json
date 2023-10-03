@@ -2,14 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "groupName": "Go Dependencies",
-      "groupSlug": "go-deps",
-      "matchDatasources": [
-        "go"
-      ],
-      "matchPackagePatterns": [
-        "*"
-      ],
       "postUpdateOptions": [
         "goModTidy",
         "gomodUpdateImportPaths"
