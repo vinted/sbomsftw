@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.21
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: golangci-lint
         uses: golangci/golangci-lint-action@07341d3490e932bea2126ce313f1c3904a362b8a
         with:
