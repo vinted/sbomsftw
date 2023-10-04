@@ -15,7 +15,7 @@ jobs:
       CS_REPOSITORY: ${{ secrets.CS_REPOSITORY }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4 # For cloudsmith-cli
         with:
           python-version: '3.10'
