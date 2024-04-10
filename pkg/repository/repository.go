@@ -160,7 +160,6 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 		contributorsToCommitCount[c.Author.Email] = contributorsToCommitCount[c.Author.Email] + 1
 		return nil
 	})
-
 	if err != nil {
 		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
 
@@ -240,9 +239,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 
 			// We only generate one sbom here
 			var mergedSlice []*cdx.BOM
-			for _, singleBOM := range sbomsFromCollector {
-				mergedSlice = append(mergedSlice, singleBOM)
-			}
+			mergedSlice = append(mergedSlice, sbomsFromCollector...)
 			mergedSBOMparam := bomtools.MergeSBOMParam{
 				SBOMs:         mergedSlice,
 				OptionalParam: "device",
@@ -267,9 +264,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 	default:
 		// All collectors are finished - merge collected SBOMs into a single one
 		var mergedSlice []*cdx.BOM
-		for _, singleBOM := range collectedSBOMs {
-			mergedSlice = append(mergedSlice, singleBOM)
-		}
+		mergedSlice = append(mergedSlice, collectedSBOMs...)
 		mergedSBOMparam := bomtools.MergeSBOMParam{
 			SBOMs: mergedSlice,
 		}

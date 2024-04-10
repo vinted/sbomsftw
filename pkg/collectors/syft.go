@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"context"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format"
@@ -21,8 +22,6 @@ type sbomCollectionResult struct {
 }
 
 func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, result chan<- sbomCollectionResult) {
-	const bomFormat = "cyclonedx"
-
 	src := getSource(repositoryPath)
 
 	// catalog the given source and return a SBOM
@@ -59,7 +58,6 @@ func (s Syft) String() string {
 
 func getSource(input string) source.Source {
 	src, err := syft.GetSource(context.Background(), input, nil)
-
 	if err != nil {
 		panic(err)
 	}

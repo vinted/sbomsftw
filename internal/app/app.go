@@ -234,7 +234,7 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 
 		return
 	}
-	
+
 	// We only generate one sbom here
 	mergedSBOMparam := bomtools.MergeSBOMParam{
 		SBOMs:         []*cdx.BOM{sboms},

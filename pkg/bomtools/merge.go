@@ -274,12 +274,13 @@ func MergeSBOMs(mergedSbomParam MergeSBOMParam) (*cdx.BOM, error) {
 	component := cdx.ComponentType(sbomType)
 
 	// create cdxComponent
-	components := []cdx.Component{{
-		Type:    component,
-		Author:  "vinted",
-		Name:    "sa-collector",
-		Version: "0.5.0", // TODO Extract somewhere else later on
-	},
+	components := []cdx.Component{
+		{
+			Type:    component,
+			Author:  "vinted",
+			Name:    "sa-collector",
+			Version: "0.5.0", // TODO Extract somewhere else later on
+		},
 	}
 
 	// Reconstruct final bom
