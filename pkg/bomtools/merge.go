@@ -258,19 +258,21 @@ func MergeSBOMs(sboms ...*cdx.BOM) (*cdx.BOM, error) {
 		sortedComponents = append(sortedComponents, *purlsToComponents[k])
 	}
 
+	// create cdxComponent
+	components := []cdx.Component{{
+		Author:  "vinted",
+		Name:    "sa-collector",
+		Version: "0.5.0", // TODO Extract somewhere else later on
+	},
+	}
+
 	// Reconstruct final bom
 	bom := cdx.NewBOM()
 	bom.Components = &sortedComponents
 	bom.SerialNumber = uuid.New().URN()
 	bom.Metadata = &cdx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
-		Tools: &[]cdx.Tool{
-			{
-				Vendor:  "vinted",
-				Name:    "sa-collector",
-				Version: "0.5.0", // TODO Extract somewhere else later on
-			},
-		},
+		Component: &components[0],
 	}
 
 	return bom, nil

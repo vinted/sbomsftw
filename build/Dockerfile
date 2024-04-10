@@ -39,8 +39,8 @@ RUN npm install -g @appthreat/cdxgen retire yarn bower && gem install bundler bu
 
 # Install golang
 WORKDIR /opt
-RUN wget https://go.dev/dl/go1.18.1.linux-${TARGETARCH}.tar.gz \
-  && tar -C /usr/local -xzf /opt/go1.18.1.linux-${TARGETARCH}.tar.gz && rm /opt/go1.18.1.linux-${TARGETARCH}.tar.gz
+RUN wget https://go.dev/dl/go1.21.1.linux-${TARGETARCH}.tar.gz \
+  && tar -C /usr/local -xzf /opt/go1.21.1.linux-${TARGETARCH}.tar.gz && rm /opt/go1.21.1.linux-${TARGETARCH}.tar.gz
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 #Install Android SDK & NDK
