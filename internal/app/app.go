@@ -234,8 +234,14 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 
 		return
 	}
+	
+	// We only generate one sbom here
+	mergedSBOMparam := bomtools.MergeSBOMParam{
+		SBOMs:         []*cdx.BOM{sboms},
+		OptionalParam: "device",
+	}
 
-	sboms, err = bomtools.MergeSBOMs(sboms)
+	sboms, err = bomtools.MergeSBOMs(mergedSBOMparam)
 	if err != nil {
 		log.WithError(err).Fatal(errMsg)
 	}
