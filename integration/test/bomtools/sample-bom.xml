@@ -1,31 +1,29 @@
-<?xml version="1.0"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
-    <components>
-        <component type="library">
-            <name>ckeditor</name>
-            <version>4.0.1</version>
-            <hashes>
-                <hash alg="MD5">b8da5dea65c6d2538624e0e5f001b7d7</hash>
-                <hash alg="SHA-1">680c001915643d058b6644b8da2b2968215e7195</hash>
-                <hash alg="SHA-256">0aaa1637e1c79e1ad75dbed0336f6647681d97fb80704da0c64e39854c124567</hash>
-                <hash alg="SHA-512">6c89cf1d0615d2d2214e1f06d63d51ac5535eb5e878bb6ffcc6f561d7133963a8a91b2af46fba29972ad3712762b107a088953cdb33c0c27645db5d00426235d</hash>
-            </hashes>
-            <licenses><license></license></licenses>
-            <purl>pkg:npm/ckeditor@4.0.1</purl>
-            <modified>false</modified>
-        </component>
-        <component type="library">
-            <name>jquery</name>
-            <version>2.1.4</version>
-            <hashes>
-                <hash alg="MD5">107fbe9555bfc88ec5cab524c790fe34</hash>
-                <hash alg="SHA-1">0fed45ad7a48ace869bc725ca474ad86a1ef1562</hash>
-                <hash alg="SHA-256">b2215cce5830e2350b9d420271d9bd82340f664c3f60f0ea850f7e9c0392704e</hash>
-                <hash alg="SHA-512">28c3eb3b22a8c59eb74ddac7c989512b0197e9e5867bdf056018efeb9056687f44d86a04f555d8f8c9a3dd6296c014dc8708fae197839588c490ddc0eae27229</hash>
-            </hashes>
-            <licenses><license></license></licenses>
-            <purl>pkg:npm/jquery@2.1.4</purl>
-            <modified>false</modified>
-        </component>
-    </components>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.2" version="1" serialNumber="urn:uuid:YOUR-UUID-HERE">
+<metadata timestamp="2022-01-01T00:00:00Z">
+    <!-- PUT YOUR METADATA HERE -->
+</metadata>
+<components>
+    <component type="library" bom-ref="pkg:npm/ckeditor@4.0.1">
+        <name>ckeditor</name>
+        <version>4.0.1</version>
+        <hashes>
+            <hash alg="MD5">b8da5dea65c6d2538624e0e5f001b7d7</hash>
+            <hash alg="SHA-1">680c001915643d058b6644b8da2b2968215e7195</hash>
+            <hash alg="SHA-256">0aaa1637e1c79e1ad75dbed0336f6647681d97fb80704da0c64e39854c124567</hash>
+            <hash alg="SHA-512">6c89cf1d0615d2d2214e1f06d63d51ac5535eb5e878bb6ffcc6f561d7133963a8a91b2af46fba29972ad3712762b107a088953cdb33c0c27645db5d00426235d</hash>
+        </hashes>
+        <purl>pkg:npm/ckeditor@4.0.1</purl>
+    </component>
+    <component type="library" bom-ref="pkg:npm/jquery@2.1.4">
+        <name>jquery</name>
+        <version>2.1.4</version>
+        <hashes>
+            <hash alg="MD5">107fbe9555bfc88ec5cab524c790fe34</hash>
+            <hash alg="SHA-1">0fed45ad7a48ace869bc725ca474ad86a1ef1562</hash>
+            <hash alg="SHA-256">b2215cce5830e2350b9d420271d9bd82340f664c3f60f0ea850f7e9c0392704e</hash>
+            <hash alg="SHA-512">28c3eb3b22a8c59eb74ddac7c989512b0197e9e5867bdf056018efeb9056687f44d86a04f555d8f8c9a3dd6296c014dc8708fae197839588c490ddc0eae27229</hash>
+        </hashes>
+        <purl>pkg:npm/jquery@2.1.4</purl>
+    </component>
+</components>
 </bom>

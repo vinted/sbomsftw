@@ -160,7 +160,6 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 		contributorsToCommitCount[c.Author.Email] = contributorsToCommitCount[c.Author.Email] + 1
 		return nil
 	})
-
 	if err != nil {
 		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
 
@@ -238,7 +237,14 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 				Time to merge those SBOMs into a single one
 			*/
 
-			mergedSBOM, err := bomtools.MergeSBOMs(sbomsFromCollector...)
+			// We only generate one sbom here
+			var mergedSlice []*cdx.BOM
+			mergedSlice = append(mergedSlice, sbomsFromCollector...)
+			mergedSBOMparam := bomtools.MergeSBOMParam{
+				SBOMs:         mergedSlice,
+				OptionalParam: "device",
+			}
+			mergedSBOM, err := bomtools.MergeSBOMs(mergedSBOMparam)
 			if err == nil {
 				// Append merged SBOM from this collector & move on to the next one
 				collectedSBOMs = append(collectedSBOMs, mergedSBOM)
@@ -257,7 +263,12 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		return nil, ctx.Err()
 	default:
 		// All collectors are finished - merge collected SBOMs into a single one
-		merged, err := bomtools.MergeSBOMs(collectedSBOMs...)
+		var mergedSlice []*cdx.BOM
+		mergedSlice = append(mergedSlice, collectedSBOMs...)
+		mergedSBOMparam := bomtools.MergeSBOMParam{
+			SBOMs: mergedSlice,
+		}
+		merged, err := bomtools.MergeSBOMs(mergedSBOMparam)
 		if err != nil {
 			return nil, fmt.Errorf("%s: ExtractSBOMs can't merge sboms - %s", r, err)
 		}

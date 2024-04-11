@@ -112,3 +112,19 @@ func (c updateSBOMsPayload) MarshalJSON() ([]byte, error) {
 		"bom":            base64.StdEncoding.EncodeToString([]byte(sbomsStr)),
 	})
 }
+
+func (c updateSBOMsPayload) MarshalJSONPayload(payload updateSBOMsPayload) ([]byte, error) {
+	sbomsStr, err := bomtools.CDXToString(payload.Sboms)
+	if err != nil {
+		return nil, fmt.Errorf("can't convert *cdx.BOM type Sboms to string")
+	}
+
+	// project version is the SHA256 sum of all project tags concatenated with '/' + project name
+	versionHash := sha256.Sum256([]byte(strings.Join(append(payload.Tags, payload.ProjectName), "/")))
+
+	return json.Marshal(map[string]string{
+		"projectName":    payload.ProjectName,
+		"projectVersion": fmt.Sprintf("%x", versionHash),
+		"bom":            base64.StdEncoding.EncodeToString([]byte(sbomsStr)),
+	})
+}

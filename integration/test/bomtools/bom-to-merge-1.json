@@ -1,21 +1,16 @@
 {
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
   "serialNumber": "urn:uuid:4305f387-f85e-4ed2-8b3c-f7f7bea7de89",
   "version": 1,
   "metadata": {
     "timestamp": "2022-04-12T11:52:19Z",
-    "tools": [
-      {
-        "vendor": "anchore",
-        "name": "syft",
-        "version": "0.43.2"
-      }
-    ],
     "component": {
-      "bom-ref": "c064c5755f84ac3d",
-      "type": "file",
-      "name": "/tmp/ruby-repos/anonymous_rate_response"
+      "type": "application",
+      "author": "anchore",
+      "name": "syft",
+      "version": "0.43.2"
     }
   },
   "components": [
