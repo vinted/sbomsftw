@@ -2,6 +2,9 @@ package collectors
 
 import (
 	"context"
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft"
@@ -22,13 +25,22 @@ type sbomCollectionResult struct {
 }
 
 func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, result chan<- sbomCollectionResult) {
-	src := getSource(repositoryPath)
+	src, err := getSource(repositoryPath)
+	if err != nil {
+		log.WithError(err).Errorf("can't get source %s", err)
+	}
 
 	// catalog the given source and return a SBOM
-	sbom := getSBOM(src)
+	sbom, err := getSBOM(src)
+	if err != nil {
+		log.WithError(err).Errorf("can't get sbom %s", err)
+	}
 
 	// take the SBOM object and encode it into the syft-json representation
-	bytes := formatSBOM(sbom)
+	bytes, err := formatSBOM(sbom)
+	if err != nil {
+		log.WithError(err).Errorf("can't format to bytes %s", err)
+	}
 
 	select {
 	case <-ctx.Done():
@@ -56,28 +68,28 @@ func (s Syft) String() string {
 	return "generic syft collector"
 }
 
-func getSource(input string) source.Source {
+func getSource(input string) (source.Source, error) {
 	src, err := syft.GetSource(context.Background(), input, nil)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("can't get source from input for sbom: %w", err)
 	}
 
-	return src
+	return src, err
 }
 
-func getSBOM(src source.Source) sbom.SBOM {
-	s, err := syft.CreateSBOM(context.Background(), src, nil)
+func getSBOM(src source.Source) (*sbom.SBOM, error) {
+	sbom, err := syft.CreateSBOM(context.Background(), src, nil)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
 	}
 
-	return *s
+	return sbom, err
 }
 
-func formatSBOM(s sbom.SBOM) []byte {
-	bytes, err := format.Encode(s, syftjson.NewFormatEncoder())
+func formatSBOM(s *sbom.SBOM) ([]byte, error) {
+	bytes, err := format.Encode(*s, syftjson.NewFormatEncoder())
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("can't json to bytes: %w", err)
 	}
-	return bytes
+	return bytes, nil
 }
