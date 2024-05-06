@@ -24,17 +24,13 @@ func executeSBOMsUpload(t *testing.T, endpoint, apiKey string) error {
 	if err != nil {
 		t.Fatalf("can't create dependency track client: %s", err)
 	}
-	bom := &cdx.BOM{ // Address the error in the new() call.
-		BOMFormat:   "CycloneDX",
-		Version:     1,
-		SpecVersion: cdx.SpecVersion(5),
-	}
 
 	payload := updateSBOMsPayload{
-		Sboms:       bom,
+		Sboms:       new(cdx.BOM),
 		ProjectName: "some-random-project-name",
 		Tags:        []string{"some-random-project-tag"},
 	}
+
 	return client.updateSBOMs(context.Background(), payload)
 }
 

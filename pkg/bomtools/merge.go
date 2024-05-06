@@ -15,11 +15,6 @@ import (
 
 var ErrNoBOMsToMerge = errors.New("merge_boms: can't merge empty list of BOMs")
 
-type MergeSBOMParam struct {
-	SBOMs         []*cdx.BOM
-	OptionalParam string // Replace MyType with the type of your optional parameter
-}
-
 /*
 stripChecksumIfExists utility function to strip trailing checksums.
 
@@ -217,12 +212,8 @@ func mergeAllByPURL(component *cdx.Component, allComponents []*cdx.Component) *c
 	return mergedComponent
 }
 
-func MergeSBOMs(mergedSbomParam MergeSBOMParam) (*cdx.BOM, error) {
+func MergeSBOMs(sboms ...*cdx.BOM) (*cdx.BOM, error) {
 	// Validate we are working with legit input
-	sboms := mergedSbomParam.SBOMs
-	params := mergedSbomParam.OptionalParam
-	sbomType := "application"
-
 	if len(sboms) == 0 {
 		return nil, ErrNoBOMsToMerge
 	}
@@ -266,22 +257,6 @@ func MergeSBOMs(mergedSbomParam MergeSBOMParam) (*cdx.BOM, error) {
 	for _, k := range keys {
 		sortedComponents = append(sortedComponents, *purlsToComponents[k])
 	}
-	// Get type of device
-	if params == "device" {
-		sbomType = "device"
-	}
-
-	component := cdx.ComponentType(sbomType)
-
-	// create cdxComponent
-	components := []cdx.Component{
-		{
-			Type:    component,
-			Author:  "vinted",
-			Name:    "sa-collector",
-			Version: "0.5.0", // TODO Extract somewhere else later on
-		},
-	}
 
 	// Reconstruct final bom
 	bom := cdx.NewBOM()
@@ -289,7 +264,13 @@ func MergeSBOMs(mergedSbomParam MergeSBOMParam) (*cdx.BOM, error) {
 	bom.SerialNumber = uuid.New().URN()
 	bom.Metadata = &cdx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
-		Component: &components[0],
+		Tools: &[]cdx.Tool{
+			{
+				Vendor:  "vinted",
+				Name:    "sa-collector",
+				Version: "0.5.0", // TODO Extract somewhere else later on
+			},
+		},
 	}
 
 	return bom, nil
