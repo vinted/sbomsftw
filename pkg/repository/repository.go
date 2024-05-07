@@ -160,7 +160,6 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 		contributorsToCommitCount[c.Author.Email] = contributorsToCommitCount[c.Author.Email] + 1
 		return nil
 	})
-
 	if err != nil {
 		log.WithError(err).Errorf(errMsgTemplate, repositoryName) // Not a critical error - log & forget
 
