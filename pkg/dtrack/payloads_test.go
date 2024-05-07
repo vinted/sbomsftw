@@ -18,7 +18,7 @@ func TestMarshal(t *testing.T) {
 		testProjectTag       = "some-random-project-tag"
 		testProjectCodeOwner = "some-random-code-owner"
 		testClassifier       = "some-random-classifier"
-		sbomsB64             = "ewogICJib21Gb3JtYXQiOiAiQ3ljbG9uZURYIiwKICAic3BlY1ZlcnNpb24iOiAiMS40IiwKICAidmVyc2lvbiI6IDEKfQo="
+		sbomsB64             = "ewogICJib21Gb3JtYXQiOiAiIiwKICAic3BlY1ZlcnNpb24iOiAiIiwKICAidmVyc2lvbiI6IDAKfQo="
 	)
 
 	t.Run("marshal createProjectPayload instances correctly", func(t *testing.T) {
@@ -58,14 +58,8 @@ func TestMarshal(t *testing.T) {
 	})
 
 	t.Run("marshal updateSBOMsPayload instances correctly", func(t *testing.T) {
-		bom := &cdx.BOM{ // Address the error in the new() call.
-			BOMFormat:   "CycloneDX",
-			Version:     1,
-			SpecVersion: cdx.SpecVersion(5),
-		}
-
 		got, err := json.Marshal(updateSBOMsPayload{
-			Sboms:       bom, // zeroed mem value - b64 is always the same
+			Sboms:       new(cdx.BOM), // zeroed mem value - b64 is always the same
 			ProjectName: testProjectName,
 			Tags:        []string{testProjectTag},
 		})

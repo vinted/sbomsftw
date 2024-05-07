@@ -1,17 +1,23 @@
 {
-  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
   "serialNumber": "urn:uuid:72861be8-8e26-483b-aef2-8f87eef986fb",
   "version": 1,
   "metadata": {
     "timestamp": "2022-04-12T11:56:11.107Z",
-    "component": {
-      "type": "application",
-      "author": "AppThreat",
-      "name": "cdxgen",
-      "version": "4.0.8"
-    }
+    "tools": [
+      {
+        "vendor": "AppThreat",
+        "name": "cdxgen",
+        "version": "4.0.8"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Team AppThreat",
+        "email": "cloud@appthreat.com"
+      }
+    ]
   },
   "components": [
     {
