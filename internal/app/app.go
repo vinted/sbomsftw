@@ -25,11 +25,11 @@ import (
 )
 
 type App struct {
-	outputFile                     string
-	tags                           []string
-	githubUsername, githubAPIToken string // TODO Move later on to a separate GitHub client
-	dependencyTrackClient          *dtrack.DependencyTrackClient
-	purgeCache                     bool
+	outputFile                                   string
+	tags                                         []string
+	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
+	dependencyTrackClient                        *dtrack.DependencyTrackClient
+	purgeCache                                   bool
 }
 
 type SBOMsFromFilesystemConfig struct {
@@ -39,10 +39,10 @@ type SBOMsFromFilesystemConfig struct {
 }
 
 type options struct {
-	tags                           []string
-	githubUsername, githubAPIToken string // TODO Move later on to a separate GitHub client
-	dependencyTrackClient          *dtrack.DependencyTrackClient
-	purgeCache                     bool
+	tags                                         []string
+	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
+	dependencyTrackClient                        *dtrack.DependencyTrackClient
+	purgeCache                                   bool
 }
 
 type Option func(options *options) error
@@ -104,6 +104,13 @@ func WithTags(tags []string) Option {
 	}
 }
 
+func WithOrganization(orgName string) Option {
+	return func(options *options) error {
+		options.organization = orgName
+		return nil
+	}
+}
+
 func New(outputFile string, opts ...Option) (*App, error) {
 	var options options
 	for _, opt := range opts {
@@ -124,6 +131,8 @@ func New(outputFile string, opts ...Option) (*App, error) {
 
 	app.purgeCache = options.purgeCache
 	app.dependencyTrackClient = options.dependencyTrackClient
+
+	app.organization = options.organization
 
 	return app, nil
 }
@@ -174,7 +183,10 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 		processing next repository.
 	*/
 
-	collectSBOMsFromRepositories := func(repositoryURLs []string) {
+	collectSBOMsFromRepositories := func(repositoryURLs []string, apiToken string) {
+		if apiToken != a.githubAPIToken && apiToken != "" {
+			a.githubAPIToken = apiToken
+		}
 		for idx, repositoryURL := range repositoryURLs {
 			if idx == 0 {
 				a.sbomsFromRepositoryInternal(ctx, repositoryURL)
@@ -193,7 +205,7 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 		}
 	}
 
-	c := internal.NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken)
+	c := internal.NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken, a.organization)
 	err := internal.WalkRepositories(c, collectSBOMsFromRepositories)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
@@ -267,22 +279,37 @@ func (a App) SBOMsFromFilesystem(config *SBOMsFromFilesystemConfig) {
 
 // sbomsFromRepositoryInternal collect SBOMs from a single repository, given the VCS URL of the repository.
 func (a App) sbomsFromRepositoryInternal(ctx context.Context, repositoryURL string) {
+	var repo *repository.Repository
+	var err error
+
 	deleteRepository := func(repositoryPath string) {
 		if err := os.RemoveAll(repositoryPath); err != nil {
 			log.WithError(err).Errorf("can't remove repository at: %s", repositoryPath)
 		}
 	}
 
-	repo, err := repository.New(ctx, repositoryURL, repository.Credentials{
+	repo, err = repository.New(ctx, repositoryURL, repository.Credentials{
 		Username:    a.githubUsername,
 		AccessToken: a.githubAPIToken,
 	})
 	if errors.Is(err, context.Canceled) {
 		return
 	} else if err != nil {
+		// If error is not null, we try to get new token and assign it to github API token
 		log.WithError(err).Errorf("can't clone %s", repositoryURL)
-
-		return
+		token, errToken := internal.RegenerateGithubToken(a.organization)
+		if errToken != nil {
+			log.WithError(errToken).Errorf("can't generate github token")
+		}
+		a.githubAPIToken = token
+		repo, err = repository.New(ctx, repositoryURL, repository.Credentials{
+			Username:    a.githubUsername,
+			AccessToken: a.githubAPIToken,
+		})
+		// If err is still here after we attempt to regen, return
+		if err != nil {
+			log.WithError(err).Errorf("could not fetch after regenerated token %s", repositoryURL)
+		}
 	}
 
 	defer deleteRepository(repo.FSPath)

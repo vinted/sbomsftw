@@ -79,6 +79,7 @@ Flags:
   -o, --output string                where to output SBOM results: (defaults to stdout when unspecified)
   -t, --tags strings                 tags to use when SBOMs are uploaded to Dependency Track (optional)
   -u, --upload-to-dependency-track   whether to upload collected SBOMs to Dependency Track (default: false)
+  -g, --organization                 used to specify when using github app for token generation 
 
 Use "subcommand [command] --help" for more information about a command.
 ```

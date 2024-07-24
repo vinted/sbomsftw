@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+	gh "github.com/vinted/sbomsftw/pkg/github"
+
 	"github.com/vinted/sbomsftw/pkg"
 )
 
@@ -22,17 +25,18 @@ type BackoffConfig struct {
 
 type GetRepositoriesConfig struct {
 	BackoffConfig
-	ctx                         context.Context
-	URL, Username, APIToken     string
-	IncludeArchivedRepositories bool
+	ctx                                   context.Context
+	URL, Username, APIToken, Organization string
+	IncludeArchivedRepositories           bool
 }
 
-func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken string) GetRepositoriesConfig {
+func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken string, org string) GetRepositoriesConfig {
 	return GetRepositoriesConfig{
 		ctx:                         ctx,
 		URL:                         url,
 		Username:                    username,
 		APIToken:                    apiToken,
+		Organization:                org,
 		IncludeArchivedRepositories: false,
 		BackoffConfig: BackoffConfig{
 			RequestTimeout: defaultRequestTimeout * time.Second, // Good defaults
@@ -147,7 +151,11 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 	return exponentialBackoff(getRepositories, conf.BackoffPolicy...)
 }
 
-func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string)) error {
+func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string, apiToken string)) error {
+	var repositories []repositoryMapping
+	var err error
+	regenCount := 0
+
 	endpoint, err := url.Parse(conf.URL)
 	if err != nil {
 		return fmt.Errorf("can't walk repository with malformed URL - %s: %w", conf.URL, err)
@@ -160,20 +168,52 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		endpoint.RawQuery = query.Encode()
 		conf.URL = endpoint.String()
 
-		repositories, err := GetRepositories(conf)
+		repositories, err = GetRepositories(conf)
 		if err != nil {
-			return fmt.Errorf("repository walking failed: %w", err)
+			if regenCount < 1 {
+				token, errToken := RegenerateGithubToken(conf.Organization)
+				if errToken != nil {
+					return fmt.Errorf("repository walking regen failed: %w", errToken)
+				}
+				// Regenerate the token and retry
+				conf.APIToken = token
+
+				// Try fetching the repositories again with the new token
+				repositories, err = GetRepositories(conf)
+				if err != nil {
+					return fmt.Errorf("repository walking after regen failed: %w", err)
+				}
+				regenCount += 1
+			} else {
+				return fmt.Errorf("repository walking failed: %w", err)
+			}
+		} else {
+			// Reset regen count upon a successful fetch
+			regenCount = 0
 		}
+
 		if len(repositories) == 0 {
-			return nil // Done all repositories have been walked
+			return nil // Done, all repositories have been walked
 		}
+
 		var repositoryURLs []string
 		for _, r := range repositories {
 			repositoryURLs = append(repositoryURLs, r.URL)
 		}
-		callback(repositoryURLs)
+		callback(repositoryURLs, conf.APIToken)
+		// reset regen count
 		page++
 	}
 }
 
-// UploadBOM uploads BOM to Dependency Track based on the configuration given
+func RegenerateGithubToken(org string) (string, error) {
+	log.Infof("Trying to generate github token for %s", org)
+	if org == "" {
+		return "", fmt.Errorf("no org specified to regen")
+	}
+	token := gh.GenerateGithubAppTokenInternal(org)
+	if token == "" {
+		return "", fmt.Errorf("could not fetch new github app token")
+	}
+	return token, nil
+}
