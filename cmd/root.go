@@ -36,6 +36,7 @@ const (
 	classifierFlag     = "classifier"
 	uploadToDTrackFlag = "upload-to-dependency-track"
 	purgeCacheFlag     = "purge-cache"
+	orgFlag            = "organization"
 )
 
 // ENV keys.
@@ -127,6 +128,7 @@ func init() {
 		uploadToDependencyTrackUsage = "whether to upload collected SBOMs to Dependency Track (default: false)"
 		tagsUsage                    = "tags to use when SBOMs are uploaded to Dependency Track (optional)"
 		purgeCacheUsage              = "whether to purge gradle and go caches after a successful run (default: false)"
+		orgFlagUsage                 = "used when using organization github app"
 	)
 
 	const classifierUsageTemplate = "classifier to use when uploading to Dependency Track. Valid values are: %s"
@@ -142,6 +144,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolP(uploadToDTrackFlag, "u", false, uploadToDependencyTrackUsage)
 
 	rootCmd.PersistentFlags().BoolP(purgeCacheFlag, "p", false, purgeCacheUsage)
+
+	rootCmd.PersistentFlags().StringP(orgFlag, "g", "", orgFlagUsage)
 }
 
 func initConfig() {

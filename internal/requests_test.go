@@ -142,7 +142,7 @@ func TestWalkRepositories(t *testing.T) {
 
 		var collectedRepos []string
 		reqConf := createGetRepositoriesConfig(goodResponseServer.URL)
-		err := WalkRepositories(reqConf, func(repos []string) {
+		err := WalkRepositories(reqConf, func(repos []string, apiToken string) {
 			collectedRepos = append(collectedRepos, repos...)
 		})
 		require.NoError(t, err)
