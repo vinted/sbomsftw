@@ -46,6 +46,14 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 		options = append(options, app.WithCachePurge())
 	}
 
+	softExit, err := cmd.Flags().GetBool(softExitFlag)
+	if err != nil {
+		return nil, fmt.Errorf(errTemplate, softExitFlag)
+	}
+	if softExit {
+		options = append(options, app.WithSoftExit())
+	}
+
 	if uploadToDependencyTrack {
 		classifier, err := cmd.Flags().GetString(classifierFlag)
 		if err != nil {
