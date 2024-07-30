@@ -36,6 +36,7 @@ const (
 	classifierFlag     = "classifier"
 	uploadToDTrackFlag = "upload-to-dependency-track"
 	purgeCacheFlag     = "purge-cache"
+	softExitFlag       = "soft-exit"
 	orgFlag            = "organization"
 )
 
@@ -129,6 +130,7 @@ func init() {
 		tagsUsage                    = "tags to use when SBOMs are uploaded to Dependency Track (optional)"
 		purgeCacheUsage              = "whether to purge gradle and go caches after a successful run (default: false)"
 		orgFlagUsage                 = "used when using organization github app"
+		softExitUsage                = "used on cleanup to exit soft without crashing"
 	)
 
 	const classifierUsageTemplate = "classifier to use when uploading to Dependency Track. Valid values are: %s"
@@ -144,6 +146,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP(uploadToDTrackFlag, "u", false, uploadToDependencyTrackUsage)
 
 	rootCmd.PersistentFlags().BoolP(purgeCacheFlag, "p", false, purgeCacheUsage)
+	rootCmd.PersistentFlags().BoolP(softExitFlag, "s", false, softExitUsage)
 
 	rootCmd.PersistentFlags().StringP(orgFlag, "g", "", orgFlagUsage)
 }

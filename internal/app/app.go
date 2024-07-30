@@ -29,7 +29,7 @@ type App struct {
 	tags                                         []string
 	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient                        *dtrack.DependencyTrackClient
-	purgeCache                                   bool
+	purgeCache, softExit                         bool
 }
 
 type SBOMsFromFilesystemConfig struct {
@@ -42,7 +42,7 @@ type options struct {
 	tags                                         []string
 	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient                        *dtrack.DependencyTrackClient
-	purgeCache                                   bool
+	purgeCache, softExit                         bool
 }
 
 type Option func(options *options) error
@@ -96,6 +96,13 @@ func WithCachePurge() Option {
 	}
 }
 
+func WithSoftExit() Option {
+	return func(options *options) error {
+		options.softExit = true
+		return nil
+	}
+}
+
 func WithTags(tags []string) Option {
 	return func(options *options) error {
 		options.tags = tags
@@ -130,6 +137,7 @@ func New(outputFile string, opts ...Option) (*App, error) {
 	app.tags = options.tags
 
 	app.purgeCache = options.purgeCache
+	app.softExit = options.softExit
 	app.dependencyTrackClient = options.dependencyTrackClient
 
 	app.organization = options.organization
@@ -440,8 +448,11 @@ func (a App) cleanup() {
 	removeDirectory := func(directoryPath string) {
 		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
 			if err = os.RemoveAll(directoryPath); err != nil {
-				exitCode = 2 // ENOENT
-
+				if a.softExit {
+					exitCode = 0
+				} else {
+					exitCode = 2 // ENOENT
+				}
 				log.WithError(err).Errorf("can't remove %s", directoryPath)
 			}
 		}
