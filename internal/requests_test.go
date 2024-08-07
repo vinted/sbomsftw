@@ -71,6 +71,7 @@ func TestGetRepositories(t *testing.T) {
 
 		want := []repositoryMapping{
 			{Name: "xmlsec", Archived: false, Language: "C", URL: "https://github.com/vinted/xmlsec"},
+			{Name: "airbrake", Archived: true, Language: "Ruby", URL: "https://github.com/vinted/airbrake-graylog2"},
 			{Name: "dotpay", Archived: false, Language: "Ruby", URL: "https://github.com/vinted/dotpay"},
 		}
 		assert.Equal(t, want, repositories)
