@@ -31,6 +31,10 @@ type GetRepositoriesConfig struct {
 }
 
 func NewGetRepositoriesConfig(ctx context.Context, url, username, apiToken string, org string) GetRepositoriesConfig {
+	if org != "" {
+		apiToken = gh.GenerateGithubAppTokenInternal(org)
+	}
+
 	return GetRepositoriesConfig{
 		ctx:                         ctx,
 		URL:                         url,
@@ -139,15 +143,8 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 			return repositories, nil
 		}
 
-		var validRepositories []repositoryMapping
-		for _, r := range repositories {
-			if !r.Archived {
-				validRepositories = append(validRepositories, r)
-			}
-		}
-		return validRepositories, nil
+		return repositories, nil
 	}
-
 	return exponentialBackoff(getRepositories, conf.BackoffPolicy...)
 }
 
@@ -167,7 +164,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		query.Set("page", strconv.Itoa(page))
 		endpoint.RawQuery = query.Encode()
 		conf.URL = endpoint.String()
-
+		log.WithField("request github", endpoint.String()).Infof("Getting query for page %d", page)
 		repositories, err = GetRepositories(conf)
 		if err != nil {
 			if regenCount < 1 {
@@ -192,7 +189,18 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 			regenCount = 0
 		}
 
-		if len(repositories) == 0 {
+		var validRepositories []repositoryMapping
+		var archivedRepositories []repositoryMapping
+		for _, r := range repositories {
+			if !r.Archived {
+				validRepositories = append(validRepositories, r)
+			} else if r.Archived {
+				archivedRepositories = append(archivedRepositories, r)
+			}
+		}
+
+		if len(validRepositories) == 0 && len(archivedRepositories) == 0 {
+			log.WithField("request github return", endpoint.String()).Infof("returning with page %d", page)
 			return nil // Done, all repositories have been walked
 		}
 

@@ -201,8 +201,17 @@ func mergeAllByPURL(component *cdx.Component, allComponents []*cdx.Component) *c
 			mergedComponent.Properties = &p
 		}
 		if c.Licenses != nil {
-			l := mergeCollection[cdx.LicenseChoice](*c.Licenses, *mergedComponent.Licenses)
-			mergedComponent.Licenses = (*cdx.Licenses)(&l)
+			l := make([]cdx.LicenseChoice, 0)
+			for _, sl := range *c.Licenses {
+				// Check for license ID
+				if sl.License != nil && sl.License.ID != "" {
+					l = append(l, sl)
+				}
+			}
+
+			// Assuming mergedComponent.Licenses is initialized properly earlier
+			mergedLicenses := mergeCollection[cdx.LicenseChoice](l, *mergedComponent.Licenses)
+			mergedComponent.Licenses = (*cdx.Licenses)(&mergedLicenses)
 		}
 		if c.ExternalReferences != nil {
 			e := mergeCollection[cdx.ExternalReference](*c.ExternalReferences, *mergedComponent.ExternalReferences)

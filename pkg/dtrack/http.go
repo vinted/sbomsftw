@@ -67,11 +67,12 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	d.setRequiredHeaders(req)
 
 	resp, err := http.DefaultClient.Do(req)
-	log.WithField("funcType", "createProject").Debugf("CreateProject request response body: %s", resp.Body)
-	log.WithField("funcType", "createProject").Debugf("CreateProject request response status code: %v", resp.StatusCode)
 	if err != nil {
+		log.WithField("funcType", "createProject").Debugf("CreateProject error %v", err.Error())
 		return "", fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
+	// putting err here incase we get a resp nil
+	log.WithField("funcType", "createProject").Debugf("CreateProject request response status code: %v", resp.StatusCode)
 
 	defer func() {
 		closeErr := resp.Body.Close()
@@ -125,11 +126,11 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	d.setRequiredHeaders(req)
 
 	resp, err := http.DefaultClient.Do(req)
-	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response body: %s", resp.Body)
-	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response status code: %v", resp.StatusCode)
 	if err != nil {
 		return fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
+	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response body: %s", resp.Body)
+	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response status code: %v", resp.StatusCode)
 
 	defer func() {
 		closeErr := resp.Body.Close()
