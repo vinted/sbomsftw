@@ -324,7 +324,6 @@ func (a App) sbomsFromRepositoryInternal(ctx context.Context, repositoryURL stri
 			Username:    a.githubUsername,
 			AccessToken: a.githubAPIToken,
 		})
-
 		if err != nil {
 			log.WithError(err).Errorf("could not fetch after regenerated token %s", repositoryURL)
 			return
