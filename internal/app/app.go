@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -302,21 +303,31 @@ func (a App) sbomsFromRepositoryInternal(ctx context.Context, repositoryURL stri
 	})
 	if errors.Is(err, context.Canceled) {
 		return
-	} else if err != nil {
-		// If error is not null, we try to get new token and assign it to github API token
+	}
+
+	if err != nil {
+		if strings.Contains(err.Error(), "HEAD reference not found") {
+			log.WithError(err).Errorf("returning with error head not found %s", err.Error())
+			return
+		}
+
 		log.WithError(err).Errorf("can't clone %s", repositoryURL)
+
 		token, errToken := internal.RegenerateGithubToken(a.organization)
 		if errToken != nil {
-			log.WithError(errToken).Errorf("can't generate github token")
+			log.WithError(errToken).Error("can't generate github token")
+			return
 		}
+
 		a.githubAPIToken = token
 		repo, err = repository.New(ctx, repositoryURL, repository.Credentials{
 			Username:    a.githubUsername,
 			AccessToken: a.githubAPIToken,
 		})
-		// If err is still here after we attempt to regen, return
+
 		if err != nil {
 			log.WithError(err).Errorf("could not fetch after regenerated token %s", repositoryURL)
+			return
 		}
 	}
 

@@ -129,8 +129,7 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 	if err != nil {
 		return fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
 	}
-	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response body: %s", resp.Body)
-	log.WithField("funcType", "updateSBOM").Debugf("CreateProject request response status code: %v", resp.StatusCode)
+	log.WithField("funcType", "updateSBOM").Debugf("Update project request response status code: %v", resp.StatusCode)
 
 	defer func() {
 		closeErr := resp.Body.Close()
@@ -149,7 +148,7 @@ func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSB
 		log.WithField("updateNotOk", resp.StatusCode).Debugf("Update SBOM response code ( %v ) != 200: %s", resp, err)
 		return err
 	}
-	log.WithField("funcType", "updateSBOM").Debugf("SBOM Update finished: %s", err)
+	log.WithField("funcType", "updateSBOM").Debugf("SBOM Update finished: %d", resp.StatusCode)
 	return err
 }
 

@@ -74,14 +74,22 @@ func getHeadReference(vcsURL string, credentials Credentials) (plumbing.Referenc
 			return "", err
 		}
 
-		return refs["HEAD"].Target(), nil
+		headRef, exists := refs["HEAD"]
+		if !exists {
+			return "", fmt.Errorf("HEAD reference not found")
+		}
+
+		target := headRef.Target()
+		if target == "" {
+			return "", fmt.Errorf("HEAD reference has no target")
+		}
+
+		return target, nil
 	}
 
 	unauthenticatedHEAD, err := obtainHEADRef(endpoint)
 	if err != nil {
-		const warnMessage = "unable to obtain repo HEAD in an unauthenticated state, retrying with credentials"
-		log.WithField("error", err).Warn(warnMessage)
-
+		log.Infof("unable to obtain repo unauthenticated head, %s", err.Error())
 		endpoint.User = credentials.Username
 		endpoint.Password = credentials.AccessToken
 
@@ -104,7 +112,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 	fsPath := filepath.Join(CheckoutsPath, name)
 
-	const cloneDepth = 100 // Clone only 100 most recent commits, this saves bandwidth & disk-space
+	const cloneDepth = 40 // Clone only 40 most recent commits, this saves bandwidth & disk-space
 	headReference, err := getHeadReference(vcsURL, credentials)
 	if err != nil {
 		return nil, err

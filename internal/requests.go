@@ -152,6 +152,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 	var repositories []repositoryMapping
 	var err error
 	regenCount := 0
+	repositoriesLen := 0
 
 	endpoint, err := url.Parse(conf.URL)
 	if err != nil {
@@ -166,6 +167,7 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		conf.URL = endpoint.String()
 		log.WithField("request github", endpoint.String()).Infof("Getting query for page %d", page)
 		repositories, err = GetRepositories(conf)
+		repositoriesLen += len(repositories)
 		if err != nil {
 			if regenCount < 1 {
 				token, errToken := RegenerateGithubToken(conf.Organization)
@@ -205,9 +207,10 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		}
 
 		var repositoryURLs []string
-		for _, r := range repositories {
+		for _, r := range validRepositories {
 			repositoryURLs = append(repositoryURLs, r.URL)
 		}
+		log.Infof("total repository count scanned %d", repositoriesLen)
 		callback(repositoryURLs, conf.APIToken)
 		// reset regen count
 		page++
