@@ -60,11 +60,14 @@ func TestMergeBoms(t *testing.T) {
 	})
 
 	t.Run("return errors when merging nil or empty list collectors", func(t *testing.T) {
-		got, err := MergeSBOMs([]*cdx.BOM{}...)
+		mergedParam := MergeSBOMParam{
+			SBOMs: []*cdx.BOM{},
+		}
+		got, err := MergeSBOMs(mergedParam)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
 
-		got, err = MergeSBOMs(nil, nil)
+		got, err = MergeSBOMs(mergedParam)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, ErrNoBOMsToMerge, err)
 	})
@@ -75,10 +78,15 @@ func TestMergeBoms(t *testing.T) {
 		thirdBOM := bomFromFile("../../integration/test/bomtools/bom-to-merge-3.json")
 
 		expectedBOM := bomFromFile("../../integration/test/bomtools/expected-merged-boms.json")
-		got, err := MergeSBOMs(firstBOM, secondBOM, thirdBOM)
+		// We only generate one sbom here
+
+		mergedParam := MergeSBOMParam{
+			SBOMs: []*cdx.BOM{firstBOM, secondBOM, thirdBOM},
+		}
+		got, err := MergeSBOMs(mergedParam)
 		require.NoError(t, err)
 
 		assert.Equal(t, *expectedBOM.Components, *got.Components)
-		assert.Equal(t, *expectedBOM.Metadata.Tools, *got.Metadata.Tools)
+		assert.Equal(t, *expectedBOM.Metadata.Component, *got.Metadata.Component)
 	})
 }

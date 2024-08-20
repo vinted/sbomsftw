@@ -1,17 +1,17 @@
 {
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
-  "specVersion": "1.4",
+  "specVersion": "1.5",
   "serialNumber": "urn:uuid:39d0ea34-b60b-475b-a21e-ba88f6bf3f9c",
   "version": 1,
   "metadata": {
     "timestamp": "2022-04-13T12:39:28+03:00",
-    "tools": [
-      {
-        "vendor": "vinted",
-        "name": "sa-collector",
-        "version": "0.5.0"
-      }
-    ]
+    "component": {
+      "type": "application",
+      "author": "vinted",
+      "name": "sa-collector",
+      "version": "0.5.0"
+    }
   },
   "components": [
     {
