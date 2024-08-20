@@ -16,7 +16,7 @@ RUN npm install -g npm@latest
 RUN gem install bundler
 
 # Install yarn & SBOM collection tools (cdxgen & cyclonedx-cli & cyclonedx-tools & licensee)
-RUN npm install -g @appthreat/cdxgen retire yarn bower && gem install bundler bundler:1.9 bundler:1.17.3
+RUN npm install -g @cyclonedx/cdxgen retire yarn bower && gem install bundler bundler:1.9 bundler:1.17.3
 
 # Install golang
 WORKDIR /opt

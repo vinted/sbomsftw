@@ -65,8 +65,11 @@ func (j JVM) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) 
 
 		return singleModeBom, nil
 	}
-
-	return bomtools.MergeSBOMs(singleModeBom, multiModeBom)
+	// We only generate one sbom here
+	mergedSBOMparam := bomtools.MergeSBOMParam{
+		SBOMs: []*cdx.BOM{singleModeBom, multiModeBom},
+	}
+	return bomtools.MergeSBOMs(mergedSBOMparam)
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface
