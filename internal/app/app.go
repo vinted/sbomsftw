@@ -196,7 +196,9 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 		if apiToken != a.githubAPIToken && apiToken != "" {
 			a.githubAPIToken = apiToken
 		}
-		for idx, repositoryURL := range repositoryURLs {
+		limit := min(50, len(repositoryURLs))
+		for idx := 0; idx < limit; idx++ {
+			repositoryURL := repositoryURLs[idx]
 			if idx == 0 {
 				a.sbomsFromRepositoryInternal(ctx, repositoryURL)
 				continue
