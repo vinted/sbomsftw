@@ -72,6 +72,13 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 
 	options = append(options, app.WithTags(tags))
 
+	excludeRepos, err := cmd.Flags().GetStringSlice(excludeReposFlag)
+	if err != nil {
+		return nil, fmt.Errorf(errTemplate, excludeReposFlag)
+	}
+
+	options = append(options, app.WithExcludedRepos(excludeRepos))
+
 	orgName, err := cmd.Flags().GetString(orgFlag)
 	if err != nil {
 		log.Warn("github app org won't be used as no org set")

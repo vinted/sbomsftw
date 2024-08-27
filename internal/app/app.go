@@ -27,7 +27,7 @@ import (
 
 type App struct {
 	outputFile                                   string
-	tags                                         []string
+	tags, excludedRepos                          []string
 	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient                        *dtrack.DependencyTrackClient
 	purgeCache, softExit                         bool
@@ -40,7 +40,7 @@ type SBOMsFromFilesystemConfig struct {
 }
 
 type options struct {
-	tags                                         []string
+	tags, excludedRepos                          []string
 	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient                        *dtrack.DependencyTrackClient
 	purgeCache, softExit                         bool
@@ -112,6 +112,14 @@ func WithTags(tags []string) Option {
 	}
 }
 
+func WithExcludedRepos(excludedRepos []string) Option {
+	return func(options *options) error {
+		options.excludedRepos = excludedRepos
+
+		return nil
+	}
+}
+
 func WithOrganization(orgName string) Option {
 	return func(options *options) error {
 		options.organization = orgName
@@ -134,7 +142,7 @@ func New(outputFile string, opts ...Option) (*App, error) {
 
 	app.githubUsername = options.githubUsername
 	app.githubAPIToken = options.githubAPIToken
-
+	app.excludedRepos = options.excludedRepos
 	app.tags = options.tags
 
 	app.purgeCache = options.purgeCache
@@ -193,10 +201,22 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 	*/
 
 	collectSBOMsFromRepositories := func(repositoryURLs []string, apiToken string) {
+		repoMap := make(map[string]bool)
+		for _, repo := range a.excludedRepos {
+			repoMap[repo] = true
+		}
+
 		if apiToken != a.githubAPIToken && apiToken != "" {
 			a.githubAPIToken = apiToken
 		}
 		for idx, repositoryURL := range repositoryURLs {
+			parts := strings.Split(strings.TrimRight(repositoryURL, "/"), "/")
+			repoName := parts[len(parts)-1]
+
+			if repoMap[repoName] {
+				log.Infof("%s is in the exclude list, skipping", repoName)
+				continue
+			}
 			if idx == 0 {
 				a.sbomsFromRepositoryInternal(ctx, repositoryURL)
 				continue

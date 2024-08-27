@@ -38,6 +38,7 @@ const (
 	purgeCacheFlag     = "purge-cache"
 	softExitFlag       = "soft-exit"
 	orgFlag            = "organization"
+	excludeReposFlag   = "exclude-repos"
 )
 
 // ENV keys.
@@ -130,6 +131,7 @@ func init() {
 		tagsUsage                    = "tags to use when SBOMs are uploaded to Dependency Track (optional)"
 		purgeCacheUsage              = "whether to purge gradle and go caches after a successful run (default: false)"
 		orgFlagUsage                 = "used when using organization github app"
+		excludeReposFlagUsage        = "used to exclude repos from gathering on org mode"
 		softExitUsage                = "used on cleanup to exit soft without crashing"
 	)
 
@@ -149,6 +151,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP(softExitFlag, "s", false, softExitUsage)
 
 	rootCmd.PersistentFlags().StringP(orgFlag, "g", "", orgFlagUsage)
+	rootCmd.PersistentFlags().StringSliceP(excludeReposFlag, "x", nil, excludeReposFlagUsage)
 }
 
 func initConfig() {
