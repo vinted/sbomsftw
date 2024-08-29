@@ -31,6 +31,7 @@ type App struct {
 	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient                        *dtrack.DependencyTrackClient
 	purgeCache, softExit                         bool
+	pagesCount, pagesIndex                       int64
 }
 
 type SBOMsFromFilesystemConfig struct {
@@ -44,6 +45,7 @@ type options struct {
 	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
 	dependencyTrackClient                        *dtrack.DependencyTrackClient
 	purgeCache, softExit                         bool
+	pageCount, pageIndex                         int64
 }
 
 type Option func(options *options) error
@@ -86,6 +88,14 @@ func WithGitHubCredentials(username, apiToken string) Option {
 		options.githubUsername = username
 		options.githubAPIToken = apiToken
 
+		return nil
+	}
+}
+
+func WithPageSlicing(pageCount, pageIndex int) Option {
+	return func(options *options) error {
+		options.pageCount = int64(pageCount)
+		options.pageIndex = int64(pageIndex)
 		return nil
 	}
 }
@@ -148,6 +158,8 @@ func New(outputFile string, opts ...Option) (*App, error) {
 	app.purgeCache = options.purgeCache
 	app.softExit = options.softExit
 	app.dependencyTrackClient = options.dependencyTrackClient
+	app.pagesCount = options.pageCount
+	app.pagesIndex = options.pageIndex
 
 	app.organization = options.organization
 
@@ -235,7 +247,7 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 	}
 
 	c := internal.NewGetRepositoriesConfig(ctx, organizationURL, a.githubUsername, a.githubAPIToken, a.organization)
-	err := internal.WalkRepositories(c, collectSBOMsFromRepositories)
+	err := internal.WalkRepositories(c, collectSBOMsFromRepositories, a.pagesCount, a.pagesIndex)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
 		log.WithError(err).Fatal("Collection failed! Can't recover - exiting")
