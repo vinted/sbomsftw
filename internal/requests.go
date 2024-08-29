@@ -148,7 +148,7 @@ func GetRepositories(conf GetRepositoriesConfig) ([]repositoryMapping, error) {
 	return exponentialBackoff(getRepositories, conf.BackoffPolicy...)
 }
 
-func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string, apiToken string)) error {
+func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs []string, apiToken string), pageCount, pageIndex int64) error {
 	var repositories []repositoryMapping
 	var err error
 	regenCount := 0
@@ -159,8 +159,13 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 		return fmt.Errorf("can't walk repository with malformed URL - %s: %w", conf.URL, err)
 	}
 
-	page := 1
+	start := (pageIndex * pageCount) + 1
+	end := int(start + pageCount - 1)
+	page := int(start)
 	for {
+		if page > end {
+			return fmt.Errorf("page returning due to pageLimit")
+		}
 		query := endpoint.Query()
 		query.Set("page", strconv.Itoa(page))
 		endpoint.RawQuery = query.Encode()

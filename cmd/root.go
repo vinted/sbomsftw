@@ -39,6 +39,8 @@ const (
 	softExitFlag       = "soft-exit"
 	orgFlag            = "organization"
 	excludeReposFlag   = "exclude-repos"
+	pageCountFlag      = "page-count"
+	pageIndexFlag      = "page-index"
 )
 
 // ENV keys.
@@ -133,6 +135,8 @@ func init() {
 		orgFlagUsage                 = "used when using organization github app"
 		excludeReposFlagUsage        = "used to exclude repos from gathering on org mode"
 		softExitUsage                = "used on cleanup to exit soft without crashing"
+		pageCountFlagUsage           = "used with pagination per org to specify slice of pages"
+		pageIndexFlagUsage           = "used with pagination per org to specify index of how many slices"
 	)
 
 	const classifierUsageTemplate = "classifier to use when uploading to Dependency Track. Valid values are: %s"
@@ -152,6 +156,9 @@ func init() {
 
 	rootCmd.PersistentFlags().StringP(orgFlag, "g", "", orgFlagUsage)
 	rootCmd.PersistentFlags().StringSliceP(excludeReposFlag, "x", nil, excludeReposFlagUsage)
+
+	rootCmd.PersistentFlags().IntP(pageCountFlag, "r", 0, pageCountFlagUsage)
+	rootCmd.PersistentFlags().IntP(pageIndexFlag, "y", 0, pageIndexFlagUsage)
 }
 
 func initConfig() {

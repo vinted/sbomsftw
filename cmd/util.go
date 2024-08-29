@@ -65,6 +65,16 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 		options = append(options, app.WithDependencyTrack(baseURL, apiToken, classifier))
 	}
 
+	pagesCount, err := cmd.Flags().GetInt(pageCountFlag)
+	if err != nil {
+		return nil, fmt.Errorf(errTemplate, pageCountFlag)
+	}
+	pagesIndex, err := cmd.Flags().GetInt(pageIndexFlag)
+	if err != nil {
+		return nil, fmt.Errorf(errTemplate, pageIndexFlag)
+	}
+	options = append(options, app.WithPageSlicing(pagesCount, pagesIndex))
+
 	tags, err := cmd.Flags().GetStringSlice(tagsFlag)
 	if err != nil {
 		return nil, fmt.Errorf(errTemplate, tagsFlag)
