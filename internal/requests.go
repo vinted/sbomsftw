@@ -164,7 +164,8 @@ func WalkRepositories(conf GetRepositoriesConfig, callback func(repositoryURLs [
 	page := int(start)
 	for {
 		if page > end {
-			return fmt.Errorf("page returning due to pageLimit")
+			log.WithField("request github", endpoint.String()).Infof("returning due to page limit, page: %d", page)
+			return nil
 		}
 		query := endpoint.Query()
 		query.Set("page", strconv.Itoa(page))
