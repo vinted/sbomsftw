@@ -59,11 +59,11 @@ func TestJVMCollector(t *testing.T) {
 		const bomRoot = "/tmp/some-random-dir"
 		executor := new(mockShellExecutor)
 
-		firstBOMComponents := []cdx.Component{{PackageURL: "pkg:gem/addressable@2.4.0"}}
+		firstBOMComponents := []cdx.Component{{PackageURL: "pkg:gem/addressable@2.4.0", Name: "addressable"}}
 		firstBOM := new(cdx.BOM)
 		firstBOM.Components = &firstBOMComponents
 
-		secondBOMComponents := []cdx.Component{{PackageURL: "pkg:gem/addressable@2.4.1"}}
+		secondBOMComponents := []cdx.Component{{PackageURL: "pkg:gem/addressable@2.4.1", Name: "addressable"}}
 		secondBOM := new(cdx.BOM)
 		secondBOM.Components = &secondBOMComponents
 

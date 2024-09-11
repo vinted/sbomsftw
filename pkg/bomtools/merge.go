@@ -248,7 +248,10 @@ func MergeSBOMs(mergedSbomParam MergeSBOMParam) (*cdx.BOM, error) {
 		if b.Components != nil {
 			components := *b.Components
 			for i := range components {
-				allComponents = append(allComponents, &components[i])
+				// Seems that sometimes the name can return empty
+				if components[i].Name != "" {
+					allComponents = append(allComponents, &components[i])
+				}
 			}
 		}
 	}
