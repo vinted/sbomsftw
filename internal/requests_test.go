@@ -145,7 +145,7 @@ func TestWalkRepositories(t *testing.T) {
 		reqConf := createGetRepositoriesConfig(goodResponseServer.URL)
 		err := WalkRepositories(reqConf, func(repos []string, apiToken string) {
 			collectedRepos = append(collectedRepos, repos...)
-		})
+		}, 0, 0)
 		require.NoError(t, err)
 		assert.Equal(t, 4, hitCounter)
 
@@ -159,7 +159,7 @@ func TestWalkRepositories(t *testing.T) {
 	})
 
 	t.Run("return an error when request config contains invalid URL", func(t *testing.T) {
-		err := WalkRepositories(createGetRepositoriesConfig("http://bad url.com"), nil)
+		err := WalkRepositories(createGetRepositoriesConfig("http://bad url.com"), nil, 0, 0)
 		var e url.InvalidHostError
 		assert.ErrorAs(t, err, &e)
 		assert.Contains(t, err.Error(), repositoryWalkFailed)
