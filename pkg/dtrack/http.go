@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -157,6 +158,13 @@ UploadSBOMs upload SBOMs to Dependency Track based on the payload supplied. If t
 automatically created.
 */
 func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSBOMsPayload) error {
+	if d.middleware {
+		return d.uploadSBOMsToMiddleware(payload)
+	}
+	return d.uploadDependencyTrackInternal(ctx, payload)
+}
+
+func (d DependencyTrackClient) uploadDependencyTrackInternal(ctx context.Context, payload UploadSBOMsPayload) error {
 	_, err := d.createProject(ctx, createProjectPayload{
 		Tags:       payload.Tags,
 		CodeOwners: payload.CodeOwners,
@@ -179,4 +187,55 @@ func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSB
 		Tags:        payload.Tags,
 		ProjectName: payload.ProjectName,
 	})
+}
+
+func (d DependencyTrackClient) uploadSBOMsToMiddleware(payload UploadSBOMsPayload) error {
+	payloadToJson, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	_, err = d.performPostRequestWithBody("sbom", payloadToJson)
+	if err != nil {
+		return fmt.Errorf("error posting sbom to middleware - %s", err)
+	}
+	return nil
+}
+
+// performPostRequestWithBody performs POST request with Basic Auth and allows to pass body to upload data to VitessDB
+func (d DependencyTrackClient) performPostRequestWithBody(prefix string, body []byte) ([]byte, error) {
+	fullUrl := d.middlewareUrl + "/" + prefix
+	parsedURL, err := url.Parse(fullUrl)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base URL: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, parsedURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("can't create HTTP request to %s: %w", fullUrl, err)
+	}
+
+	// Set content type for JSON
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(d.middlewareUser, d.middlewarePass)
+
+	resp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer func() {
+		closeErr := resp.Body.Close()
+		if err != nil {
+			if closeErr != nil {
+				err = fmt.Errorf("%w can't close response body: %v", err, closeErr)
+			}
+			return
+		}
+		err = closeErr
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return io.ReadAll(resp.Body)
 }

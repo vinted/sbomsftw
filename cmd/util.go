@@ -32,6 +32,11 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 		options = append(options, app.WithGitHubCredentials(githubUsername, githubToken))
 	}
 
+	middleware, err := cmd.Flags().GetBool(useMiddlewareFlag)
+	if err != nil {
+		return nil, err
+	}
+
 	uploadToDependencyTrack, err := cmd.Flags().GetBool(uploadToDTrackFlag)
 	if err != nil {
 		return nil, fmt.Errorf(errTemplate, uploadToDTrackFlag)
@@ -62,7 +67,12 @@ func createAppFromCLI(cmd *cobra.Command, verbose bool) (*app.App, error) {
 
 		baseURL := viper.GetString(envKeyDTrackURL)
 		apiToken := viper.GetString(envKeyDTrackToken)
-		options = append(options, app.WithDependencyTrack(baseURL, apiToken, classifier))
+		middlewareBaseUrl := viper.GetString(envKeyMiddleware)
+		middlewareUser := viper.GetString(envKeyMiddlewareUser)
+		middlewarePass := viper.GetString(envKeyMiddlewarePass)
+		useMiddleware := middleware
+		options = append(options, app.WithDependencyTrack(baseURL, apiToken, classifier,
+			middlewareBaseUrl, middlewareUser, middlewarePass, useMiddleware))
 	}
 
 	pagesCount, err := cmd.Flags().GetInt(pageCountFlag)

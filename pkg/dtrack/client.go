@@ -3,6 +3,7 @@ package dtrack
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -22,14 +23,19 @@ func GetValidClassifiersString() string {
 }
 
 type DependencyTrackClient struct {
-	baseURL, apiToken string
-	classifier        string
-	requestTimeout    time.Duration
+	baseURL, apiToken, middlewareUrl string
+	classifier                       string
+	requestTimeout                   time.Duration
+	middleware                       bool
+	httpClient                       *http.Client
+	middlewareUser, middlewarePass   string
 }
 
 type options struct {
-	classifier     string
-	requestTimeout time.Duration
+	classifier                                    string
+	requestTimeout                                time.Duration
+	middlewareUrl, middlewareUser, middlewarePass string
+	middleware                                    bool
 }
 
 type Option func(options *options) error
@@ -62,6 +68,18 @@ func WithClassifier(classifier string) Option {
 	}
 }
 
+func WithMiddleware(middlewareUrl, middlewareUser, middlewarePass string, middleware bool) Option {
+	return func(options *options) error {
+		if middleware {
+			options.middlewareUrl = middlewareUrl
+			options.middleware = true
+			options.middlewareUser = middlewareUser
+			options.middlewarePass = middlewarePass
+		}
+		return nil
+	}
+}
+
 // NewClient create a new Dependency Track client. A valid base URL & API token is required.
 func NewClient(baseURL, apiToken string, opts ...Option) (*DependencyTrackClient, error) {
 	if _, err := url.Parse(baseURL); err != nil { // Validate supplied URL early on
@@ -87,6 +105,14 @@ func NewClient(baseURL, apiToken string, opts ...Option) (*DependencyTrackClient
 	client.apiToken = apiToken
 	// Optional parameters
 	const defaultTimeout = 60
+
+	if options.middleware {
+		client.middleware = true
+		client.middlewareUrl = options.middlewareUrl
+		client.middlewareUser = options.middlewareUser
+		client.middlewarePass = options.middlewarePass
+		client.httpClient = &http.Client{Timeout: 30 * time.Second}
+	}
 
 	if options.requestTimeout == 0 { // If timeout is not provided - use default value
 		client.requestTimeout = time.Second * time.Duration(defaultTimeout)

@@ -41,16 +41,16 @@ type SBOMsFromFilesystemConfig struct {
 }
 
 type options struct {
-	tags, excludedRepos                          []string
-	githubUsername, githubAPIToken, organization string // TODO Move later on to a separate GitHub client
-	dependencyTrackClient                        *dtrack.DependencyTrackClient
-	purgeCache, softExit                         bool
-	pageCount, pageIndex                         int64
+	tags, excludedRepos                                         []string
+	githubUsername, githubAPIToken, organization, middlewareUrl string // TODO Move later on to a separate GitHub client
+	dependencyTrackClient                                       *dtrack.DependencyTrackClient
+	purgeCache, softExit                                        bool
+	pageCount, pageIndex                                        int64
 }
 
 type Option func(options *options) error
 
-func WithDependencyTrack(baseURL, apiToken, classifier string) Option {
+func WithDependencyTrack(baseURL, apiToken, classifier, middlewareBaseUrl, middlewareUser, middlewarePass string, middleware bool) Option {
 	return func(options *options) error {
 		if baseURL == "" {
 			return errors.New("dependency track base URL can't be empty")
@@ -64,7 +64,8 @@ func WithDependencyTrack(baseURL, apiToken, classifier string) Option {
 			return errors.New("dependency track API token can't be empty")
 		}
 
-		client, err := dtrack.NewClient(baseURL, apiToken, dtrack.WithClassifier(classifier))
+		client, err := dtrack.NewClient(baseURL, apiToken, dtrack.WithClassifier(classifier),
+			dtrack.WithMiddleware(middlewareBaseUrl, middlewareUser, middlewarePass, middleware))
 		if err != nil {
 			return fmt.Errorf("can't create dependency track client: %v", err)
 		}
@@ -133,6 +134,13 @@ func WithExcludedRepos(excludedRepos []string) Option {
 func WithOrganization(orgName string) Option {
 	return func(options *options) error {
 		options.organization = orgName
+		return nil
+	}
+}
+
+func WithMiddleware(middlewareUrl string) Option {
+	return func(options *options) error {
+		options.middlewareUrl = middlewareUrl
 		return nil
 	}
 }

@@ -35,6 +35,7 @@ const (
 	outputFlag         = "output"
 	classifierFlag     = "classifier"
 	uploadToDTrackFlag = "upload-to-dependency-track"
+	useMiddlewareFlag  = "middleware"
 	purgeCacheFlag     = "purge-cache"
 	softExitFlag       = "soft-exit"
 	orgFlag            = "organization"
@@ -49,6 +50,9 @@ const (
 	envKeyGithubToken    = "GITHUB_TOKEN" //nolint:gosec
 	envKeyDTrackURL      = "DEPENDENCY_TRACK_URL"
 	envKeyDTrackToken    = "DEPENDENCY_TRACK_TOKEN"
+	envKeyMiddleware     = "MIDDLEWARE_URL"
+	envKeyMiddlewareUser = "MIDDLEWARE_USER"
+	envKeyMiddlewarePass = "MIDDLEWARE_PASS"
 )
 
 const envPrefix = "SAC" // Software Asset Collector.
@@ -135,6 +139,7 @@ func init() {
 		orgFlagUsage                 = "used when using organization github app"
 		excludeReposFlagUsage        = "used to exclude repos from gathering on org mode"
 		softExitUsage                = "used on cleanup to exit soft without crashing"
+		useMiddlewareUsage           = "used to change the dependency-track url to your own supplied API for SBOM consumption"
 		pageCountFlagUsage           = "used with pagination per org to specify slice of pages"
 		pageIndexFlagUsage           = "used with pagination per org to specify index of how many slices"
 	)
@@ -150,6 +155,8 @@ func init() {
 
 	rootCmd.PersistentFlags().StringP(classifierFlag, "c", dtrack.ValidClassifiers[0], classifierUsage)
 	rootCmd.PersistentFlags().BoolP(uploadToDTrackFlag, "u", false, uploadToDependencyTrackUsage)
+
+	rootCmd.PersistentFlags().BoolP(useMiddlewareFlag, "m", false, useMiddlewareUsage)
 
 	rootCmd.PersistentFlags().BoolP(purgeCacheFlag, "p", false, purgeCacheUsage)
 	rootCmd.PersistentFlags().BoolP(softExitFlag, "s", false, softExitUsage)
