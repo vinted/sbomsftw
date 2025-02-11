@@ -162,7 +162,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP(softExitFlag, "s", false, softExitUsage)
 
 	rootCmd.PersistentFlags().StringP(orgFlag, "g", "", orgFlagUsage)
-	rootCmd.PersistentFlags().StringSliceP(excludeReposFlag, "x", nil, excludeReposFlagUsage)
+	rootCmd.PersistentFlags().StringSlice(excludeReposFlag, nil, excludeReposFlagUsage)
 
 	rootCmd.PersistentFlags().IntP(pageCountFlag, "r", 0, pageCountFlagUsage)
 	rootCmd.PersistentFlags().IntP(pageIndexFlag, "y", 0, pageIndexFlagUsage)
