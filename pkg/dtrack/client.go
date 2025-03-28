@@ -104,14 +104,14 @@ func NewClient(baseURL, apiToken string, opts ...Option) (*DependencyTrackClient
 	client.baseURL = baseURL
 	client.apiToken = apiToken
 	// Optional parameters
-	const defaultTimeout = 60
+	const defaultTimeout = 180
 
 	if options.middleware {
 		client.middleware = true
 		client.middlewareUrl = options.middlewareUrl
 		client.middlewareUser = options.middlewareUser
 		client.middlewarePass = options.middlewarePass
-		client.httpClient = &http.Client{Timeout: 30 * time.Second}
+		client.httpClient = &http.Client{Timeout: 60 * time.Second}
 	}
 
 	if options.requestTimeout == 0 { // If timeout is not provided - use default value
