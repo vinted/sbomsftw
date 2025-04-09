@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/vinted/sbomsftw/pkg"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/vinted/sbomsftw/pkg"
 
 	"github.com/vinted/sbomsftw/internal"
 
