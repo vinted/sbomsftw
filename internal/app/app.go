@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vinted/sbomsftw/pkg"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,8 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/vinted/sbomsftw/pkg"
 
 	"github.com/vinted/sbomsftw/internal"
 
@@ -507,6 +506,7 @@ func (a App) cleanup() {
 				if a.softExit {
 					exitCode = 0
 				} else {
+					log.WithError(err).Errorf("setting exit code 2 %s", err.Error())
 					exitCode = 2 // ENOENT
 				}
 				log.WithError(err).Errorf("can't remove %s", directoryPath)
@@ -527,7 +527,7 @@ func (a App) cleanup() {
 		removeDirectory(filepath.Join(os.Getenv("HOME"), goCache))
 		removeDirectory(filepath.Join(os.Getenv("HOME"), gradleCache))
 	}
-
+	log.Warnf("exiting with code %d", exitCode)
 	os.Exit(exitCode)
 }
 
