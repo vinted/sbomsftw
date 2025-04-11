@@ -112,7 +112,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 	fsPath := filepath.Join(CheckoutsPath, name)
 
-	const cloneDepth = 40 // Clone only 40 most recent commits, this saves bandwidth & disk-space
+	const cloneDepth = 1 // Clone only 40 most recent commits, this saves bandwidth & disk-space
 	headReference, err := getHeadReference(vcsURL, credentials)
 	if err != nil {
 		return nil, err
@@ -188,34 +188,57 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 }
 
 func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
-	log.Warnf("Using new extractor method")
 	var collectedSBOMs []*cdx.BOM
+	log.Warnf("starting new extractor")
 
-	// Process generic collectors (unchanged, keeping sequential processing)
+	// Process generic collectors in parallel
 	if includeGenericCollectors {
+		var genericSBOMs []*cdx.BOM
+		var mu sync.Mutex
+		var wg sync.WaitGroup
+
 		for _, c := range r.genericCollectors {
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			default:
-				log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", c)
-				bom, err := c.GenerateBOM(ctx, r.FSPath)
+			collector := c // Capture loop variable
+			wg.Add(1)
 
-				if err == nil {
-					collectedSBOMs = append(collectedSBOMs, bom)
-					continue
+			go func() {
+				defer wg.Done()
+
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					log.Warnf("generating new parallel generic")
+					log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", collector)
+					bom, err := collector.GenerateBOM(ctx, r.FSPath)
+
+					if err != nil {
+						log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", collector)
+						return
+					}
+
+					mu.Lock()
+					genericSBOMs = append(genericSBOMs, bom)
+					mu.Unlock()
 				}
-
-				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
-			}
+			}()
 		}
+
+		// Wait for all generic collectors to complete
+		wg.Wait()
+
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		collectedSBOMs = append(collectedSBOMs, genericSBOMs...)
 	}
 
 	if ctx.Err() != nil {
 		return nil, ctx.Err() // Return early if user cancelled
 	}
 
-	// Process applicable collectors, but parallelize generating BOMs for collection paths
+	// Process applicable collectors (unchanged)
 	for res := range r.filterApplicableCollectors() {
 		select {
 		case <-ctx.Done():
@@ -223,41 +246,20 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		default:
 			collector := res.collector
 			languageFiles := res.languageFiles
+			log.Warnf("generating new parallel applicable")
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
 
-			// Get all collection paths first
-			collectionPaths := collector.BootstrapLanguageFiles(ctx, languageFiles)
-
-			// Parallelize BOM generation for each path
 			var sbomsFromCollector []*cdx.BOM
-			var mu sync.Mutex // To protect sbomsFromCollector
-			var wg sync.WaitGroup
-
-			for _, path := range collectionPaths {
-				wg.Add(1)
-				go func(collectionPath string) {
-					defer wg.Done()
-
-					b, err := collector.GenerateBOM(ctx, collectionPath)
-					if err != nil {
-						logFields := log.Fields{"collection path": collectionPath, "error": err}
-						log.WithFields(logFields).Debugf("%s failed for %s", collector, r)
-						return
-					}
-
-					mu.Lock()
+			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
+				b, err := collector.GenerateBOM(ctx, collectionPath)
+				if err == nil {
 					sbomsFromCollector = append(sbomsFromCollector, b)
-					mu.Unlock()
-				}(path)
+					continue
+				}
+				logFields := log.Fields{"collection path": collectionPath, "error": err}
+				log.WithFields(logFields).Debugf("%s failed for %s", collector, r)
 			}
 
-			wg.Wait()
-
-			if ctx.Err() != nil {
-				return nil, ctx.Err()
-			}
-
-			// Rest of code for this collector remains unchanged
 			var mergedSlice []*cdx.BOM
 			mergedSlice = append(mergedSlice, sbomsFromCollector...)
 			mergedSBOMparam := bomtools.MergeSBOMParam{
