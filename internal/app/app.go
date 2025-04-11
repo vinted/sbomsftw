@@ -497,38 +497,6 @@ func (a App) cleanup() {
 
 	log.Debug("cleaning up - bye!")
 
-	/*
-		Remove a directory if it exists.
-		If for some reason directory removal fails. Log the error and set the appropriate exit code
-	*/
-	removeDirectory := func(directoryPath string) {
-		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
-			if err = os.RemoveAll(directoryPath); err != nil {
-				if a.softExit {
-					exitCode = 0
-				} else {
-					log.WithError(err).Errorf("setting exit code 2 %s", err.Error())
-					exitCode = 2 // ENOENT
-				}
-				log.WithError(err).Errorf("can't remove %s", directoryPath)
-			}
-		}
-	}
-
-	removeDirectory(repository.CheckoutsPath) // Always remove checkouts directory
-
-	if a.purgeCache {
-		// Build caches
-		const (
-			goCache     = "go"
-			gradleCache = ".gradle"
-		)
-
-		// Purge go & .gradle caches if user desires
-		removeDirectory(filepath.Join(os.Getenv("HOME"), goCache))
-		removeDirectory(filepath.Join(os.Getenv("HOME"), gradleCache))
-	}
-	log.Warnf("exiting with code %d", exitCode)
 	os.Exit(exitCode)
 }
 
