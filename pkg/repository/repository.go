@@ -188,6 +188,7 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 }
 
 func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
+	log.Warnf("Using new extractor method")
 	var collectedSBOMs []*cdx.BOM
 
 	// Process generic collectors (unchanged, keeping sequential processing)
