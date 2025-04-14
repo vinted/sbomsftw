@@ -3,6 +3,7 @@ package collectors
 import (
 	"context"
 	fp "path/filepath"
+	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
@@ -76,9 +77,11 @@ func (j JVM) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) 
 // BootstrapLanguageFiles implements LanguageCollector interface
 func (j JVM) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []string {
 	const bootstrapCmd = "./gradlew"
-	const cleanupCmd = "./gradlew --stop"
+	const cleanupCmd = "./gradlew --status"
 
 	for dir, files := range SplitPaths(bomRoots) {
+		log.Infof("have we spawned the process yet?")
+		time.Sleep(50000)
 		for _, f := range files {
 			if f == "gradlew" {
 				log.WithFields(log.Fields{
