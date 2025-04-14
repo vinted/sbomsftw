@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/cataloging"
+	"github.com/anchore/syft/syft/cataloging/filecataloging"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	log "github.com/sirupsen/logrus"
@@ -76,9 +79,18 @@ func getSource(input string) (source.Source, error) {
 }
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
-	bomConfig := syft.DefaultCreateSBOMConfig()
-	bomConfig.Licenses.Coverage = 0
-	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
+	//bomConfig := syft.DefaultCreateSBOMConfig()
+	config := syft.CreateSBOMConfig{
+		Search:         cataloging.DefaultSearchConfig(),
+		Relationships:  cataloging.DefaultRelationshipsConfig(),
+		DataGeneration: cataloging.DefaultDataGenerationConfig(),
+		Packages:       pkgcataloging.DefaultConfig(),
+		Files:          filecataloging.DefaultConfig(),
+		Parallelism:    5,
+		ToolName:       "syft",
+	}
+
+	syftSbom, err := syft.CreateSBOM(context.Background(), src, &config)
 	if err != nil {
 		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
 	}
