@@ -147,7 +147,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 		languageCollectors: []pkg.LanguageCollector{
 			collectors.NewPythonCollector(),
 			collectors.NewRustCollector(),
-			// collectors.NewJVMCollector(),
+			collectors.NewJVMCollector(),
 			collectors.NewGolangCollector(),
 			collectors.NewJSCollector(),
 			collectors.NewRubyCollector(),
