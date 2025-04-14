@@ -77,6 +77,7 @@ func getSource(input string) (source.Source, error) {
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	bomConfig := syft.DefaultCreateSBOMConfig()
+	bomConfig.Licenses.Coverage = 0
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
 		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
