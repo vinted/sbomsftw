@@ -187,58 +187,37 @@ func parseCodeOwners(repositoryName string, repository *git.Repository) []string
 	return contributorEmails
 }
 
+/*
+ExtractSBOMs extracts SBOMs for every possible language from the repository.
+If includeGenericCollectors is set to true then additional collectors such as:
+syft & retirejs & cdxgen are executed against the repository as well. This tends to produce richer SBOM results
+*/
 func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedSBOMs []*cdx.BOM
-	log.Warnf("starting new extractor")
-
-	// Process generic collectors in parallel
+	// Generate base SBOM with generic collectors (syft/retirejs/cdxgen)
 	if includeGenericCollectors {
-		var genericSBOMs []*cdx.BOM
-		var mu sync.Mutex
-		var wg sync.WaitGroup
-
 		for _, c := range r.genericCollectors {
-			collector := c // Capture loop variable
-			wg.Add(1)
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			default:
+				log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", c)
+				bom, err := c.GenerateBOM(ctx, r.FSPath)
 
-			go func() {
-				defer wg.Done()
-
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					log.Warnf("generating new parallel generic")
-					log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", collector)
-					bom, err := collector.GenerateBOM(ctx, r.FSPath)
-
-					if err != nil {
-						log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", collector)
-						return
-					}
-
-					mu.Lock()
-					genericSBOMs = append(genericSBOMs, bom)
-					mu.Unlock()
+				if err == nil {
+					collectedSBOMs = append(collectedSBOMs, bom)
+					continue
 				}
-			}()
+
+				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
+			}
 		}
-
-		// Wait for all generic collectors to complete
-		wg.Wait()
-
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-
-		collectedSBOMs = append(collectedSBOMs, genericSBOMs...)
 	}
 
 	if ctx.Err() != nil {
 		return nil, ctx.Err() // Return early if user cancelled
 	}
 
-	// Process applicable collectors (unchanged)
 	for res := range r.filterApplicableCollectors() {
 		select {
 		case <-ctx.Done():
@@ -246,9 +225,11 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		default:
 			collector := res.collector
 			languageFiles := res.languageFiles
-			log.Warnf("generating new parallel applicable")
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
 
+			/*
+				Generate SBOMs from every directory that contains language files
+			*/
 			var sbomsFromCollector []*cdx.BOM
 			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
 				b, err := collector.GenerateBOM(ctx, collectionPath)
@@ -259,7 +240,12 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 				logFields := log.Fields{"collection path": collectionPath, "error": err}
 				log.WithFields(logFields).Debugf("%s failed for %s", collector, r)
 			}
+			/*
+				Collector traversed the whole repository and generated SBOMs for every collection path.
+				Time to merge those SBOMs into a single one
+			*/
 
+			// We only generate one sbom here
 			var mergedSlice []*cdx.BOM
 			mergedSlice = append(mergedSlice, sbomsFromCollector...)
 			mergedSBOMparam := bomtools.MergeSBOMParam{
@@ -268,6 +254,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			}
 			mergedSBOM, err := bomtools.MergeSBOMs(mergedSBOMparam)
 			if err == nil {
+				// Append merged SBOM from this collector & move on to the next one
 				collectedSBOMs = append(collectedSBOMs, mergedSBOM)
 				continue
 			}
@@ -279,12 +266,11 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			log.WithFields(logFields).Debugf("%s failed to merge SBOMs", collector)
 		}
 	}
-
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		// Final merge and filtering (unchanged)
+		// All collectors are finished - merge collected SBOMs into a single one
 		var mergedSlice []*cdx.BOM
 		mergedSlice = append(mergedSlice, collectedSBOMs...)
 		mergedSBOMparam := bomtools.MergeSBOMParam{
@@ -295,6 +281,12 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			return nil, fmt.Errorf("%s: ExtractSBOMs can't merge sboms - %s", r, err)
 		}
 
+		/*
+			Filter optional SBOM components. Some libraries are only used for development purposes: E.g. junit/mockito.
+			These libraries aren't included in release builds & we don't want to track them for vulnerabilities.
+			These test libraries have the CycloneDX optional scope attached to them - so we filter out all optional
+			components before returning the final SBOM.
+		*/
 		result := bomtools.FilterOutComponentsWithoutAType(merged)
 		result = bomtools.FilterOutByScope(result, cdx.ScopeOptional)
 
