@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vinted/sbomsftw/internal"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/vinted/sbomsftw/pkg"
-
-	"github.com/vinted/sbomsftw/internal"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
@@ -206,6 +205,7 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	//defer signal.Stop(sigs) // Clean up signal handling
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -242,7 +242,7 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 				continue
 			}
 
-			delay := time.NewTimer(time.Duration(delayAmount) * time.Second)
+			delay := time.NewTimer(time.Duration(20) * time.Second)
 
 			select {
 			case <-ctx.Done():
@@ -250,6 +250,7 @@ func (a App) SBOMsFromOrganization(organizationURL string, delayAmount uint16) {
 				return
 			case <-delay.C:
 				a.sbomsFromRepositoryInternal(ctx, repositoryURL)
+				collectors.LogMemoryUsage(fmt.Sprintf("sbom after %s", repositoryURL))
 			}
 		}
 	}

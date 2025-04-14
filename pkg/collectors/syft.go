@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	log "github.com/sirupsen/logrus"
+	"runtime"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft"
@@ -78,8 +79,9 @@ func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	bomConfig := syft.DefaultCreateSBOMConfig()
 	bomConfig.Licenses.Coverage = 0
 	bomConfig.Parallelism = 10
-
+	LogMemoryUsage("before")
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
+	LogMemoryUsage("after")
 	if err != nil {
 		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
 	}
@@ -104,4 +106,21 @@ func formatSBOM(s *sbom.SBOM) ([]byte, error) {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
+}
+
+func LogMemoryUsage(timing string) {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	// Convert bytes to MB for easier reading
+	allocatedMemory := memStats.Alloc / 1024 / 1024
+	totalAllocatedMemory := memStats.TotalAlloc / 1024 / 1024
+	systemMemory := memStats.Sys / 1024 / 1024
+	numGC := memStats.NumGC
+
+	fmt.Printf("Memory Usage:\n")
+	fmt.Printf("Allocated %s: %v MB\n", timing, allocatedMemory)
+	fmt.Printf("Total Allocated %s: %v MB\n", timing, totalAllocatedMemory)
+	fmt.Printf("System %s: %v MB\n", timing, systemMemory)
+	fmt.Printf("Number of GCs %s: %v\n", timing, numGC)
 }
