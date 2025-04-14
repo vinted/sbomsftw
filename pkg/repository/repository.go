@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/vinted/sbomsftw/pkg/collectors"
 
@@ -205,7 +206,7 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			default:
-				log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", c)
+				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
 				bom, err := c.GenerateBOM(ctx, r.FSPath)
 
 				if err == nil {
@@ -227,9 +228,11 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
+			time.Sleep(50000)
+			log.WithField("repository", r.Name).Infof("sleeping")
 			collector := res.collector
-			languageFiles := res.languageFiles
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
+			languageFiles := res.languageFiles
 
 			/*
 				Generate SBOMs from every directory that contains language files
