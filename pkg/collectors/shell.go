@@ -57,32 +57,29 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		withoutLicensesTimeout = time.Duration(15) * time.Minute
 	)
 	// Fetching licenses can time out so add a cancellation of 15 minutes
-	withLicensesCtx, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
-	withoutLicensesCtx, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
+	withLicensesCtx, _ := context.WithTimeout(ctx, withLicensesTimeout)
+	withoutLicensesCtx, _ := context.WithTimeout(ctx, withoutLicensesTimeout)
 	cdxGenCmd := formatCDXGenCmd(multiModuleMode, true, language, outputFile)
 	cmd := exec.CommandContext(withLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 	cmd.Dir = bomRoot
 
 	if err = cmd.Run(); err != nil {
-		defer withLicensesCancel()
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
 		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
 		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 		cmd.Dir = bomRoot
 
 		if err = cmd.Run(); err != nil {
-			defer withoutLicensesCancel()
 			return nil, fmt.Errorf("can't Collect SBOMs for %s: %v", bomRoot, err)
 		}
-		defer withoutLicensesCancel()
 	}
-	defer withLicensesCancel()
-	defer withoutLicensesCancel()
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
 		return nil, fmt.Errorf("can't Collect %s SBOMs for %s", language, bomRoot)
 	}
+	print("sleeping zzz")
+	time.Sleep(15 * time.Minute)
 	err = cmd.Cancel()
 	if err != nil {
 		log.Warnf("could not cancel cmd %s", err.Error())
