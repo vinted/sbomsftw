@@ -21,9 +21,9 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 	}
 
 	defer func() {
-		_ = os.Remove(f.Name())
-		_ = os.Remove(f.Name() + ".xml")
-		_ = os.Remove(f.Name() + ".json")
+		//_ = os.Remove(f.Name())
+		//_ = os.Remove(f.Name() + ".xml")
+		//_ = os.Remove(f.Name() + ".json")
 	}()
 
 	outputFile := f.Name() + ".json"
@@ -45,8 +45,11 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 	}
 
 	// Ensure all child processes are terminated
-	fmt.Printf("sending kill sigterm to %s", cmd.Process.Pid)
-	syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
+	fmt.Printf("sending kill sigterm to %d", cmd.Process.Pid)
+	err = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
+	if err != nil {
+		fmt.Printf("could not kill pid %d: %v", cmd.Process.Pid, err)
+	}
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
