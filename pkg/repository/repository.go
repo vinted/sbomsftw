@@ -199,15 +199,13 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 				return nil, ctx.Err()
 			default:
 				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
-				if !strings.Contains(c.String(), "cdxgen") {
-					bom, err := c.GenerateBOM(ctx, r.FSPath)
-					if err == nil {
-						collectedSBOMs = append(collectedSBOMs, bom)
-						continue
-					}
-
-					log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
+				bom, err := c.GenerateBOM(ctx, r.FSPath)
+				if err == nil {
+					collectedSBOMs = append(collectedSBOMs, bom)
+					continue
 				}
+
+				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
 			}
 		}
 	}
