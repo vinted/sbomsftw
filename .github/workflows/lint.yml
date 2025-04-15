@@ -10,10 +10,10 @@ jobs:
     steps:
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version: 1.24.2
       - uses: actions/checkout@v4
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@07341d3490e932bea2126ce313f1c3904a362b8a
+        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd
         with:
           version: latest
-          args: --enable=gofumpt --timeout 3m --verbose
+          args: --timeout 3m --verbose
