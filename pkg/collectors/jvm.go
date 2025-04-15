@@ -77,43 +77,43 @@ func (j JVM) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []st
 	const bootstrapCmd = "./gradlew"
 	const cleanupCmd = "./gradlew --status"
 
-	for dir, files := range SplitPaths(bomRoots) {
-		for _, f := range files {
-			if f == "gradlew" {
-				log.WithFields(log.Fields{
-					"collector":       j,
-					"collection path": dir,
-				}).Debug("priming gradle cache")
-
-				if err := j.executor.shellOut(ctx, dir, bootstrapCmd); err != nil {
-					log.WithFields(log.Fields{
-						"error":           err,
-						"collector":       j,
-						"collection path": dir,
-					}).Debug("can't prime gradle cache")
-					continue
-				}
-				log.WithFields(log.Fields{
-					"collector":       j,
-					"collection path": dir,
-				}).Debug("gradle cache primed successfully")
-
-				// Add cleanup - stop Gradle daemon
-				log.WithFields(log.Fields{
-					"collector":       j,
-					"collection path": dir,
-				}).Debug("stopping gradle daemon")
-				log.Warnf("attempting to cleanup cmd gradle")
-				if err := j.executor.shellOut(ctx, dir, cleanupCmd); err != nil {
-					log.WithFields(log.Fields{
-						"error":           err,
-						"collector":       j,
-						"collection path": dir,
-					}).Debug("failed to stop gradle daemon")
-				}
-			}
-		}
-	}
+	//for dir, files := range SplitPaths(bomRoots) {
+	//	for _, f := range files {
+	//		if f == "gradlew" {
+	//			log.WithFields(log.Fields{
+	//				"collector":       j,
+	//				"collection path": dir,
+	//			}).Debug("priming gradle cache")
+	//
+	//			if err := j.executor.shellOut(ctx, dir, bootstrapCmd); err != nil {
+	//				log.WithFields(log.Fields{
+	//					"error":           err,
+	//					"collector":       j,
+	//					"collection path": dir,
+	//				}).Debug("can't prime gradle cache")
+	//				continue
+	//			}
+	//			log.WithFields(log.Fields{
+	//				"collector":       j,
+	//				"collection path": dir,
+	//			}).Debug("gradle cache primed successfully")
+	//
+	//			// Add cleanup - stop Gradle daemon
+	//			log.WithFields(log.Fields{
+	//				"collector":       j,
+	//				"collection path": dir,
+	//			}).Debug("stopping gradle daemon")
+	//			log.Warnf("attempting to cleanup cmd gradle")
+	//			if err := j.executor.shellOut(ctx, dir, cleanupCmd); err != nil {
+	//				log.WithFields(log.Fields{
+	//					"error":           err,
+	//					"collector":       j,
+	//					"collection path": dir,
+	//				}).Debug("failed to stop gradle daemon")
+	//			}
+	//		}
+	//	}
+	//}
 
 	return SquashToDirs(bomRoots)
 }

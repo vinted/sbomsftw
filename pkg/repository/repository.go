@@ -235,52 +235,50 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			collector := res.collector
 			log.WithField("repository", r.Name).Infof("exec of res collector %s", collector.String())
 			time.Sleep(15 * time.Second)
-			if !strings.Contains(collector.String(), "jvm") {
-				log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
-				languageFiles := res.languageFiles
+			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
+			languageFiles := res.languageFiles
 
-				/*
-					Generate SBOMs from every directory that contains language files
-				*/
-				var sbomsFromCollector []*cdx.BOM
-				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", collector.String())
-				collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", collector.String()))
-				log.WithField("repository", r.Name).Infof("sleeping before bootstrap")
-				time.Sleep(10 * time.Second)
-				for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
-					b, err := collector.GenerateBOM(ctx, collectionPath)
-					if err == nil {
-						sbomsFromCollector = append(sbomsFromCollector, b)
-						continue
-					}
-					logFields := log.Fields{"collection path": collectionPath, "error": err}
-					log.WithFields(logFields).Debugf("%s failed for %s", collector, r)
-				}
-				/*
-					Collector traversed the whole repository and generated SBOMs for every collection path.
-					Time to merge those SBOMs into a single one
-				*/
-
-				// We only generate one sbom here
-				var mergedSlice []*cdx.BOM
-				mergedSlice = append(mergedSlice, sbomsFromCollector...)
-				mergedSBOMparam := bomtools.MergeSBOMParam{
-					SBOMs:         mergedSlice,
-					OptionalParam: "device",
-				}
-				mergedSBOM, err := bomtools.MergeSBOMs(mergedSBOMparam)
+			/*
+				Generate SBOMs from every directory that contains language files
+			*/
+			var sbomsFromCollector []*cdx.BOM
+			log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", collector.String())
+			collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", collector.String()))
+			log.WithField("repository", r.Name).Infof("sleeping before bootstrap")
+			time.Sleep(10 * time.Second)
+			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
+				b, err := collector.GenerateBOM(ctx, collectionPath)
 				if err == nil {
-					// Append merged SBOM from this collector & move on to the next one
-					collectedSBOMs = append(collectedSBOMs, mergedSBOM)
+					sbomsFromCollector = append(sbomsFromCollector, b)
 					continue
 				}
-				if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
-					log.WithField("repository", r.Name).Debugf("%s found no SBOMs", collector)
-					continue
-				}
-				logFields := log.Fields{"repository": r.Name, "error": err}
-				log.WithFields(logFields).Debugf("%s failed to merge SBOMs", collector)
+				logFields := log.Fields{"collection path": collectionPath, "error": err}
+				log.WithFields(logFields).Debugf("%s failed for %s", collector, r)
 			}
+			/*
+				Collector traversed the whole repository and generated SBOMs for every collection path.
+				Time to merge those SBOMs into a single one
+			*/
+
+			// We only generate one sbom here
+			var mergedSlice []*cdx.BOM
+			mergedSlice = append(mergedSlice, sbomsFromCollector...)
+			mergedSBOMparam := bomtools.MergeSBOMParam{
+				SBOMs:         mergedSlice,
+				OptionalParam: "device",
+			}
+			mergedSBOM, err := bomtools.MergeSBOMs(mergedSBOMparam)
+			if err == nil {
+				// Append merged SBOM from this collector & move on to the next one
+				collectedSBOMs = append(collectedSBOMs, mergedSBOM)
+				continue
+			}
+			if errors.Is(err, bomtools.ErrNoBOMsToMerge) {
+				log.WithField("repository", r.Name).Debugf("%s found no SBOMs", collector)
+				continue
+			}
+			logFields := log.Fields{"repository": r.Name, "error": err}
+			log.WithFields(logFields).Debugf("%s failed to merge SBOMs", collector)
 		}
 	}
 	select {
