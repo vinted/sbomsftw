@@ -143,7 +143,7 @@ func cleanupNewProcesses(pidsBefore map[int]struct{}) {
 				strings.Contains(execName, "maven") ||
 				strings.Contains(execName, "cdxgen") {
 
-				log.Debugf("Terminating leftover process: %s (PID: %d)", p.Executable(), p.Pid())
+				log.Debugf("Terminating leftover process: %s (PID: %d)", execName, p.Pid())
 				killProcess(p.Pid())
 			}
 		}
