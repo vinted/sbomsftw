@@ -89,7 +89,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 
 		withoutLicensesCtx, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
 		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
-		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd)
+		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 		cmd.Dir = bomRoot
 
 		err = cmd.Run()

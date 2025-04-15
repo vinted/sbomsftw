@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/vinted/sbomsftw/internal/app"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -70,7 +69,7 @@ func TestGetRepositories(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 1, hitCounter)
 
-		want := []app.repositoryMapping{
+		want := []repositoryMapping{
 			{Name: "xmlsec", Archived: false, Language: "C", URL: "https://github.com/vinted/xmlsec"},
 			{Name: "airbrake", Archived: true, Language: "Ruby", URL: "https://github.com/vinted/airbrake-graylog2"},
 			{Name: "dotpay", Archived: false, Language: "Ruby", URL: "https://github.com/vinted/dotpay"},

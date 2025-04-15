@@ -23,14 +23,9 @@ package main
 
 import (
 	"github.com/vinted/sbomsftw/cmd"
-	"log"
-	"net/http"
 	_ "net/http/pprof" // Registers pprof endpoints
 )
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-	}()
 	cmd.Execute()
 }

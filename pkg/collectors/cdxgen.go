@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -21,9 +20,9 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 	}
 
 	defer func() {
-		//_ = os.Remove(f.Name())
-		//_ = os.Remove(f.Name() + ".xml")
-		//_ = os.Remove(f.Name() + ".json")
+		_ = os.Remove(f.Name())
+		_ = os.Remove(f.Name() + ".xml")
+		_ = os.Remove(f.Name() + ".json")
 	}()
 
 	outputFile := f.Name() + ".json"
@@ -35,20 +34,8 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 	cmd := exec.CommandContext(ctx, "bash", "-c", cdxgenCmd)
 	cmd.Dir = repositoryPath
 
-	// Set process group for better process management
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
 	if err = cmd.Run(); err != nil {
-		// Make sure to kill all processes in the same group when there's an error
-		syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		return nil, fmt.Errorf("can't collect BOMs for %s: %v", repositoryPath, err)
-	}
-
-	// Ensure all child processes are terminated
-	fmt.Printf("sending kill sigterm to %d", cmd.Process.Pid)
-	err = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-	if err != nil {
-		fmt.Printf("could not kill pid %d: %v", cmd.Process.Pid, err)
 	}
 
 	output, err := os.ReadFile(outputFile)

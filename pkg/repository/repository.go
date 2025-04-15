@@ -4,24 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	log "github.com/sirupsen/logrus"
+	"github.com/vinted/sbomsftw/pkg"
+	"github.com/vinted/sbomsftw/pkg/bomtools"
 	"github.com/vinted/sbomsftw/pkg/collectors"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/client"
-
-	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	log "github.com/sirupsen/logrus"
-	"github.com/vinted/sbomsftw/pkg"
-	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"
@@ -145,12 +142,8 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 			collectors.Syft{}, collectors.CDXGen{}, collectors.RetireJS{},
 		},
 		languageCollectors: []pkg.LanguageCollector{
-			collectors.NewPythonCollector(),
-			collectors.NewRustCollector(),
-			collectors.NewJVMCollector(),
-			collectors.NewGolangCollector(),
-			collectors.NewJSCollector(),
-			collectors.NewRubyCollector(),
+			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
+			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector(),
 		},
 	}, nil
 }
@@ -199,29 +192,25 @@ syft & retirejs & cdxgen are executed against the repository as well. This tends
 func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedSBOMs []*cdx.BOM
 	// Generate base SBOM with generic collectors (syft/retirejs/cdxgen)
-	//if includeGenericCollectors {
-	//	for _, c := range r.genericCollectors {
-	//		select {
-	//		case <-ctx.Done():
-	//			return nil, ctx.Err()
-	//		default:
-	//			log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
-	//			collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", c))
-	//			log.WithField("repository", r.Name).Infof("sleeping before exec")
-	//			time.Sleep(50000)
-	//			if !strings.Contains(c.String(), "cdxgen") {
-	//				bom, err := c.GenerateBOM(ctx, r.FSPath)
-	//				collectors.LogMemoryUsage(fmt.Sprintf("repository after - %s", c))
-	//				if err == nil {
-	//					collectedSBOMs = append(collectedSBOMs, bom)
-	//					continue
-	//				}
-	//
-	//				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
-	//			}
-	//		}
-	//	}
-	//}
+	if includeGenericCollectors {
+		for _, c := range r.genericCollectors {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			default:
+				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
+				if !strings.Contains(c.String(), "cdxgen") {
+					bom, err := c.GenerateBOM(ctx, r.FSPath)
+					if err == nil {
+						collectedSBOMs = append(collectedSBOMs, bom)
+						continue
+					}
+
+					log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
+				}
+			}
+		}
+	}
 
 	if ctx.Err() != nil {
 		return nil, ctx.Err() // Return early if user cancelled
@@ -242,9 +231,6 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			*/
 			var sbomsFromCollector []*cdx.BOM
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", collector.String())
-			collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", collector.String()))
-			log.WithField("repository", r.Name).Infof("sleeping before bootstrap")
-			time.Sleep(10 * time.Second)
 			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
 				b, err := collector.GenerateBOM(ctx, collectionPath)
 				if err == nil {
