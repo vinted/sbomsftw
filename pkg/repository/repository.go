@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -206,6 +207,8 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			default:
 				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
 				collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", c))
+				log.WithField("repository", r.Name).Infof("sleeping before exec")
+				time.Sleep(50000)
 				if !strings.Contains(c.String(), "cdxgen") {
 					bom, err := c.GenerateBOM(ctx, r.FSPath)
 					collectors.LogMemoryUsage(fmt.Sprintf("repository after - %s", c))
