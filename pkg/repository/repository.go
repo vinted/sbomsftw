@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vinted/sbomsftw/pkg/collectors"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/vinted/sbomsftw/pkg/collectors"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -229,8 +227,6 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
-			time.Sleep(50000)
-			log.WithField("repository", r.Name).Infof("sleeping")
 			collector := res.collector
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
 			languageFiles := res.languageFiles

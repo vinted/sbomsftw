@@ -4,13 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary"
-	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
-	"github.com/anchore/syft/syft/pkg/cataloger/golang"
-	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
-	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	log "github.com/sirupsen/logrus"
 	"runtime"
 
@@ -83,14 +77,6 @@ func getSource(input string) (source.Source, error) {
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	bomConfig := syft.DefaultCreateSBOMConfig()
-	packageCatalog := pkgcataloging.Config{
-		Binary:      binary.DefaultClassifierCatalogerConfig(),
-		Dotnet:      dotnet.DefaultCatalogerConfig(),
-		Golang:      golang.DefaultCatalogerConfig(),
-		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
-		Python:      python.DefaultCatalogerConfig(),
-	}
-	bomConfig.Packages = packageCatalog
 	LogMemoryUsage("before")
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	LogMemoryUsage("after")

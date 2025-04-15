@@ -45,6 +45,7 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 	}
 
 	// Ensure all child processes are terminated
+	fmt.Printf("sending kill sigterm to %s", cmd.Process.Pid)
 	syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 
 	output, err := os.ReadFile(outputFile)
