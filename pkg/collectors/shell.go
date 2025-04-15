@@ -64,26 +64,29 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 	cmd.Dir = bomRoot
 
 	if err = cmd.Run(); err != nil {
-		withLicensesCancel()
+		defer withLicensesCancel()
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
 		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
 		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 		cmd.Dir = bomRoot
 
 		if err = cmd.Run(); err != nil {
-			withoutLicensesCancel()
+			defer withoutLicensesCancel()
 			return nil, fmt.Errorf("can't Collect SBOMs for %s: %v", bomRoot, err)
 		}
 		withoutLicensesCancel()
 	}
-	withLicensesCancel()
-	withoutLicensesCancel()
+	defer withLicensesCancel()
+	defer withoutLicensesCancel()
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
 		return nil, fmt.Errorf("can't Collect %s SBOMs for %s", language, bomRoot)
 	}
-
+	err = cmd.Cancel()
+	if err != nil {
+		log.Warnf("could not cancel cmd %s", err.Error())
+	}
 	return bomtools.StringToCDX(output)
 }
 
