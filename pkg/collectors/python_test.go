@@ -2,7 +2,7 @@ package collectors
 
 import (
 	"context"
-	"github.com/google/martian/log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"testing"
