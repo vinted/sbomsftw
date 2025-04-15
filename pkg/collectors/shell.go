@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	ps "github.com/mitchellh/go-ps"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
@@ -56,28 +58,52 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		withLicensesTimeout    = time.Duration(15) * time.Minute
 		withoutLicensesTimeout = time.Duration(10) * time.Minute
 	)
-	// Fetching licenses can time out so add a cancellation of 15 minutes
+
+	// Get list of processes before running cdxgen
+	processesBefore, err := ps.Processes()
+	if err != nil {
+		log.WithError(err).Warn("Failed to get process list before cdxgen execution")
+		processesBefore = []ps.Process{} // Empty slice if we couldn't get processes
+	}
+
+	pidsBefore := make(map[int]struct{})
+	for _, p := range processesBefore {
+		pidsBefore[p.Pid()] = struct{}{}
+	}
+
+	// First attempt - with licenses
 	withLicensesCtx, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
 	cdxGenCmd := formatCDXGenCmd(multiModuleMode, true, language, outputFile)
-	cmd := exec.CommandContext(withLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
+	cmd := exec.CommandContext(withLicensesCtx, "bash", "-c", cdxGenCmd)
 	cmd.Dir = bomRoot
 
-	if err = cmd.Run(); err != nil {
-		withLicensesCancel()
+	err = cmd.Run()
+	withLicensesCancel() // Important to cancel the context regardless of the result
+
+	// If first attempt failed, try without licenses
+	if err != nil {
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
+
+		// Clean up any processes that might have been left behind
+		cleanupNewProcesses(pidsBefore)
+
 		withoutLicensesCtx, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
 		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
 		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
 		cmd.Dir = bomRoot
 
-		if err = cmd.Run(); err != nil {
-			withoutLicensesCancel()
+		err = cmd.Run()
+		withoutLicensesCancel()
 
+		if err != nil {
+			// Clean up any processes before returning error
+			cleanupNewProcesses(pidsBefore)
 			return nil, fmt.Errorf("can't Collect SBOMs for %s: %v", bomRoot, err)
 		}
-		withoutLicensesCancel()
 	}
-	withLicensesCancel()
+
+	// Clean up any leftover processes
+	cleanupNewProcesses(pidsBefore)
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
@@ -85,6 +111,68 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 	}
 
 	return bomtools.StringToCDX(output)
+}
+
+// cleanupNewProcesses finds and terminates new Java processes that weren't running before
+func cleanupNewProcesses(pidsBefore map[int]struct{}) {
+	processesAfter, err := ps.Processes()
+	if err != nil {
+		log.WithError(err).Warn("Failed to get process list for cleanup")
+		return
+	}
+
+	for _, p := range processesAfter {
+		// Check if this is a new process (wasn't running before)
+		if _, existed := pidsBefore[p.Pid()]; !existed {
+			execName := strings.ToLower(p.Executable())
+
+			// Check if it's a Java process or related to cdxgen
+			if strings.Contains(execName, "java") ||
+				strings.Contains(execName, "jvm") ||
+				strings.Contains(execName, "gradle") ||
+				strings.Contains(execName, "maven") ||
+				strings.Contains(execName, "cdxgen") {
+
+				log.Debugf("Terminating leftover process: %s (PID: %d)", p.Executable(), p.Pid())
+				killProcess(p.Pid())
+			}
+		}
+	}
+}
+
+// killProcess terminates a process by PID
+func killProcess(pid int) {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		log.WithError(err).Debugf("Could not find process %d", pid)
+		return
+	}
+
+	// First try SIGTERM for graceful shutdown
+	if err := proc.Signal(os.Interrupt); err != nil {
+		log.WithError(err).Debugf("Failed to send SIGTERM to process %d", pid)
+
+		// If SIGTERM fails, force kill
+		if err := proc.Kill(); err != nil {
+			log.WithError(err).Debugf("Failed to kill process %d", pid)
+		}
+	}
+
+	// Wait for the process to exit (with timeout)
+	done := make(chan error, 1)
+	go func() {
+		_, err := proc.Wait()
+		done <- err
+	}()
+
+	// Wait up to 5 seconds for process to exit
+	select {
+	case <-done:
+		// Process exited
+	case <-time.After(5 * time.Second):
+		// Force kill if it didn't exit
+		_ = proc.Kill()
+	}
 }
 
 func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {

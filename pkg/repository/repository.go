@@ -4,24 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
-
-	"github.com/vinted/sbomsftw/pkg/collectors"
-
+	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/client"
-
-	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
+	"github.com/vinted/sbomsftw/pkg/collectors"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"
@@ -112,7 +109,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 	name := strings.TrimSuffix(urlPaths[len(urlPaths)-1], ".git")
 	fsPath := filepath.Join(CheckoutsPath, name)
 
-	const cloneDepth = 40 // Clone only 40 most recent commits, this saves bandwidth & disk-space
+	const cloneDepth = 1 // Clone only 40 most recent commits, this saves bandwidth & disk-space
 	headReference, err := getHeadReference(vcsURL, credentials)
 	if err != nil {
 		return nil, err
@@ -201,9 +198,8 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			default:
-				log.WithField("repository", r.Name).Infof("extracting SBOMs with: %s", c)
+				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
 				bom, err := c.GenerateBOM(ctx, r.FSPath)
-
 				if err == nil {
 					collectedSBOMs = append(collectedSBOMs, bom)
 					continue
@@ -224,13 +220,14 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			return nil, ctx.Err()
 		default:
 			collector := res.collector
-			languageFiles := res.languageFiles
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
+			languageFiles := res.languageFiles
 
 			/*
 				Generate SBOMs from every directory that contains language files
 			*/
 			var sbomsFromCollector []*cdx.BOM
+			log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", collector.String())
 			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
 				b, err := collector.GenerateBOM(ctx, collectionPath)
 				if err == nil {

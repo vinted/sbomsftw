@@ -18,9 +18,9 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 	if err != nil {
 		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output %v", err)
 	}
+
 	// Cleanup func. CDXGen creates multiple files on success, even if we only ask for one
 	defer func() {
-		// Ignore errors because when cdxgen fails it creates no files for us to remove
 		_ = os.Remove(f.Name())
 		_ = os.Remove(f.Name() + ".xml")
 		_ = os.Remove(f.Name() + ".json")
@@ -30,7 +30,6 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 
 	cdxgenCmd := fmt.Sprintf("export FETCH_LICENSE=false && cdxgen --recursive -o %s", outputFile)
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
-
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", cdxgenCmd)

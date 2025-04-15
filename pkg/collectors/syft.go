@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-
-	"github.com/anchore/syft/syft/format/cyclonedxjson"
-	log "github.com/sirupsen/logrus"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
 

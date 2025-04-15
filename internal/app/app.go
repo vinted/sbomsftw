@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vinted/sbomsftw/internal"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/vinted/sbomsftw/pkg"
-
-	"github.com/vinted/sbomsftw/internal"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"

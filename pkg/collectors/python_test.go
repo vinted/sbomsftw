@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"testing"
@@ -125,7 +126,12 @@ func TestPythonCollector(t *testing.T) {
 		}
 
 		tempDir, innerDir := setup()
-		defer os.RemoveAll(tempDir)
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				log.Errorf("failed to remove temporary directory %s: %v", path, err)
+			}
+		}(tempDir)
 
 		bomRoots := []string{
 			filepath.Join(tempDir, "environment_3.7.yml"),
