@@ -199,29 +199,29 @@ syft & retirejs & cdxgen are executed against the repository as well. This tends
 func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors bool) (*cdx.BOM, error) {
 	var collectedSBOMs []*cdx.BOM
 	// Generate base SBOM with generic collectors (syft/retirejs/cdxgen)
-	if includeGenericCollectors {
-		for _, c := range r.genericCollectors {
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			default:
-				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
-				collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", c))
-				log.WithField("repository", r.Name).Infof("sleeping before exec")
-				time.Sleep(50000)
-				if !strings.Contains(c.String(), "cdxgen") {
-					bom, err := c.GenerateBOM(ctx, r.FSPath)
-					collectors.LogMemoryUsage(fmt.Sprintf("repository after - %s", c))
-					if err == nil {
-						collectedSBOMs = append(collectedSBOMs, bom)
-						continue
-					}
-
-					log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
-				}
-			}
-		}
-	}
+	//if includeGenericCollectors {
+	//	for _, c := range r.genericCollectors {
+	//		select {
+	//		case <-ctx.Done():
+	//			return nil, ctx.Err()
+	//		default:
+	//			log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
+	//			collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", c))
+	//			log.WithField("repository", r.Name).Infof("sleeping before exec")
+	//			time.Sleep(50000)
+	//			if !strings.Contains(c.String(), "cdxgen") {
+	//				bom, err := c.GenerateBOM(ctx, r.FSPath)
+	//				collectors.LogMemoryUsage(fmt.Sprintf("repository after - %s", c))
+	//				if err == nil {
+	//					collectedSBOMs = append(collectedSBOMs, bom)
+	//					continue
+	//				}
+	//
+	//				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
+	//			}
+	//		}
+	//	}
+	//}
 
 	if ctx.Err() != nil {
 		return nil, ctx.Err() // Return early if user cancelled
@@ -240,6 +240,10 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 				Generate SBOMs from every directory that contains language files
 			*/
 			var sbomsFromCollector []*cdx.BOM
+			log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", collector.String())
+			collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", collector.String()))
+			log.WithField("repository", r.Name).Infof("sleeping before bootstrap")
+			time.Sleep(50000)
 			for _, collectionPath := range collector.BootstrapLanguageFiles(ctx, languageFiles) {
 				b, err := collector.GenerateBOM(ctx, collectionPath)
 				if err == nil {
