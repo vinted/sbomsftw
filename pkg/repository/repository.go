@@ -206,14 +206,16 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			default:
 				log.WithField("repository", r.Name).Infof("extracting SBOMs with generic: %s", c)
 				collectors.LogMemoryUsage(fmt.Sprintf("repository extract - %s", c))
-				bom, err := c.GenerateBOM(ctx, r.FSPath)
-				collectors.LogMemoryUsage(fmt.Sprintf("repository after - %s", c))
-				if err == nil {
-					collectedSBOMs = append(collectedSBOMs, bom)
-					continue
-				}
+				if !strings.Contains(c.String(), "cdxgen") {
+					bom, err := c.GenerateBOM(ctx, r.FSPath)
+					collectors.LogMemoryUsage(fmt.Sprintf("repository after - %s", c))
+					if err == nil {
+						collectedSBOMs = append(collectedSBOMs, bom)
+						continue
+					}
 
-				log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
+					log.WithFields(log.Fields{"repository": r.Name, "error": err}).Debugf("%s failed to collect SBOMs", c)
+				}
 			}
 		}
 	}
