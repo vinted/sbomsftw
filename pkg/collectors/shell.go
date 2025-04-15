@@ -3,13 +3,14 @@ package collectors
 import (
 	"context"
 	"fmt"
+	"github.com/codeskyblue/go-sh"
+	"github.com/mitchellh/go-ps"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	ps "github.com/mitchellh/go-ps"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
 )
@@ -25,27 +26,22 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
 		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
 
-		var (
-			multiModuleModeConfig string
-			template              = "%s && %s && cdxgen --type %s -o %s"
-		)
-
+		var multiModuleModeConfig string
 		if multiModuleMode {
 			multiModuleModeConfig = "export GRADLE_MULTI_PROJECT_MODE=1"
 		} else {
 			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
 		}
 
-		return fmt.Sprintf(template, licenseConfig, multiModuleModeConfig, language, outputFile)
+		return fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
 	}
 
 	f, err := os.CreateTemp("/tmp", "sa-collector-tmp-output-")
 	if err != nil {
-		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output %v", err)
+		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output: %v", err)
 	}
-	// Cleanup func. CDXGen creates multiple files on success, even if we only ask for one
+
 	defer func() {
-		// Ignore errors because when cdxgen fails it creates no files for us to remove
 		_ = os.Remove(f.Name())
 		_ = os.Remove(f.Name() + ".xml")
 		_ = os.Remove(f.Name() + ".json")
@@ -53,73 +49,33 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 
 	outputFile := f.Name() + ".json"
 
-	// Timeouts for SBOM generation with CDXGen
-	var (
-		withLicensesTimeout    = time.Duration(15) * time.Minute
-		withoutLicensesTimeout = time.Duration(10) * time.Minute
-	)
+	withLicensesTimeout := 15 * time.Minute
+	withoutLicensesTimeout := 10 * time.Minute
 
-	// Get list of processes before running cdxgen
-	processesBefore, err := ps.Processes()
-	if err != nil {
-		log.WithError(err).Warn("Failed to get process list before cdxgen execution")
-		processesBefore = []ps.Process{} // Empty slice if we couldn't get processes
-	}
+	_, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
+	defer withLicensesCancel()
 
-	pidsBefore := make(map[int]struct{})
-	for _, p := range processesBefore {
-		pidsBefore[p.Pid()] = struct{}{}
-	}
-
-	// First attempt - with licenses
-	withLicensesCtx, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
-	cdxGenCmd := formatCDXGenCmd(multiModuleMode, true, language, outputFile)
-	cmd := exec.CommandContext(withLicensesCtx, "bash", "-c", cdxGenCmd)
-	cmd.Dir = bomRoot
-
-	err = cmd.Run()
-	withLicensesCancel() // Important to cancel the context regardless of the result
-
-	// If first attempt failed, try without licenses
-	if err != nil {
+	if err := runCDXGenCommand(bomRoot, formatCDXGenCmd(multiModuleMode, true, language, outputFile)); err != nil {
 		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
 
-		// Clean up any processes that might have been left behind
-		cleanupNewProcesses(pidsBefore)
+		_, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
+		defer withoutLicensesCancel()
 
-		withoutLicensesCtx, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
-		cdxGenCmd = formatCDXGenCmd(multiModuleMode, false, language, outputFile)
-		cmd = exec.CommandContext(withoutLicensesCtx, "bash", "-c", cdxGenCmd) //nolint:gosec
-		cmd.Dir = bomRoot
-
-		err = cmd.Run()
-		withoutLicensesCancel()
-
-		if err != nil {
-			// Clean up any processes before returning error
-			cleanupNewProcesses(pidsBefore)
-			return nil, fmt.Errorf("can't Collect SBOMs for %s: %v", bomRoot, err)
+		if err := runCDXGenCommand(bomRoot, formatCDXGenCmd(multiModuleMode, false, language, outputFile)); err != nil {
+			return nil, fmt.Errorf("can't collect SBOMs for %s: %v", bomRoot, err)
 		}
 	}
 
-	// Clean up any leftover processes
-	cleanupNewProcesses(pidsBefore)
-
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
-		return nil, fmt.Errorf("can't Collect %s SBOMs for %s", language, bomRoot)
-	}
-	processesAfter, err := ps.Processes()
-	if err != nil {
-		log.WithError(err).Warn("Failed to get process list before cdxgen execution")
-		processesBefore = []ps.Process{} // Empty slice if we couldn't get processes
-	}
-	for _, p := range processesAfter {
-		execName := strings.ToLower(p.Executable())
-		log.Warnf("leftover processes %s, pid %d", execName, p.Pid())
+		return nil, fmt.Errorf("can't collect %s SBOMs for %s", language, bomRoot)
 	}
 
 	return bomtools.StringToCDX(output)
+}
+
+func runCDXGenCommand(dir, cmd string) error {
+	return sh.NewSession().SetDir(dir).Command("bash", "-c", cmd).Run()
 }
 
 // cleanupNewProcesses finds and terminates new Java processes that weren't running before
