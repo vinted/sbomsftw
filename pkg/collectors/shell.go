@@ -109,6 +109,15 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 	if err != nil || len(output) == 0 {
 		return nil, fmt.Errorf("can't Collect %s SBOMs for %s", language, bomRoot)
 	}
+	processesAfter, err := ps.Processes()
+	if err != nil {
+		log.WithError(err).Warn("Failed to get process list before cdxgen execution")
+		processesBefore = []ps.Process{} // Empty slice if we couldn't get processes
+	}
+	for _, p := range processesAfter {
+		execName := strings.ToLower(p.Executable())
+		log.Warnf("leftover processes %s, pid %d", execName, p.Pid())
+	}
 
 	return bomtools.StringToCDX(output)
 }
@@ -125,6 +134,7 @@ func cleanupNewProcesses(pidsBefore map[int]struct{}) {
 		// Check if this is a new process (wasn't running before)
 		if _, existed := pidsBefore[p.Pid()]; !existed {
 			execName := strings.ToLower(p.Executable())
+			log.Warnf("leftover pid %s", execName)
 
 			// Check if it's a Java process or related to cdxgen
 			if strings.Contains(execName, "java") ||
