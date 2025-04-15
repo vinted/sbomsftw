@@ -53,8 +53,8 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 
 	// Timeouts for SBOM generation with CDXGen
 	var (
-		withLicensesTimeout    = time.Duration(20) * time.Second
-		withoutLicensesTimeout = time.Duration(20) * time.Second
+		withLicensesTimeout    = time.Duration(15) * time.Minute
+		withoutLicensesTimeout = time.Duration(15) * time.Minute
 	)
 	// Fetching licenses can time out so add a cancellation of 15 minutes
 	withLicensesCtx, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
@@ -74,7 +74,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 			defer withoutLicensesCancel()
 			return nil, fmt.Errorf("can't Collect SBOMs for %s: %v", bomRoot, err)
 		}
-		withoutLicensesCancel()
+		defer withoutLicensesCancel()
 	}
 	defer withLicensesCancel()
 	defer withoutLicensesCancel()
