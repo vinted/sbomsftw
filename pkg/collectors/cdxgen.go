@@ -19,6 +19,7 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output %v", err)
 	}
 
+	// Cleanup func. CDXGen creates multiple files on success, even if we only ask for one
 	defer func() {
 		_ = os.Remove(f.Name())
 		_ = os.Remove(f.Name() + ".xml")

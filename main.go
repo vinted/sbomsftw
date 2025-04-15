@@ -23,7 +23,6 @@ package main
 
 import (
 	"github.com/vinted/sbomsftw/cmd"
-	_ "net/http/pprof" // Registers pprof endpoints
 )
 
 func main() {

@@ -222,7 +222,6 @@ func (r Repository) ExtractSBOMs(ctx context.Context, includeGenericCollectors b
 			return nil, ctx.Err()
 		default:
 			collector := res.collector
-			log.WithField("repository", r.Name).Infof("exec of res collector %s", collector.String())
 			log.WithField("repository", r.Name).Infof("extracting SBOMs with %s", collector)
 			languageFiles := res.languageFiles
 
