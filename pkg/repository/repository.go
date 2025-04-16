@@ -142,7 +142,7 @@ func New(ctx context.Context, vcsURL string, credentials Credentials) (*Reposito
 			collectors.Syft{}, collectors.CDXGen{}, collectors.RetireJS{},
 		},
 		languageCollectors: []pkg.LanguageCollector{
-			collectors.NewPythonCollector(), collectors.NewRustCollector(),
+			collectors.NewPythonCollector(), collectors.NewRustCollector(), collectors.NewJVMCollector(),
 			collectors.NewGolangCollector(), collectors.NewJSCollector(), collectors.NewRubyCollector(),
 		},
 	}, nil

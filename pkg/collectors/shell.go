@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/codeskyblue/go-sh"
-	"github.com/mitchellh/go-ps"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -32,8 +30,9 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		} else {
 			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
 		}
-
-		return fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
+		formattedCmd := fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
+		log.Warnf("running following cmd %s", formattedCmd)
+		return formattedCmd
 	}
 
 	f, err := os.CreateTemp("/tmp", "sa-collector-tmp-output-")
@@ -76,69 +75,6 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 
 func runCDXGenCommand(dir, cmd string) error {
 	return sh.NewSession().SetDir(dir).Command("bash", "-c", cmd).Run()
-}
-
-// cleanupNewProcesses finds and terminates new Java processes that weren't running before
-func cleanupNewProcesses(pidsBefore map[int]struct{}) {
-	processesAfter, err := ps.Processes()
-	if err != nil {
-		log.WithError(err).Warn("Failed to get process list for cleanup")
-		return
-	}
-
-	for _, p := range processesAfter {
-		// Check if this is a new process (wasn't running before)
-		if _, existed := pidsBefore[p.Pid()]; !existed {
-			execName := strings.ToLower(p.Executable())
-			log.Warnf("leftover pid %s", execName)
-
-			// Check if it's a Java process or related to cdxgen
-			if strings.Contains(execName, "java") ||
-				strings.Contains(execName, "jvm") ||
-				strings.Contains(execName, "gradle") ||
-				strings.Contains(execName, "maven") ||
-				strings.Contains(execName, "cdxgen") {
-
-				log.Debugf("Terminating leftover process: %s (PID: %d)", execName, p.Pid())
-				killProcess(p.Pid())
-			}
-		}
-	}
-}
-
-// killProcess terminates a process by PID
-func killProcess(pid int) {
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		log.WithError(err).Debugf("Could not find process %d", pid)
-		return
-	}
-
-	// First try SIGTERM for graceful shutdown
-	if err := proc.Signal(os.Interrupt); err != nil {
-		log.WithError(err).Debugf("Failed to send SIGTERM to process %d", pid)
-
-		// If SIGTERM fails, force kill
-		if err := proc.Kill(); err != nil {
-			log.WithError(err).Debugf("Failed to kill process %d", pid)
-		}
-	}
-
-	// Wait for the process to exit (with timeout)
-	done := make(chan error, 1)
-	go func() {
-		_, err := proc.Wait()
-		done <- err
-	}()
-
-	// Wait up to 5 seconds for process to exit
-	select {
-	case <-done:
-		// Process exited
-	case <-time.After(5 * time.Second):
-		// Force kill if it didn't exit
-		_ = proc.Kill()
-	}
 }
 
 func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {
