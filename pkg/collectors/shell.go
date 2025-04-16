@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"syscall"
 	"time"
 
@@ -23,6 +22,8 @@ type shellExecutor interface {
 type defaultShellExecutor struct{}
 
 func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
+	log.Warnf("using bom from cdxgen")
+
 	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
 		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
 
@@ -79,7 +80,7 @@ func runCDXGenCommand(dir, cmd string) error {
 	session := sh.NewSession().SetDir(dir)
 
 	// Run the command
-	err := session.Command("bash", "-c", cmd).Run()
+	err := session.Command("bash", "-c", cmd).SetTimeout(2 * time.Minute).Run()
 
 	// If there's an error, make sure the session is properly closed
 	if err != nil {
@@ -93,13 +94,24 @@ func runCDXGenCommand(dir, cmd string) error {
 }
 
 func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {
+	log.Warnf("using shellout interface")
 	const shellCmdTimeout = 1
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(shellCmdTimeout)*time.Minute)
 
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "-c", shellCmd) // User controller input doesn't go here
+	session := sh.NewSession().SetDir(execDir)
 
-	cmd.Dir = execDir
+	// Run the command
+	err := session.Command("bash", "-c", shellCmd).SetTimeout(2 * time.Minute).Run()
+	//cmd := exec.CommandContext(ctx, "bash", "-c", shellCmd) // User controller input doesn't go here
+	if err != nil {
+		log.Warnf("there was an err during cdxgen command: %v", err)
+		// Close the session explicitly
+		session.Kill(syscall.SIGKILL)
+		return err
+	}
 
-	return cmd.Run()
+	//cmd.Dir = execDir
+
+	return nil
 }
