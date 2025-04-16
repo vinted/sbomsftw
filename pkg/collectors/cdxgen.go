@@ -3,6 +3,7 @@ package collectors
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"time"
@@ -28,7 +29,8 @@ func (c CDXGen) GenerateBOM(ctx context.Context, repositoryPath string) (*cdx.BO
 
 	outputFile := f.Name() + ".json"
 
-	cdxgenCmd := fmt.Sprintf("export FETCH_LICENSE=false && cdxgen --recursive -o %s", outputFile)
+	cdxgenCmd := fmt.Sprintf("export FETCH_LICENSE=false && cdxgen --profile generic --technique manifest-analysis --recursive -o %s", outputFile)
+	log.Warnf("cmd for generic cdxgen - %s", cdxgenCmd)
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
