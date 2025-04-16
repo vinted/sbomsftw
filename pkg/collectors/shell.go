@@ -31,7 +31,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		} else {
 			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
 		}
-		formattedCmd := fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
+		formattedCmd := fmt.Sprintf("%s && %s && cdxgen --profile generic --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
 		log.Warnf("running following cmd %s", formattedCmd)
 		return formattedCmd
 	}
