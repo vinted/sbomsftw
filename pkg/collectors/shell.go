@@ -93,7 +93,7 @@ func runCDXGenCommand(dir, cmd string) error {
 }
 
 func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {
-	const shellCmdTimeout = 10
+	const shellCmdTimeout = 1
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(shellCmdTimeout)*time.Minute)
 
 	defer cancel()
