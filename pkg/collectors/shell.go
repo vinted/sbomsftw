@@ -33,7 +33,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
 		}
 
-		return fmt.Sprintf("%s && %s && cdxgen --no-install-deps --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
+		return fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
 	}
 
 	f, err := os.CreateTemp("/tmp", "sa-collector-tmp-output-")
