@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -15,10 +20,6 @@ import (
 	"github.com/vinted/sbomsftw/pkg"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
 	"github.com/vinted/sbomsftw/pkg/collectors"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
 )
 
 const CheckoutsPath = "/tmp/checkouts/"

@@ -2,10 +2,11 @@ package collectors
 
 import (
 	"context"
+	fp "path/filepath"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
-	fp "path/filepath"
 )
 
 type JVM struct {
@@ -72,10 +73,8 @@ func (j JVM) GenerateBOM(ctx context.Context, bomRoot string) (*cdx.BOM, error) 
 }
 
 // BootstrapLanguageFiles implements LanguageCollector interface
-// BootstrapLanguageFiles implements LanguageCollector interface
 func (j JVM) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []string {
 	const bootstrapCmd = "./gradlew"
-	const cleanupCmd = "./gradlew --stop"
 
 	for dir, files := range SplitPaths(bomRoots) {
 		for _, f := range files {
@@ -97,20 +96,6 @@ func (j JVM) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []st
 					"collector":       j,
 					"collection path": dir,
 				}).Debug("gradle cache primed successfully")
-
-				// Add cleanup - stop Gradle daemon
-				log.WithFields(log.Fields{
-					"collector":       j,
-					"collection path": dir,
-				}).Debug("stopping gradle daemon")
-				log.Warnf("attempting to cleanup cmd gradle")
-				if err := j.executor.shellOut(ctx, dir, cleanupCmd); err != nil {
-					log.WithFields(log.Fields{
-						"error":           err,
-						"collector":       j,
-						"collection path": dir,
-					}).Debug("failed to stop gradle daemon")
-				}
 			}
 		}
 	}
