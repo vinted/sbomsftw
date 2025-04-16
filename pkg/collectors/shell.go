@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 
 	"github.com/codeskyblue/go-sh"
@@ -31,7 +32,7 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 		} else {
 			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
 		}
-		formattedCmd := fmt.Sprintf("%s && %s && cdxgen --profile generic --technique manifest-analysis --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
+		formattedCmd := fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
 		log.Warnf("running following cmd %s", formattedCmd)
 		return formattedCmd
 	}
@@ -75,7 +76,20 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 }
 
 func runCDXGenCommand(dir, cmd string) error {
-	return sh.NewSession().SetDir(dir).Command("bash", "-c", cmd).Run()
+	session := sh.NewSession().SetDir(dir)
+
+	// Run the command
+	err := session.Command("bash", "-c", cmd).Run()
+
+	// If there's an error, make sure the session is properly closed
+	if err != nil {
+		log.Warnf("there was an err during cdxgen command: %v", err)
+		// Close the session explicitly
+		session.Kill(syscall.SIGKILL)
+		return err
+	}
+
+	return nil
 }
 
 func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {
