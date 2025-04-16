@@ -13,7 +13,7 @@ jobs:
           go-version: 1.24.2
       - uses: actions/checkout@v4
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd
+        uses: golangci/golangci-lint-action@7ecb048b56b28747ce02304a64cbef5daf45d94d
         with:
           version: latest
           args: --timeout 3m --verbose
