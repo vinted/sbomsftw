@@ -2,10 +2,11 @@ package collectors
 
 import (
 	"context"
+	fp "path/filepath"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
-	fp "path/filepath"
 )
 
 type JVM struct {

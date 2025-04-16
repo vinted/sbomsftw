@@ -2,10 +2,11 @@ package collectors
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"

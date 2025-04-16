@@ -3,10 +3,11 @@ package collectors
 import (
 	"context"
 	"fmt"
-	"github.com/codeskyblue/go-sh"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/codeskyblue/go-sh"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
