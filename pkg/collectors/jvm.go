@@ -89,7 +89,7 @@ func (j JVM) BootstrapLanguageFiles(ctx context.Context, bomRoots []string) []st
 						"error":           err,
 						"collector":       j,
 						"collection path": dir,
-					}).Debug("can't prime gradle cache")
+					}).Debugf("can't prime gradle cache - %s", err)
 					continue
 				}
 				log.WithFields(log.Fields{
