@@ -49,7 +49,7 @@ func (d defaultShellExecutor) bomFromCdxgen(
 	}
 
 	log.WithError(err).
-		Debug("Failed to generate SBOMs with licensing information. Attempting to generate SBOMs without licensing information.")
+		Warning("Failed to generate SBOMs with licensing information. Attempting to generate SBOMs without licensing information.")
 
 	withoutLicencesCommand := formatCommand(multiModuleMode, false, language, outputFile)
 	sbom, err = generate(ctx, bomRoot, outputFile, withoutLicencesCommand, 10*time.Minute)
@@ -58,7 +58,7 @@ func (d defaultShellExecutor) bomFromCdxgen(
 	}
 
 	log.WithError(err).
-		Debug("Failed to generate SBOMs with and without licensing information.")
+		Error("Failed to generate SBOMs with and without licensing information.")
 
 	return nil, err
 }
