@@ -70,7 +70,7 @@ func generate(
 	timeout time.Duration,
 ) (*cdx.BOM, error) {
 
-	// FIXME: This does absolutely nothing. go-sh does
+	// TODO: This does absolutely nothing. go-sh does
 	// not accept context, which means the commands
 	// ran via it cannot be cancelled.
 	_, cancel := context.WithTimeout(ctx, timeout)
