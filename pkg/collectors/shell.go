@@ -9,7 +9,6 @@ import (
 
 	"github.com/codeskyblue/go-sh"
 
-	"github.com/CycloneDX/cyclonedx-go"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
@@ -69,7 +68,7 @@ func generate(
 	outputFile string,
 	command string,
 	timeout time.Duration,
-) (*cyclonedx.BOM, error) {
+) (*cdx.BOM, error) {
 
 	// FIXME: This does absolutely nothing. go-sh does
 	// not accept context, which means the commands
