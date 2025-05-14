@@ -9,6 +9,7 @@ import (
 
 	"github.com/codeskyblue/go-sh"
 
+	"github.com/CycloneDX/cyclonedx-go"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	log "github.com/sirupsen/logrus"
 	"github.com/vinted/sbomsftw/pkg/bomtools"
@@ -21,21 +22,12 @@ type shellExecutor interface {
 
 type defaultShellExecutor struct{}
 
-func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string, language string, multiModuleMode bool) (*cdx.BOM, error) {
-	formatCDXGenCmd := func(multiModuleMode, fetchLicense bool, language, outputFile string) string {
-		licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
-
-		var multiModuleModeConfig string
-		if multiModuleMode {
-			multiModuleModeConfig = "export GRADLE_MULTI_PROJECT_MODE=1"
-		} else {
-			multiModuleModeConfig = "unset GRADLE_MULTI_PROJECT_MODE"
-		}
-		formattedCmd := fmt.Sprintf("%s && %s && cdxgen --type %s -o %s", licenseConfig, multiModuleModeConfig, language, outputFile)
-		log.Warnf("running following cmd %s", formattedCmd)
-		return formattedCmd
-	}
-
+func (d defaultShellExecutor) bomFromCdxgen(
+	ctx context.Context,
+	bomRoot string,
+	language string,
+	multiModuleMode bool,
+) (*cdx.BOM, error) {
 	f, err := os.CreateTemp("/tmp", "sa-collector-tmp-output-")
 	if err != nil {
 		return nil, fmt.Errorf("can't create a temp file for writing cdxgen output: %v", err)
@@ -49,33 +41,85 @@ func (d defaultShellExecutor) bomFromCdxgen(ctx context.Context, bomRoot string,
 
 	outputFile := f.Name() + ".json"
 
-	withLicensesTimeout := 15 * time.Minute
-	withoutLicensesTimeout := 10 * time.Minute
+	withLicencesCommand := formatCommand(multiModuleMode, true, language, outputFile)
+	sbom, err := generate(ctx, bomRoot, outputFile, withLicencesCommand, 15*time.Minute)
 
-	_, withLicensesCancel := context.WithTimeout(ctx, withLicensesTimeout)
-	defer withLicensesCancel()
+	if err == nil {
+		return sbom, nil
+	}
 
-	if err := runCDXGenCommand(bomRoot, formatCDXGenCmd(multiModuleMode, true, language, outputFile)); err != nil {
-		log.WithError(err).Debugf("cdxgen failed - regenerating SBOMs without licensing info")
+	log.WithError(err).
+		Debug("Failed to generate SBOMs with licensing information. Attempting to generate SBOMs without licensing information.")
 
-		_, withoutLicensesCancel := context.WithTimeout(ctx, withoutLicensesTimeout)
-		defer withoutLicensesCancel()
+	withoutLicencesCommand := formatCommand(multiModuleMode, false, language, outputFile)
+	sbom, err = generate(ctx, bomRoot, outputFile, withoutLicencesCommand, 10*time.Minute)
+	if err == nil {
+		return sbom, nil
+	}
 
-		if err := runCDXGenCommand(bomRoot, formatCDXGenCmd(multiModuleMode, false, language, outputFile)); err != nil {
-			return nil, fmt.Errorf("can't collect SBOMs for %s: %v", bomRoot, err)
-		}
+	log.WithError(err).
+		Debug("Failed to generate SBOMs with and without licensing information.")
+
+	return nil, err
+}
+
+func generate(
+	ctx context.Context,
+	directory string,
+	outputFile string,
+	command string,
+	timeout time.Duration,
+) (*cyclonedx.BOM, error) {
+
+	// FIXME: This does absolutely nothing. go-sh does
+	// not accept context, which means the commands
+	// ran via it cannot be cancelled.
+	_, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	err := run(directory, command)
+	if err != nil {
+		return nil, err
 	}
 
 	output, err := os.ReadFile(outputFile)
 	if err != nil || len(output) == 0 {
-		return nil, fmt.Errorf("can't collect %s SBOMs for %s", language, bomRoot)
+		return nil, fmt.Errorf("SBOMs failed to generate: %s", command)
 	}
 
 	return bomtools.StringToCDX(output)
 }
 
-func runCDXGenCommand(dir, cmd string) error {
-	return sh.NewSession().SetDir(dir).Command("bash", "-c", cmd).Run()
+func run(directory string, command string) error {
+	return sh.NewSession().
+		SetDir(directory).
+		Command("bash", "-c", command).
+		Run()
+}
+
+func formatCommand(
+	multiModuleMode bool,
+	fetchLicense bool,
+	language string,
+	outputFile string,
+) string {
+	licenseConfig := fmt.Sprintf("export FETCH_LICENSE=%t", fetchLicense)
+
+	multiModuleModeConfig := "unset GRADLE_MULTI_PROJECT_MODE"
+	if multiModuleMode {
+		multiModuleModeConfig = "export GRADLE_MULTI_PROJECT_MODE=1"
+	}
+
+	formattedCmd := fmt.Sprintf(
+		"%s && %s && cdxgen --type %s -o %s",
+		licenseConfig,
+		multiModuleModeConfig,
+		language,
+		outputFile,
+	)
+
+	log.Warnf("running following cmd %s", formattedCmd)
+	return formattedCmd
 }
 
 func (d defaultShellExecutor) shellOut(ctx context.Context, execDir, shellCmd string) error {
