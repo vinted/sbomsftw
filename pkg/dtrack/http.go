@@ -214,13 +214,12 @@ func (
 		return nil, fmt.Errorf("error parsing base URL: %w", err)
 	}
 
-	request, err := http.NewRequest(http.MethodPost, parsedUrl.String(), bytes.NewBuffer(body))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, parsedUrl.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("can't create HTTP request to %s: %w", fullUrl, err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
-	request.WithContext(ctx)
 	request.SetBasicAuth(d.middlewareUser, d.middlewarePass)
 
 	return d.performRequest(
