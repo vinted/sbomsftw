@@ -2,7 +2,8 @@ package dtrack
 
 import (
 	"context"
-	"io"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,7 +38,7 @@ func executeSBOMsUpload(t *testing.T, endpoint, apiKey string) error {
 		Tags:        []string{"some-random-project-tag"},
 	}
 
-	return client.updateSBOMs(context.Background(), payload)
+	return client.updateDependencyTrackSBOMs(context.Background(), payload)
 }
 
 // Helper function for creating a project
@@ -52,19 +53,10 @@ func executeCreateProject(t *testing.T, endpoint, apiKey string) (string, error)
 	return client.createProject(context.Background(), createProjectPayload{})
 }
 
-func TestAppendURLPath(t *testing.T) {
-	const (
-		baseURL      = "https://dependency-track.com/"
-		pathToAppend = "/api/v1/bom"
-	)
-	client, _ := NewClient(baseURL, "🔑")
-
-	assert.Equal(t, "https://dependency-track.com/api/v1/bom", client.appendURLPath(pathToAppend))
-}
-
 func TestCreateProject(t *testing.T) {
 	t.Run("append '/api/v1/project' to base URL when creating project", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			t.Log(req.URL.Path)
 			res.WriteHeader(http.StatusCreated)
 			assert.Equal(t, "/api/v1/project", req.URL.Path)
 		}))
@@ -85,7 +77,7 @@ func TestCreateProject(t *testing.T) {
 		assert.ErrorAs(t, err, &e)
 	})
 
-	t.Run("return io.EOF error when JSON decoding fails", func(t *testing.T) {
+	t.Run("return json.SyntaxError error when JSON decoding fails", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusCreated) // Return StatusCreated & no JSON
 		}))
@@ -93,7 +85,10 @@ func TestCreateProject(t *testing.T) {
 
 		_, err := executeCreateProject(t, server.URL, apiKeyForTesting)
 
-		assert.ErrorIs(t, err, io.EOF)
+		var syntaxError *json.SyntaxError
+		if !errors.As(err, &syntaxError) {
+			t.Error("Error returned is not json.SyntaxError")
+		}
 	})
 
 	t.Run("set X-Api-Key & Content-Type request headers correctly", func(t *testing.T) {

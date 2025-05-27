@@ -23,12 +23,12 @@ func GetValidClassifiersString() string {
 }
 
 type DependencyTrackClient struct {
-	baseURL, apiToken, middlewareUrl string
-	classifier                       string
-	requestTimeout                   time.Duration
-	middleware                       bool
-	httpClient                       *http.Client
-	middlewareUser, middlewarePass   string
+	dependencyTrackUrl, apiToken, middlewareUrl string
+	classifier                                  string
+	requestTimeout                              time.Duration
+	middleware                                  bool
+	httpClient                                  *http.Client
+	middlewareUser, middlewarePass              string
 }
 
 type options struct {
@@ -101,24 +101,25 @@ func NewClient(baseURL, apiToken string, opts ...Option) (*DependencyTrackClient
 	client := new(DependencyTrackClient)
 
 	// Mandatory parameters
-	client.baseURL = baseURL
+	client.dependencyTrackUrl = baseURL
 	client.apiToken = apiToken
 	// Optional parameters
-	const defaultTimeout = 180
 
 	if options.middleware {
 		client.middleware = true
 		client.middlewareUrl = options.middlewareUrl
 		client.middlewareUser = options.middlewareUser
 		client.middlewarePass = options.middlewarePass
-		client.httpClient = &http.Client{Timeout: 60 * time.Second}
 	}
 
+	const defaultTimeout = 180
 	if options.requestTimeout == 0 { // If timeout is not provided - use default value
 		client.requestTimeout = time.Second * time.Duration(defaultTimeout)
 	} else {
 		client.requestTimeout = options.requestTimeout
 	}
+
+	client.httpClient = &http.Client{}
 
 	if options.classifier == "" {
 		client.classifier = ValidClassifiers[0]
