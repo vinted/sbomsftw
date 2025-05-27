@@ -7,13 +7,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
-	"path"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/vinted/sbomsftw/pkg"
+)
+
+const (
+	exponentialBackoffRetryCount          = 5
+	exponentialBackoffTimeoutMilliseconds = 500
 )
 
 const (
@@ -24,19 +30,11 @@ const (
 // error templates.
 const (
 	cantMarshalPayload              = "can't convert provided payload into JSON: %w"
-	cantUnmarshalResponse           = "can't decode JSON response from %s: %w"
+	cantUnmarshalResponse           = "can't unmarshal JSON response from %s: %w"
 	cantConstructHTTPRequest        = "can't construct HTTP request to %s: %w"
 	cantPerformHTTPRequest          = "can't perform HTTP request to %s: %w"
 	cantPerformRequestCantCloseBody = "request to %s failed: %w also failed to close response body: %v"
 )
-
-// appendURLPath append a specified path to the base URL & return the new URL.
-func (d DependencyTrackClient) appendURLPath(pathToAppend string) string {
-	baseURL, _ := url.Parse(d.baseURL) // Ignore error - we already validated base URL earlier on.
-	baseURL.Path = path.Join(baseURL.Path, pathToAppend)
-
-	return baseURL.String()
-}
 
 // setRequiredHeaders set mandatory HTTP headers for requests to Dependency Track to succeed.
 func (d DependencyTrackClient) setRequiredHeaders(req *http.Request) {
@@ -53,44 +51,33 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
 	defer cancel()
 
-	log.WithField("payloadName", payload.Name).Debugf("Create project with payload name: %s", payload.Name)
+	dtCreateProjectEndpoint, err := url.JoinPath(d.dependencyTrackUrl, projectPath)
+	if err != nil {
+		return "", fmt.Errorf("error joining base URL: %w", err)
+	}
+
+	log.
+		WithField("payloadName", payload.Name).
+		Debugf("Create project with payload name: %s", payload.Name)
+
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf(cantMarshalPayload, err)
 	}
 
-	requestURL := d.appendURLPath(projectPath)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, requestURL, bytes.NewBuffer(jsonPayload))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPut, dtCreateProjectEndpoint, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		return "", fmt.Errorf(cantConstructHTTPRequest, requestURL, err)
+		return "", fmt.Errorf(cantConstructHTTPRequest, dtCreateProjectEndpoint, err)
 	}
 
-	d.setRequiredHeaders(req)
+	d.setRequiredHeaders(request)
+	response, err := d.performRequest(
+		request,
+		exponentialBackoffRetryCount,
+		exponentialBackoffTimeoutMilliseconds*time.Millisecond,
+	)
 
-	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.WithField("funcType", "createProject").Debugf("CreateProject error %v", err.Error())
-		return "", fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
-	}
-	// putting err here incase we get a resp nil
-	log.WithField("funcType", "createProject").Debugf("CreateProject request response status code: %v", resp.StatusCode)
-
-	defer func() {
-		closeErr := resp.Body.Close()
-		if err != nil {
-			if closeErr != nil {
-				err = fmt.Errorf(cantPerformRequestCantCloseBody, requestURL, err, closeErr)
-			}
-
-			return
-		}
-		err = closeErr
-	}()
-
-	if resp.StatusCode != http.StatusCreated {
-		log.WithField("funcType", "createProject").Debugf("Returning createProject BadStatusError")
-		// Don't return the error straight up - mind the defer above.
-		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
 		return "", err
 	}
 
@@ -99,72 +86,69 @@ func (d DependencyTrackClient) createProject(ctx context.Context, payload create
 	}
 
 	var metadata projectMetadata
-	if err = json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
-		err = fmt.Errorf(cantUnmarshalResponse, requestURL, err)
+	if err = json.Unmarshal(response, &metadata); err != nil {
+		err = fmt.Errorf(cantUnmarshalResponse, dtCreateProjectEndpoint, err)
 		return "", err
 	}
-	log.WithField("metadataUUID", metadata.UUID).Debugf("Returning metadata UUID: %s", metadata.UUID)
-	return metadata.UUID, err // Return only UUID since it's the only relevant field we need from project creation.
+
+	log.
+		WithField("metadataUUID", metadata.UUID).
+		Debugf("Created a new Dependency Track project with UUID %s", metadata.UUID)
+
+	return metadata.UUID, err
 }
 
-// updateSBOMs updates SBOMs inside Dependency Track based on the payload supplied
-func (d DependencyTrackClient) updateSBOMs(ctx context.Context, payload updateSBOMsPayload) error {
+func (d DependencyTrackClient) updateDependencyTrackSBOMs(ctx context.Context, payload updateSBOMsPayload) error {
 	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
 	defer cancel()
 
+	dtUploadSBOMsEndpoint, err := url.JoinPath(d.dependencyTrackUrl, uploadSBOMsPath)
+	if err != nil {
+		return fmt.Errorf("error joining base URL: %w", err)
+	}
+
 	jsonPayload, err := json.Marshal(payload)
-	log.WithField("funcType", "updateSBOM").Debugf("Updating project with payload: %s", payload.ProjectName)
+	log.
+		WithField("funcType", "updateSBOM").
+		Debugf("Updating project with payload: %s", payload.ProjectName)
+
 	if err != nil {
 		return fmt.Errorf(cantMarshalPayload, err)
 	}
 
-	requestURL := d.appendURLPath(uploadSBOMsPath)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, requestURL, bytes.NewBuffer(jsonPayload))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPut, dtUploadSBOMsEndpoint, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		return fmt.Errorf(cantConstructHTTPRequest, requestURL, err)
+		return fmt.Errorf(cantConstructHTTPRequest, dtUploadSBOMsEndpoint, err)
 	}
 
-	d.setRequiredHeaders(req)
+	d.setRequiredHeaders(request)
+	_, err = d.performRequest(
+		request,
+		exponentialBackoffRetryCount,
+		exponentialBackoffTimeoutMilliseconds*time.Millisecond,
+	)
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf(cantPerformHTTPRequest, requestURL, err)
-	}
-	log.WithField("funcType", "updateSBOM").Debugf("Update project request response status code: %v", resp.StatusCode)
-
-	defer func() {
-		closeErr := resp.Body.Close()
-		if err != nil {
-			if closeErr != nil {
-				err = fmt.Errorf(cantPerformRequestCantCloseBody, requestURL, err, closeErr)
-			}
-			return
-		}
-		err = closeErr
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		// Don't return the error straight up - mind the defer above.
-		err = pkg.BadStatusError{Status: resp.StatusCode, URL: requestURL}
-		log.WithField("updateNotOk", resp.StatusCode).Debugf("Update SBOM response code ( %v ) != 200: %s", resp, err)
-		return err
-	}
-	log.WithField("funcType", "updateSBOM").Debugf("SBOM Update finished: %d", resp.StatusCode)
 	return err
 }
 
-/*
-UploadSBOMs upload SBOMs to Dependency Track based on the payload supplied. If the project doesn't exist - it is
-automatically created.
-*/
-func (d DependencyTrackClient) UploadSBOMs(ctx context.Context, payload UploadSBOMsPayload) error {
+func (
+	d DependencyTrackClient,
+) UploadSBOMs(
+	ctx context.Context,
+	payload UploadSBOMsPayload,
+) error {
 	if d.middleware {
-		return d.uploadSBOMsToMiddleware(payload)
+		return d.uploadSBOMsToMiddleware(ctx, payload)
 	}
-	return d.uploadDependencyTrackInternal(ctx, payload)
+	return d.uploadSBOMsToDependencyTrack(ctx, payload)
 }
 
-func (d DependencyTrackClient) uploadDependencyTrackInternal(ctx context.Context, payload UploadSBOMsPayload) error {
+func (
+	d DependencyTrackClient,
+) uploadSBOMsToDependencyTrack(
+	ctx context.Context,
+	payload UploadSBOMsPayload,
+) error {
 	_, err := d.createProject(ctx, createProjectPayload{
 		Tags:       payload.Tags,
 		CodeOwners: payload.CodeOwners,
@@ -182,60 +166,168 @@ func (d DependencyTrackClient) uploadDependencyTrackInternal(ctx context.Context
 		}
 	}
 	log.WithField("funcType", "uploadSBOM").Debugf("SBOM is performing an update")
-	return d.updateSBOMs(ctx, updateSBOMsPayload{
+	return d.updateDependencyTrackSBOMs(ctx, updateSBOMsPayload{
 		Sboms:       payload.Sboms,
 		Tags:        payload.Tags,
 		ProjectName: payload.ProjectName,
 	})
 }
 
-func (d DependencyTrackClient) uploadSBOMsToMiddleware(payload UploadSBOMsPayload) error {
-	payloadToJson, err := json.Marshal(payload)
+func (
+	d DependencyTrackClient,
+) uploadSBOMsToMiddleware(
+	ctx context.Context,
+	payload UploadSBOMsPayload,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, d.requestTimeout)
+	defer cancel()
+
+	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
-	_, err = d.performPostRequestWithBody("sbom", payloadToJson)
+	_, err = d.performPostRequestToMiddleware(
+		ctx,
+		"/sbom",
+		jsonPayload,
+	)
 	if err != nil {
-		return fmt.Errorf("error posting sbom to middleware - %s", err)
+		return fmt.Errorf("error posting sbom to middleware - %w", err)
 	}
 	return nil
 }
 
-// performPostRequestWithBody performs POST request with Basic Auth and allows to pass body to upload data to VitessDB
-func (d DependencyTrackClient) performPostRequestWithBody(prefix string, body []byte) ([]byte, error) {
-	fullUrl := d.middlewareUrl + "/" + prefix
-	parsedURL, err := url.Parse(fullUrl)
+func (
+	d DependencyTrackClient,
+) performPostRequestToMiddleware(
+	ctx context.Context,
+	endpoint string,
+	body []byte,
+) ([]byte, error) {
+	fullUrl, err := url.JoinPath(d.middlewareUrl, endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("error joining base URL: %w", err)
+	}
+
+	parsedUrl, err := url.Parse(fullUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing base URL: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, parsedURL.String(), bytes.NewBuffer(body))
+	request, err := http.NewRequest(http.MethodPost, parsedUrl.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("can't create HTTP request to %s: %w", fullUrl, err)
 	}
 
-	// Set content type for JSON
-	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(d.middlewareUser, d.middlewarePass)
+	request.Header.Set("Content-Type", "application/json")
+	request.WithContext(ctx)
+	request.SetBasicAuth(d.middlewareUser, d.middlewarePass)
 
-	resp, err := d.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer func() {
-		closeErr := resp.Body.Close()
-		if err != nil {
-			if closeErr != nil {
-				err = fmt.Errorf("%w can't close response body: %v", err, closeErr)
-			}
-			return
+	return d.performRequest(
+		request,
+		exponentialBackoffRetryCount,
+		exponentialBackoffTimeoutMilliseconds*time.Millisecond,
+	)
+}
+
+func (
+	d DependencyTrackClient,
+) performRequest(
+	request *http.Request,
+	retryCount int,
+	timeout time.Duration,
+) ([]byte, error) {
+	// Retry only if there were issues with the connection
+	// or similar errors. If we managed to reach the server
+	// and it provided us a response, we will accept that
+	// response.
+	for try := 1; try <= retryCount; try++ {
+		response, err := d.httpClient.Do(request)
+
+		if contextCancelled(err) {
+			log.Warnf(
+				"%s %s (%d/%d) | HTTP request cancelled...",
+				request.Method,
+				request.URL.String(),
+				try,
+				retryCount,
+			)
+			return nil, err
 		}
-		err = closeErr
-	}()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		if err != nil {
+			retryIn := getBackoffDuration(try, timeout)
+			log.Warnf(
+				"%s %s (%d/%d) | HTTP Request failed: \"%s\", retrying in %v...\n",
+				request.Method,
+				request.URL.String(),
+				try,
+				retryCount,
+				err,
+				retryIn,
+			)
+			time.Sleep(retryIn)
+			continue
+		}
+
+		if !isResponseSuccess(response) {
+			return nil, pkg.BadStatusError{
+				URL:    request.URL.String(),
+				Status: response.StatusCode,
+			}
+		}
+
+		// TODO: This might require rethinking later. For now
+		//       we just log that a failure happens, but we
+		//       might want to return the error and mark this
+		//       as a failure.
+		defer func() {
+			err := response.Body.Close()
+			if err != nil {
+				log.Warnf(
+					"%s %s (%d/%d) | Closing HTTP Request failed: \"%s\"...\n",
+					request.Method,
+					request.URL.String(),
+					try,
+					retryCount,
+					err,
+				)
+			}
+		}()
+
+		return io.ReadAll(response.Body)
 	}
 
-	return io.ReadAll(resp.Body)
+	return nil, fmt.Errorf(
+		"%s %s | request failed for all %d attempts",
+		request.Method,
+		request.URL.String(),
+		retryCount,
+	)
+}
+
+func contextCancelled(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	urlErr, ok := err.(*url.Error)
+	if !ok {
+		return false
+	}
+
+	return urlErr.Err == context.Canceled
+}
+
+func isResponseSuccess(response *http.Response) bool {
+	return response.StatusCode >= 200 && response.StatusCode < 300
+}
+
+func getBackoffDuration(try int, timeout time.Duration) time.Duration {
+	if try < 1 {
+		return timeout
+	}
+
+	multiplier := math.Pow(2, float64(try))
+	return timeout * time.Duration(multiplier)
 }
