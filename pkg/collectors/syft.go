@@ -87,6 +87,8 @@ func getSBOM(src source.Source) (*sbom.SBOM, error) {
 		Packages:          syftSbom.Artifacts.Packages,
 		LinuxDistribution: syftSbom.Artifacts.LinuxDistribution,
 	}
+	log.Warnf("syftSbom artifacts %x", artifacts.Packages)
+	log.Warnf("syftSbom artifacts %s", src.Describe())
 	sbomFinal := &sbom.SBOM{
 		Artifacts:     artifacts,
 		Relationships: syftSbom.Relationships,
