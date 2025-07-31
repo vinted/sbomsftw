@@ -79,20 +79,25 @@ func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	log.Warnf("bom config tool version %s", bomConfig.ToolVersion)
 	log.Warnf("bom config source %s", src.Describe().Name)
 	log.Warnf("bom config source %s", src.Describe())
-	bomConfig.CatalogerSelection.WithAdditions([]string{"rpm", "rpm-db"}...)
+
+	// FIX: Assign the result back
+	bomConfig.CatalogerSelection = bomConfig.CatalogerSelection.WithAdditions([]string{"rpm", "rpm-db"}...)
+
 	log.Warnf("Selected catalogers: %+v", bomConfig.CatalogerSelection)
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
 		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
 	}
+
+	log.Warnf("syftSbom packages count: %d", len(syftSbom.Artifacts.FileDigests))
 	log.Warnf("syftSbom linux distro %s", syftSbom.Artifacts.LinuxDistribution)
 	log.Warnf("syftSbom source %s", syftSbom.Source.Name)
+
 	artifacts := sbom.Artifacts{
 		Packages:          syftSbom.Artifacts.Packages,
 		LinuxDistribution: syftSbom.Artifacts.LinuxDistribution,
 	}
-	log.Warnf("syftSbom artifacts %x", artifacts.Packages)
-	log.Warnf("syftSbom artifacts %s", src.Describe())
+
 	sbomFinal := &sbom.SBOM{
 		Artifacts:     artifacts,
 		Relationships: syftSbom.Relationships,
