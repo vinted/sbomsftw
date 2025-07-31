@@ -76,10 +76,14 @@ func getSource(input string) (source.Source, error) {
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	bomConfig := syft.DefaultCreateSBOMConfig()
+	log.Infof("bom config packages %s", bomConfig.Packages)
+	log.Infof("bom config tool version %s", bomConfig.ToolVersion)
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
 		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
 	}
+	log.Infof("syftSbom linux distro %s", syftSbom.Artifacts.LinuxDistribution)
+	log.Infof("syftSbom source %s", syftSbom.Source.Name)
 	artifacts := sbom.Artifacts{
 		Packages:          syftSbom.Artifacts.Packages,
 		LinuxDistribution: syftSbom.Artifacts.LinuxDistribution,
