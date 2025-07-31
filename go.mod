@@ -4,11 +4,13 @@ go 1.24.2
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2
+	github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722
 	github.com/anchore/syft v1.29.1
 	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/uuid v1.6.0
+	github.com/mattn/go-sqlite3 v1.14.23
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
@@ -43,7 +45,6 @@ require (
 	github.com/anchore/fangs v0.0.0-20250319222917-446a1e748ec2 // indirect
 	github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537 // indirect
 	github.com/anchore/go-homedir v0.0.0-20250319154043-c29668562e4d // indirect
-	github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722 // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb // indirect
 	github.com/anchore/go-rpmdb v0.0.0-20250516171929-f77691e1faec // indirect
