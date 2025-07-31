@@ -8,7 +8,6 @@ import (
 	"github.com/anchore/go-logger/adapter/logrus"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
-	"github.com/anchore/syft/syft/pkg/cataloger/redhat"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	log "github.com/sirupsen/logrus"
@@ -88,8 +87,6 @@ func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	log.Warnf("bom config source %s", src.Describe().Name)
 	log.Warnf("bom config source %s", src.Describe())
 
-	rpmCataloger := redhat.NewDBCataloger()
-	bomConfig.CatalogerSelection = bomConfig.CatalogerSelection.WithAdditions(rpmCataloger)
 	log.Warnf("Selected catalogers: %+v", bomConfig.CatalogerSelection)
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
