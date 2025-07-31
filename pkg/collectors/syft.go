@@ -3,9 +3,12 @@ package collectors
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"fmt"
-	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/go-logger/adapter/logrus"
+	"github.com/mattn/go-sqlite3"
+
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/sbom"
@@ -21,6 +24,10 @@ type Syft struct {
 type sbomCollectionResult struct {
 	sbom *cdx.BOM
 	err  error
+}
+
+func init() {
+	sql.Register("sqlite", &sqlite3.SQLiteDriver{})
 }
 
 func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, result chan<- sbomCollectionResult) {
@@ -78,30 +85,17 @@ func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	loggerConfig := logrus.DefaultConfig()
 	loggerConfig.Level = "debug"
 	logger, err := logrus.New(loggerConfig)
-
-	// Set logger for syft
 	syft.SetLogger(logger)
 
 	bomConfig := syft.DefaultCreateSBOMConfig()
-	log.Warnf("bom config tool version %s", bomConfig.ToolVersion)
-	log.Warnf("bom config source %s", src.Describe().Name)
-	log.Warnf("bom config source %s", src.Describe())
-
-	log.Warnf("Selected catalogers: %+v", bomConfig.CatalogerSelection)
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
 		return nil, fmt.Errorf("can't create CycloneDX SBOM: %w", err)
 	}
-
-	log.Warnf("syftSbom packages count: %d", len(syftSbom.Artifacts.FileDigests))
-	log.Warnf("syftSbom linux distro %s", syftSbom.Artifacts.LinuxDistribution)
-	log.Warnf("syftSbom source %s", syftSbom.Source.Name)
-
 	artifacts := sbom.Artifacts{
 		Packages:          syftSbom.Artifacts.Packages,
 		LinuxDistribution: syftSbom.Artifacts.LinuxDistribution,
 	}
-
 	sbomFinal := &sbom.SBOM{
 		Artifacts:     artifacts,
 		Relationships: syftSbom.Relationships,

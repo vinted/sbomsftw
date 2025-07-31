@@ -22,12 +22,9 @@ THE SOFTWARE.
 package main
 
 import (
-	"database/sql"
-	"github.com/mattn/go-sqlite3"
 	"github.com/vinted/sbomsftw/cmd"
 )
 
 func main() {
-	sql.Register("sqlite", &sqlite3.SQLiteDriver{})
 	cmd.Execute()
 }
