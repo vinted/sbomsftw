@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/anchore/go-logger/adapter/logrus"
 	"github.com/mattn/go-sqlite3"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -82,11 +81,6 @@ func getSource(input string) (source.Source, error) {
 }
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
-	loggerConfig := logrus.DefaultConfig()
-	loggerConfig.Level = "debug"
-	logger, err := logrus.New(loggerConfig)
-	syft.SetLogger(logger)
-
 	bomConfig := syft.DefaultCreateSBOMConfig()
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
