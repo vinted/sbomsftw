@@ -81,7 +81,7 @@ func getSBOM(src source.Source) (*sbom.SBOM, error) {
 	log.Warnf("bom config source %s", src.Describe())
 
 	// FIX: Assign the result back
-	bomConfig.CatalogerSelection = bomConfig.CatalogerSelection.WithAdditions([]string{"rpm", "rpm-db-cataloger"}...)
+	bomConfig.CatalogerSelection = bomConfig.CatalogerSelection.WithAdditions([]string{"rpm-db-cataloger"}...)
 
 	log.Warnf("Selected catalogers: %+v", bomConfig.CatalogerSelection)
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
