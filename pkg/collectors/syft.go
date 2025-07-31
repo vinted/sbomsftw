@@ -75,7 +75,9 @@ func getSource(input string) (source.Source, error) {
 }
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
-	logger, err := logrus.New(logrus.DefaultConfig())
+	loggerConfig := logrus.DefaultConfig()
+	loggerConfig.Level = "debug"
+	logger, err := logrus.New(loggerConfig)
 
 	// Set logger for syft
 	syft.SetLogger(logger)
