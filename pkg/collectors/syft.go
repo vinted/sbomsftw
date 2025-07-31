@@ -3,7 +3,9 @@ package collectors
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"fmt"
+	"github.com/mattn/go-sqlite3"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft"
@@ -21,6 +23,10 @@ type Syft struct {
 type sbomCollectionResult struct {
 	sbom *cdx.BOM
 	err  error
+}
+
+func init() {
+	sql.Register("sqlite", &sqlite3.SQLiteDriver{})
 }
 
 func (s Syft) generateBOMInternal(ctx context.Context, repositoryPath string, result chan<- sbomCollectionResult) {
