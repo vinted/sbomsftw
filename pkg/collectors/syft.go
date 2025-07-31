@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/anchore/go-logger/adapter/logrus"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/sbom"
@@ -75,14 +75,19 @@ func getSource(input string) (source.Source, error) {
 }
 
 func getSBOM(src source.Source) (*sbom.SBOM, error) {
+	logger, err := logrus.New(logrus.DefaultConfig())
+
+	// Set logger for syft
+	syft.SetLogger(logger)
+
 	bomConfig := syft.DefaultCreateSBOMConfig()
 	log.Warnf("bom config tool version %s", bomConfig.ToolVersion)
 	log.Warnf("bom config source %s", src.Describe().Name)
 	log.Warnf("bom config source %s", src.Describe())
 
 	// FIX: Assign the result back
-	bomConfig.CatalogerSelection = bomConfig.CatalogerSelection.WithAdditions([]string{"rpm-db-cataloger"}...)
-
+	bomConfig.CatalogerSelection = bomConfig.CatalogerSelection.WithAdditions([]string{"rpm-db-cataloger", "file-content-cataloger", "file-executable-cataloger",
+		"file-metadata-cataloger", "file-digest-cataloger", "relationships-cataloger"}...)
 	log.Warnf("Selected catalogers: %+v", bomConfig.CatalogerSelection)
 	syftSbom, err := syft.CreateSBOM(context.Background(), src, bomConfig)
 	if err != nil {
