@@ -1,3 +1,5 @@
+# Original project is no longer maintained. Feel free to fork if needed.
+
 # SBOMS For The Win!
 
 Tool for SBOM (Software Bill Of Materials) collection from filesystems & GitHub repositories.
